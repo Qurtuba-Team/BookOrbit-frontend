@@ -1,13 +1,16 @@
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Shield, BookOpen, Lock, UserPlus } from "lucide-react";
+import { ArrowRight, Shield, BookOpen, Lock, UserPlus, AlertCircle } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 const AuthPage = () => {
   const location = useLocation();
+  const navigate  = useNavigate();
+  const { login } = useAuth();
   const [isLogin, setIsLogin] = useState(location.pathname !== "/register");
+  const [loginError, setLoginError] = useState("");
 
-  // ── Login State ──
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [registerData, setRegisterData] = useState({
     name: "", phone: "", email: "", password: "", agreeToTerms: false,
@@ -21,11 +24,21 @@ const AuthPage = () => {
     setRegisterData((p) => ({ ...p, [name]: type === "checkbox" ? checked : value }));
   };
 
-  const handleSubmit = (e) => e.preventDefault();
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setLoginError("");
+    const result = login(loginData.email, loginData.password);
+    if (result.success) {
+      navigate("/app");
+    } else {
+      setLoginError(result.error);
+    }
+  };
 
   const switchMode = () => {
     const next = !isLogin;
     setIsLogin(next);
+    setLoginError("");
     window.history.replaceState(null, "", next ? "/login" : "/register");
   };
 
@@ -123,6 +136,18 @@ const AuthPage = () => {
                       </div>
                       <input type="password" name="password" value={loginData.password} onChange={handleLoginChange} className={inputClass} placeholder="••••••••" required />
                     </div>
+
+                    {/* Bypass error / hint */}
+                    {loginError && (
+                      <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs font-medium">
+                        <AlertCircle size={14} />
+                        <span>{loginError}</span>
+                      </div>
+                    )}
+                    <div className="p-3 bg-library-accent/5 border border-library-accent/15 rounded-xl text-[11px] text-library-primary/50 dark:text-gray-500 font-medium leading-relaxed" dir="ltr">
+                      <span className="font-bold text-library-accent">Demo:</span> demo@booksorbit.com / demo1234
+                    </div>
+
                     <button type="submit" className="w-full bg-library-primary dark:bg-white text-library-paper dark:text-library-primary font-bold py-4 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.98] transition-all text-sm">
                       دخول للأرشيف
                     </button>

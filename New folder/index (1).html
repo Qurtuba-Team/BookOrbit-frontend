@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BookOrbit | The University Textbook Network</title>
+    <meta name="description" content="A trusted digital platform for university students to lend and borrow textbooks. Save money, share knowledge, build community.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://api.fontshare.com">
+    <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,500,700,800&f[]=instrument-sans@400,500,600,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- ═══════════ EFFECT: Premium Preloader ═══════════ -->
+    <div class="preloader" id="preloader">
+        <div class="pl-content">
+            <svg class="pl-logo" viewBox="0 0 100 100" fill="none">
+                <circle cx="50" cy="50" r="40" stroke="var(--green-400)" stroke-width="2" />
+                <path d="M30 40 L50 30 L70 40 L70 70 L50 60 L30 70 Z" stroke="var(--purple)" stroke-width="2" stroke-linejoin="round"/>
+            </svg>
+            <div class="pl-counter" id="plCounter">000</div>
+        </div>
+        <div class="pl-overlay pl-top"></div>
+        <div class="pl-overlay pl-bottom"></div>
+    </div>
+
+    <!-- Cursor Effects -->
+    <div class="cursor-glow" id="cursorGlow"></div>
+    <div class="cursor-trail" id="cursorTrail">
+        <div class="cursor-lens-ring"></div>
+        <div class="cursor-lens-flare"></div>
+    </div>
+    <!-- Image Peek Cursor -->
+    <div class="cursor-media" id="cursorMedia"></div>
+
+    <!-- Aurora Background -->
+    <div class="aurora-bg">
+        <div class="aurora aurora-1"></div>
+        <div class="aurora aurora-2"></div>
+        <div class="aurora aurora-3"></div>
+    </div>
+
+    <!-- ═══════════ NAVIGATION ═══════════ -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="#" class="nav-logo" id="navLogo">
+                <div class="logo-orbit">
+                    <svg viewBox="0 0 40 40" fill="none" class="logo-svg">
+                        <circle cx="20" cy="20" r="8" fill="url(#orbitGrad)" />
+                        <ellipse cx="20" cy="20" rx="18" ry="7" stroke="url(#orbitRing)" stroke-width="1.5" fill="none" class="orbit-ring-svg"/>
+                        <ellipse cx="20" cy="20" rx="14" ry="12" stroke="url(#orbitRing2)" stroke-width="0.8" fill="none" transform="rotate(60 20 20)" class="orbit-ring-svg-2"/>
+                        <circle cx="36" cy="18" r="2.5" fill="#34d399" class="orbit-dot"/>
+                        <defs>
+                            <radialGradient id="orbitGrad" cx="50%" cy="40%">
+                                <stop offset="0%" stop-color="#6ee7b7"/>
+                                <stop offset="100%" stop-color="#059669"/>
+                            </radialGradient>
+                            <linearGradient id="orbitRing" x1="0" y1="0" x2="40" y2="0">
+                                <stop offset="0%" stop-color="#34d399" stop-opacity="0.6"/>
+                                <stop offset="50%" stop-color="#10b981" stop-opacity="0.2"/>
+                                <stop offset="100%" stop-color="#6ee7b7" stop-opacity="0.6"/>
+                            </linearGradient>
+                            <linearGradient id="orbitRing2" x1="0" y1="0" x2="40" y2="40">
+                                <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.3"/>
+                                <stop offset="100%" stop-color="#34d399" stop-opacity="0.3"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <span class="logo-text">Book<span class="logo-highlight">Orbit</span></span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="#features" class="nav-link">Features</a></li>
+                <li><a href="#trust" class="nav-link">Trust</a></li>
+                <li><a href="#how-it-works" class="nav-link">How It Works</a></li>
+                <li><a href="#showcase" class="nav-link">Platform</a></li>
+            </ul>
+            <div class="nav-actions">
+                <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" title="Toggle Light/Dark Mode">
+                    <svg class="theme-icon theme-icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <svg class="theme-icon theme-icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" style="display:none">
+                        <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.8"/>
+                        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <a href="#" class="nav-btn nav-btn-ghost" id="loginBtn">Log In</a>
+                <a href="#" class="nav-btn nav-btn-primary" id="signupBtn">
+                    <span>Get Started</span>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M1 7H13M13 7L8 2M13 7L8 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </a>
+            </div>
+            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <ul class="mobile-nav-links">
+            <li><a href="#features">Features</a></li>
+            <li><a href="#trust">Trust</a></li>
+            <li><a href="#how-it-works">How It Works</a></li>
+            <li><a href="#showcase">Platform</a></li>
+        </ul>
+        <div class="mobile-nav-actions">
+            <a href="#" class="nav-btn nav-btn-ghost">Log In</a>
+            <a href="#" class="nav-btn nav-btn-primary"><span>Get Started</span></a>
+        </div>
+    </div>
+
+    <!-- Circular Reveal for Theme Toggle -->
+    <div class="theme-reveal" id="themeReveal"></div>
+
+    <!-- ═══════════ HERO SECTION ═══════════ -->
+    <section class="hero" id="hero">
+        <!-- Morphing Blob -->
+        <div class="morphing-blob blob-hero">
+            <svg viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
+                <g transform="translate(300,300)">
+                    <path d="M120,-157.6C152.7,-141.5,174.4,-102.6,184.4,-62.6C194.3,-22.6,192.4,18.4,180.1,56.4C167.7,94.4,144.9,129.3,113.1,156.2C81.3,183.1,40.7,202,-.7,202.9C-42,203.9,-84,186.8,-120.5,162.1C-157,137.4,-188,105,-199.8,66.5C-211.5,28,-204,-16.7,-186.7,-54.8C-169.3,-92.8,-142,-124.3,-109.3,-140.3C-76.7,-156.4,-38.3,-157,2.4,-160.4C43.2,-163.7,86.3,-169.8,120,-157.6Z" fill="url(#blobGrad1)">
+                        <animate attributeName="d" dur="12s" repeatCount="indefinite" values="M120,-157.6C152.7,-141.5,174.4,-102.6,184.4,-62.6C194.3,-22.6,192.4,18.4,180.1,56.4C167.7,94.4,144.9,129.3,113.1,156.2C81.3,183.1,40.7,202,-.7,202.9C-42,203.9,-84,186.8,-120.5,162.1C-157,137.4,-188,105,-199.8,66.5C-211.5,28,-204,-16.7,-186.7,-54.8C-169.3,-92.8,-142,-124.3,-109.3,-140.3C-76.7,-156.4,-38.3,-157,2.4,-160.4C43.2,-163.7,86.3,-169.8,120,-157.6Z;M154.2,-168.8C195.6,-147.9,222.4,-99.8,224,-51.5C225.6,-3.2,201.9,45.2,175.3,88.9C148.7,132.6,119.2,171.5,79.3,193.1C39.5,214.6,-10.7,218.7,-57.6,205.1C-104.5,191.4,-148.1,160,-170.8,119.1C-193.5,78.2,-195.3,27.8,-187.8,-19.3C-180.3,-66.3,-163.5,-110,-133.2,-133.7C-103,-157.3,-59.3,-160.8,-11.2,-164.7C36.8,-168.6,112.8,-189.7,154.2,-168.8Z;M120,-157.6C152.7,-141.5,174.4,-102.6,184.4,-62.6C194.3,-22.6,192.4,18.4,180.1,56.4C167.7,94.4,144.9,129.3,113.1,156.2C81.3,183.1,40.7,202,-.7,202.9C-42,203.9,-84,186.8,-120.5,162.1C-157,137.4,-188,105,-199.8,66.5C-211.5,28,-204,-16.7,-186.7,-54.8C-169.3,-92.8,-142,-124.3,-109.3,-140.3C-76.7,-156.4,-38.3,-157,2.4,-160.4C43.2,-163.7,86.3,-169.8,120,-157.6Z"/>
+                    </path>
+                </g>
+                <defs>
+                    <linearGradient id="blobGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="rgba(16,185,129,0.12)"/>
+                        <stop offset="50%" stop-color="rgba(167,139,250,0.06)"/>
+                        <stop offset="100%" stop-color="rgba(45,212,191,0.08)"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+        </div>
+        <!-- Noise Texture -->
+        <div class="noise-overlay"></div>
+        <!-- Grid -->
+        <div class="hero-grid"></div>
+        <div class="hero-container">
+            <!-- Left: Content -->
+            <div class="hero-content">
+                <div class="hero-badge" data-reveal>
+                    <div class="badge-pulse"></div>
+                    <span class="badge-text">Verified campus exchange</span>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3L9 7L5 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </div>
+
+                <h1 class="hero-title split-reveal-group" id="heroTitle">
+                    <span class="title-row">
+                        <span class="split-wrap"><span class="split-inner">Borrow</span></span>
+                        <span class="split-wrap"><span class="split-inner">textbooks</span></span>
+                    </span>
+                    <span class="title-row">
+                        <span class="split-wrap"><span class="split-inner">from</span></span>
+                        <span class="split-wrap"><span class="split-inner text-shimmer">verified</span></span>
+                    </span>
+                    <span class="title-row">
+                        <span class="split-wrap"><span class="split-inner">students<span class="title-dot">.</span></span></span>
+                    </span>
+                </h1>
+
+                <p class="hero-desc" data-reveal>
+                    Find the book you need, request it from a verified student on your campus,
+                    and complete each exchange with clear pickup and return steps.
+                </p>
+
+                <div class="hero-actions" data-reveal>
+                    <a href="#" class="btn-primary" id="heroCta">
+                        <span>Browse Available Books</span>
+                        <div class="btn-arrow">
+                            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                                <path d="M4 9H14M14 9L9.5 4.5M14 9L9.5 13.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div class="btn-glow"></div>
+                        <div class="btn-shine"></div>
+                    </a>
+                    <a href="#how-it-works" class="btn-secondary" id="heroSecondary">
+                        <div class="btn-play">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4.5 2.5L11.5 7L4.5 11.5V2.5Z" fill="currentColor"/></svg>
+                        </div>
+                        <span>See How It Works</span>
+                    </a>
+                </div>
+
+                <div class="hero-proof hero-proof-trust" data-reveal>
+                    <div class="proof-stat">
+                        <strong>Verified access</strong>
+                        <span>University email and admin review keep the network closed.</span>
+                    </div>
+                    <div class="proof-stat">
+                        <strong>Documented handoffs</strong>
+                        <span>Pickup and return stay confirmed with a simple visible record.</span>
+                    </div>
+                    <div class="proof-stat">
+                        <strong>Fair community</strong>
+                        <span>Reputation and penalties make trust visible before you borrow.</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: 3D Interactive Book Scene -->
+            <div class="hero-visual" data-reveal>
+                <div class="scene-wrapper" id="sceneWrapper">
+                    <!-- Orbit Rings -->
+                    <div class="orbit-ring ring-1"></div>
+
+                    <!-- MAIN VISUAL: Floating Book Stack -->
+                    <div class="book-stack-container" id="bookStack">
+                        <div class="stack-scene">
+                            <div class="stack-body" id="stackBody">
+                                <!-- Top Book (Green) -->
+                                <div class="st-book st-top">
+                                    <div class="st-face st-front">
+                                        <div class="st-cover">
+                                            <div class="cover-grain"></div>
+                                            <div class="cover-shine"></div>
+                                            <div class="cover-shadow-band"></div>
+                                            <div class="cover-art">
+                                                <svg viewBox="0 0 100 100" fill="none">
+                                                    <circle cx="50" cy="50" r="35" stroke="rgba(255,255,255,0.12)" stroke-width="0.8"/>
+                                                    <circle cx="50" cy="50" r="25" stroke="rgba(255,255,255,0.08)" stroke-width="0.6"/>
+                                                </svg>
+                                            </div>
+                                            <span class="cover-kicker">Core Series</span>
+                                            <h3 class="st-title">Computer<br>Science</h3>
+                                            <p class="st-subtitle">Algorithms / Systems / Logic</p>
+                                            <div class="st-author">A. Moretti</div>
+                                        </div>
+                                    </div>
+                                    <div class="st-face st-back"></div>
+                                    <div class="st-face st-spine">
+                                        <span class="spine-badge"></span>
+                                        <span class="spine-text">Computer Science</span>
+                                    </div>
+                                    <div class="st-face st-right-edge"></div>
+                                    <div class="st-face st-top-edge"></div>
+                                    <div class="st-face st-bottom-edge"></div>
+                                </div>
+
+                                <!-- Middle Book (Teal) -->
+                                <div class="st-book st-mid">
+                                    <div class="st-face st-front">
+                                        <div class="st-cover">
+                                            <div class="cover-grain"></div>
+                                            <div class="cover-shine"></div>
+                                            <div class="cover-shadow-band"></div>
+                                            <span class="cover-kicker">Lab Edition</span>
+                                            <h3 class="st-title st-title-md">Physics 101</h3>
+                                            <p class="st-subtitle">Motion / Waves / Energy</p>
+                                            <div class="st-author">N. Calder</div>
+                                        </div>
+                                    </div>
+                                    <div class="st-face st-back"></div>
+                                    <div class="st-face st-spine">
+                                        <span class="spine-badge"></span>
+                                        <span class="spine-text">Physics 101</span>
+                                    </div>
+                                    <div class="st-face st-right-edge"></div>
+                                    <div class="st-face st-top-edge"></div>
+                                    <div class="st-face st-bottom-edge"></div>
+                                </div>
+
+                                <!-- Bottom Book (Purple) -->
+                                <div class="st-book st-bot">
+                                    <div class="st-face st-front">
+                                        <div class="st-cover">
+                                            <div class="cover-grain"></div>
+                                            <div class="cover-shine"></div>
+                                            <div class="cover-shadow-band"></div>
+                                            <span class="cover-kicker">Honors Track</span>
+                                            <h3 class="st-title st-title-md">Advanced Math</h3>
+                                            <p class="st-subtitle">Proofs / Models / Theory</p>
+                                            <div class="st-author">E. Laurent</div>
+                                        </div>
+                                    </div>
+                                    <div class="st-face st-back"></div>
+                                    <div class="st-face st-spine">
+                                        <span class="spine-badge"></span>
+                                        <span class="spine-text">Advanced Math</span>
+                                    </div>
+                                    <div class="st-face st-right-edge"></div>
+                                    <div class="st-face st-top-edge"></div>
+                                    <div class="st-face st-bottom-edge"></div>
+                                </div>
+                                
+                                <div class="stack-glow"></div>
+                                <div class="stack-shadow"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Scroll Cue -->
+        <div class="scroll-cue" data-reveal>
+            <div class="scroll-line"></div>
+            <span>Scroll to explore</span>
+        </div>
+    </section>
+
+    <!-- ═══════════ FEATURES ═══════════ -->
+    <section class="trust-band" id="trust">
+        <div class="section-wrap trust-wrap">
+            <div class="section-head" data-reveal>
+                <span class="pill">Why It Feels Safe</span>
+                <h2 class="section-title">Built for calm, documented borrowing on campus.</h2>
+                <p class="section-sub">
+                    BookOrbit replaces scattered chats and vague meetups with verification,
+                    accountability, and a return flow both sides can trust.
+                </p>
+            </div>
+            <div class="trust-grid">
+                <article class="trust-card" data-reveal>
+                    <span class="trust-index">01</span>
+                    <h3>Closed to verified students</h3>
+                    <p>Accounts are approved with university email and manual review before anyone can borrow or lend.</p>
+                </article>
+                <article class="trust-card" data-reveal>
+                    <span class="trust-index">02</span>
+                    <h3>Every handoff is confirmed</h3>
+                    <p>OTP verification turns each exchange into a clear, time-stamped event instead of a vague message thread.</p>
+                </article>
+                <article class="trust-card" data-reveal>
+                    <span class="trust-index">03</span>
+                    <h3>Reputation has real weight</h3>
+                    <p>Good behavior earns trust. Late returns and no-shows reduce borrowing privileges until resolved.</p>
+                </article>
+                <article class="trust-card" data-reveal>
+                    <span class="trust-index">04</span>
+                    <h3>The whole flow stays visible</h3>
+                    <p>From request to return, both students can see the current step and know exactly what happens next.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="features" id="features">
+        <div class="section-wrap">
+            <div class="section-head" data-reveal>
+                <span class="pill">Why Students Stay</span>
+                <h2 class="section-title">Everything needed for a smooth,<br><span class="text-shimmer">low-friction exchange.</span></h2>
+                <p class="section-sub scrub-text" data-scrub>Not just a platform — a complete ecosystem for students who want to save money and share knowledge.</p>
+            </div>
+
+            <div class="features-grid">
+                <!-- Feature 1 — OTP (Large) -->
+                <div class="feat-card feat-card-xl" data-reveal>
+                    <div class="feat-icon feat-icon-green">
+                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                            <rect x="3" y="8" width="22" height="16" rx="3" stroke="currentColor" stroke-width="1.8"/>
+                            <path d="M3 12L14 18L25 12" stroke="currentColor" stroke-width="1.8"/>
+                            <circle cx="14" cy="5" r="3" stroke="currentColor" stroke-width="1.5"/>
+                        </svg>
+                    </div>
+                    <div class="feat-text">
+                        <h3>OTP Verification System</h3>
+                        <p>Pickup and return are both confirmed with a one-time code, so neither side has to rely on memory, screenshots, or awkward follow-ups.</p>
+                    </div>
+                    <div class="feat-demo">
+                        <div class="otp-visual">
+                            <div class="otp-digit" data-digit="4">4</div>
+                            <div class="otp-digit" data-digit="7">7</div>
+                            <div class="otp-digit" data-digit="2">2</div>
+                            <div class="otp-digit" data-digit="9">9</div>
+                        </div>
+                        <div class="otp-status">
+                            <div class="otp-check">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8L6.5 11.5L13 5" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </div>
+                            <span>Verified successfully</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feature 2 — Points -->
+                <div class="feat-card feat-card-diorama" data-reveal>
+                    <div class="diorama-layer diorama-bg" data-depth="0.02">
+                        <div class="diorama-orb diorama-orb-1"></div>
+                        <div class="diorama-orb diorama-orb-2"></div>
+                    </div>
+                    <div class="diorama-layer diorama-mid" data-depth="0.05">
+                        <svg class="diorama-svg" viewBox="0 0 120 120" fill="none"><polygon points="60,10 110,90 10,90" stroke="rgba(251,191,36,0.08)" stroke-width="0.5" fill="none"/><polygon points="60,30 95,80 25,80" stroke="rgba(251,191,36,0.06)" stroke-width="0.5" fill="none"/></svg>
+                    </div>
+                    <div class="diorama-layer diorama-fg" data-depth="0.1">
+                        <div class="diorama-star">★</div>
+                    </div>
+                    <div class="feat-icon feat-icon-amber">
+                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                            <path d="M14 3L17 10.5L25 11.5L19 17L20.5 25L14 21L7.5 25L9 17L3 11.5L11 10.5L14 3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h3>Points & Reputation</h3>
+                    <p>Helpful behavior raises your standing. Late returns and no-shows lower it, so trust is visible and earned over time.</p>
+                </div>
+
+                <!-- Feature 3 — Verified Profiles -->
+                <div class="feat-card feat-card-diorama" data-reveal>
+                    <div class="diorama-layer diorama-bg" data-depth="0.02">
+                        <div class="diorama-orb diorama-orb-3"></div>
+                    </div>
+                    <div class="diorama-layer diorama-mid" data-depth="0.06">
+                        <svg class="diorama-svg" viewBox="0 0 120 120" fill="none"><circle cx="60" cy="60" r="45" stroke="rgba(167,139,250,0.06)" stroke-width="0.5"/><circle cx="60" cy="60" r="30" stroke="rgba(167,139,250,0.04)" stroke-width="0.5"/></svg>
+                    </div>
+                    <div class="diorama-layer diorama-fg" data-depth="0.12">
+                        <div class="diorama-check">✓</div>
+                    </div>
+                    <div class="feat-icon feat-icon-purple">
+                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                            <circle cx="14" cy="10" r="5" stroke="currentColor" stroke-width="1.8"/>
+                            <path d="M6 24c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                            <path d="M19 13l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h3>Verified Student Profiles</h3>
+                    <p>Only real students get in. University email verification and admin approval keep the network local, relevant, and safer to use.</p>
+                </div>
+
+                <!-- Feature 4 — Smart Search -->
+                <div class="feat-card feat-card-diorama" data-reveal>
+                    <div class="diorama-layer diorama-bg" data-depth="0.03">
+                        <div class="diorama-orb diorama-orb-4"></div>
+                        <div class="diorama-orb diorama-orb-5"></div>
+                    </div>
+                    <div class="diorama-layer diorama-mid" data-depth="0.06">
+                        <svg class="diorama-svg" viewBox="0 0 120 120" fill="none"><rect x="20" y="20" width="80" height="80" rx="10" stroke="rgba(45,212,191,0.05)" stroke-width="0.5"/><rect x="35" y="35" width="50" height="50" rx="6" stroke="rgba(45,212,191,0.04)" stroke-width="0.5"/></svg>
+                    </div>
+                    <div class="diorama-layer diorama-fg" data-depth="0.1">
+                        <div class="diorama-search">⌕</div>
+                    </div>
+                    <div class="feat-icon feat-icon-teal">
+                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                            <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/>
+                            <path d="M18 18L25 25" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M9 12H15M12 9V15" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
+                        </svg>
+                    </div>
+                    <h3>Smart Search & Filters</h3>
+                    <p>Search by title, author, or subject, then narrow by condition, availability, and the lender's trust score.</p>
+                </div>
+
+                <!-- Feature 5 — Tracking (Large) -->
+                <div class="feat-card feat-card-xl" data-reveal>
+                    <div class="feat-icon feat-icon-rose">
+                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                            <rect x="4" y="6" width="8" height="16" rx="1.5" stroke="currentColor" stroke-width="1.8"/>
+                            <rect x="12" y="6" width="8" height="16" rx="1.5" stroke="currentColor" stroke-width="1.8"/>
+                            <path d="M20 8l4 2v14l-4-2V8z" stroke="currentColor" stroke-width="1.8"/>
+                        </svg>
+                    </div>
+                    <div class="feat-text">
+                        <h3>Full Borrow Tracking</h3>
+                        <p>Requests, approvals, extensions, handoffs, and returns live in one timeline, so the whole exchange feels predictable instead of messy.</p>
+                    </div>
+                    <div class="feat-demo">
+                        <div class="timeline-visual">
+                            <div class="tl-step tl-done"><div class="tl-dot"></div><span>Request</span></div>
+                            <div class="tl-line tl-line-done"></div>
+                            <div class="tl-step tl-done"><div class="tl-dot"></div><span>Approved</span></div>
+                            <div class="tl-line tl-line-done"></div>
+                            <div class="tl-step tl-active"><div class="tl-dot"></div><span>Handoff</span></div>
+                            <div class="tl-line"></div>
+                            <div class="tl-step"><div class="tl-dot"></div><span>Return</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feature 6 — Penalties -->
+                <div class="feat-card feat-card-diorama" data-reveal>
+                    <div class="diorama-layer diorama-bg" data-depth="0.02">
+                        <div class="diorama-orb diorama-orb-6"></div>
+                    </div>
+                    <div class="diorama-layer diorama-mid" data-depth="0.05">
+                        <svg class="diorama-svg" viewBox="0 0 120 120" fill="none"><polygon points="60,15 100,100 20,100" stroke="rgba(248,113,113,0.06)" stroke-width="0.5" fill="none"/></svg>
+                    </div>
+                    <div class="diorama-layer diorama-fg" data-depth="0.09">
+                        <div class="diorama-warn">!</div>
+                    </div>
+                    <div class="feat-icon feat-icon-red">
+                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                            <path d="M14 4L25 22H3L14 4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                            <path d="M14 11V16M14 19V19.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <h3>Fair Penalty System</h3>
+                    <p>Late returns, damage, and no-shows carry real consequences, which protects careful students without making the experience punitive.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════ HOW IT WORKS ═══════════ -->
+    <section class="how-section" id="how-it-works">
+        <div class="section-wrap">
+            <div class="section-head" data-reveal>
+                <span class="pill">Simple Process</span>
+                <h2 class="section-title scrub-text" data-scrub>Three clear steps from request to return.</h2>
+                <p class="section-sub">No vague meetups, no endless follow-up messages, and no wondering what happens next.</p>
+            </div>
+
+            <div class="steps-row">
+                <div class="step-card" data-reveal>
+                    <div class="step-num">01</div>
+                    <div class="step-icon-box">
+                        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                            <circle cx="20" cy="14" r="7" stroke="currentColor" stroke-width="2"/>
+                            <path d="M7 34c0-7.2 5.8-13 13-13s13 5.8 13 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M26 14l2.5 2.5 5-5" stroke="#10b981" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h3>Create Your Account</h3>
+                    <p>Sign up with your university email and photo. An admin reviews and approves your profile within 24 hours.</p>
+                </div>
+
+                <div class="step-arrow">
+                    <svg viewBox="0 0 60 20" fill="none">
+                        <path d="M0 10H52M52 10L44 4M52 10L44 16" stroke="url(#arrowGrad)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4 3"/>
+                        <defs><linearGradient id="arrowGrad" x1="0" y1="10" x2="60" y2="10"><stop stop-color="#10b981" stop-opacity="0.3"/><stop offset="1" stop-color="#a78bfa" stop-opacity="0.3"/></linearGradient></defs>
+                    </svg>
+                </div>
+
+                <div class="step-card" data-reveal>
+                    <div class="step-num">02</div>
+                    <div class="step-icon-box">
+                        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                            <rect x="6" y="5" width="16" height="24" rx="2" stroke="currentColor" stroke-width="2"/>
+                            <rect x="18" y="11" width="16" height="24" rx="2" stroke="currentColor" stroke-width="2"/>
+                            <path d="M12 13h6M12 17h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.4"/>
+                            <circle cx="30" cy="31" r="3" stroke="#10b981" stroke-width="1.5"/>
+                            <path d="M30 29v4M28 31h4" stroke="#10b981" stroke-width="1" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <h3>Browse & Request</h3>
+                    <p>Search for the book you need. Check its condition, the owner's rating, and send a borrow request with one click.</p>
+                </div>
+
+                <div class="step-arrow">
+                    <svg viewBox="0 0 60 20" fill="none">
+                        <path d="M0 10H52M52 10L44 4M52 10L44 16" stroke="url(#arrowGrad2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4 3"/>
+                        <defs><linearGradient id="arrowGrad2" x1="0" y1="10" x2="60" y2="10"><stop stop-color="#a78bfa" stop-opacity="0.3"/><stop offset="1" stop-color="#2dd4bf" stop-opacity="0.3"/></linearGradient></defs>
+                    </svg>
+                </div>
+
+                <div class="step-card" data-reveal>
+                    <div class="step-num">03</div>
+                    <div class="step-icon-box">
+                        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                            <path d="M10 20L17 27L30 14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <circle cx="20" cy="20" r="16" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <h3>Meet & Verify</h3>
+                    <p>Meet on campus, confirm the handoff with an OTP code, and start reading. When done, return it the same way.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════ HORIZONTAL SCROLL GALLERY ═══════════ -->
+    <section class="hscroll-section" id="showcase">
+        <div class="section-wrap">
+            <div class="section-head" data-reveal>
+                <span class="pill">Inside BookOrbit</span>
+                <h2 class="section-title">A product that stays clear<br><span class="text-shimmer">while the logistics stay tracked.</span></h2>
+                <p class="section-sub">Designed for speed, clarity, and delight — every screen is crafted with students in mind.</p>
+            </div>
+        </div>
+        <div class="hscroll-track" id="hscrollTrack">
+            <div class="hscroll-slides" id="hscrollSlides">
+                <div class="hscroll-card">
+                    <div class="hscroll-card-img" style="background: linear-gradient(135deg, #065f46, #059669)">
+                        <div class="hscroll-card-ui">
+                            <div class="hscroll-ui-topbar"><span class="hscroll-dot"></span><span class="hscroll-dot"></span><span class="hscroll-dot"></span></div>
+                            <div class="hscroll-ui-search"><div class="hscroll-ui-searchbar">🔍 Search for "Data Structures"...</div></div>
+                            <div class="hscroll-ui-grid"><div class="hscroll-ui-book"></div><div class="hscroll-ui-book"></div><div class="hscroll-ui-book"></div><div class="hscroll-ui-book"></div><div class="hscroll-ui-book"></div><div class="hscroll-ui-book"></div></div>
+                        </div>
+                    </div>
+                    <h4>Browse Library</h4>
+                    <p>Find any textbook in seconds with smart filters.</p>
+                </div>
+                <div class="hscroll-card">
+                    <div class="hscroll-card-img" style="background: linear-gradient(135deg, #5b21b6, #7c3aed)">
+                        <div class="hscroll-card-ui">
+                            <div class="hscroll-ui-topbar"><span class="hscroll-dot"></span><span class="hscroll-dot"></span><span class="hscroll-dot"></span></div>
+                            <div class="hscroll-ui-profile">
+                                <div class="hscroll-ui-avatar">M</div>
+                                <div class="hscroll-ui-lines"><div class="hscroll-ui-line w80"></div><div class="hscroll-ui-line w50"></div></div>
+                            </div>
+                            <div class="hscroll-ui-stats"><div class="hscroll-ui-stat"><span>4.9</span>Rating</div><div class="hscroll-ui-stat"><span>47</span>Points</div><div class="hscroll-ui-stat"><span>12</span>Lends</div></div>
+                        </div>
+                    </div>
+                    <h4>Student Profile</h4>
+                    <p>Verified profiles with reputation scores and history.</p>
+                </div>
+                <div class="hscroll-card">
+                    <div class="hscroll-card-img" style="background: linear-gradient(135deg, #0d9488, #14b8a6)">
+                        <div class="hscroll-card-ui">
+                            <div class="hscroll-ui-topbar"><span class="hscroll-dot"></span><span class="hscroll-dot"></span><span class="hscroll-dot"></span></div>
+                            <div class="hscroll-ui-otp">
+                                <div class="hscroll-ui-otp-title">Enter OTP Code</div>
+                                <div class="hscroll-ui-otp-boxes"><span>4</span><span>7</span><span>2</span><span>9</span></div>
+                                <div class="hscroll-ui-otp-btn">Verify ✓</div>
+                            </div>
+                        </div>
+                    </div>
+                    <h4>OTP Handoff</h4>
+                    <p>Secure every exchange with one-time verification codes.</p>
+                </div>
+                <div class="hscroll-card">
+                    <div class="hscroll-card-img" style="background: linear-gradient(135deg, #b45309, #d97706)">
+                        <div class="hscroll-card-ui">
+                            <div class="hscroll-ui-topbar"><span class="hscroll-dot"></span><span class="hscroll-dot"></span><span class="hscroll-dot"></span></div>
+                            <div class="hscroll-ui-timeline">
+                                <div class="hscroll-tl-item done"><div class="hscroll-tl-dot"></div><span>Requested</span></div>
+                                <div class="hscroll-tl-line done"></div>
+                                <div class="hscroll-tl-item done"><div class="hscroll-tl-dot"></div><span>Approved</span></div>
+                                <div class="hscroll-tl-line"></div>
+                                <div class="hscroll-tl-item active"><div class="hscroll-tl-dot"></div><span>Handoff</span></div>
+                                <div class="hscroll-tl-line"></div>
+                                <div class="hscroll-tl-item"><div class="hscroll-tl-dot"></div><span>Return</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <h4>Borrow Tracking</h4>
+                    <p>Real-time status updates from request to return.</p>
+                </div>
+                <div class="hscroll-card">
+                    <div class="hscroll-card-img" style="background: linear-gradient(135deg, #064e3b, #10b981)">
+                        <div class="hscroll-card-ui">
+                            <div class="hscroll-ui-topbar"><span class="hscroll-dot"></span><span class="hscroll-dot"></span><span class="hscroll-dot"></span></div>
+                            <div class="hscroll-ui-dashboard">
+                                <div class="hscroll-ui-dbox"><span>📚</span>My Books: 8</div>
+                                <div class="hscroll-ui-dbox"><span>⭐</span>Points: 124</div>
+                                <div class="hscroll-ui-dbox"><span>🔄</span>Active: 3</div>
+                                <div class="hscroll-ui-dbox"><span>✅</span>Completed: 23</div>
+                            </div>
+                        </div>
+                    </div>
+                    <h4>Dashboard</h4>
+                    <p>All your lending activity at a glance.</p>
+                </div>
+            </div>
+        </div>
+        <div class="hscroll-progress">
+            <div class="hscroll-progress-bar" id="hscrollBar"></div>
+        </div>
+    </section>
+
+    <!-- ═══════════ FINAL CTA ═══════════ -->
+    <section class="final-cta-section">
+        <div class="cta-glow-bg"></div>
+        <!-- Morphing Blob CTA -->
+        <div class="morphing-blob blob-cta">
+            <svg viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
+                <g transform="translate(300,300)">
+                    <path d="M131.5,-175.1C170.1,-156.3,200.2,-120.4,210.9,-80.1C221.6,-39.7,212.8,5.1,198.7,47.3C184.6,89.5,165.1,129.1,133,152.8C100.8,176.5,56,184.3,10.3,189.8C-35.5,195.3,-82.3,198.5,-118.7,179.7C-155.1,160.8,-181.2,119.8,-196.6,75.3C-212,30.8,-216.7,-17.2,-204.1,-58.5C-191.5,-99.8,-161.6,-134.5,-125.4,-154.2C-89.2,-173.8,-46.7,-178.4,-0.2,-178.1C46.4,-177.8,92.8,-193.8,131.5,-175.1Z" fill="url(#blobGrad2)">
+                        <animate attributeName="d" dur="15s" repeatCount="indefinite" values="M131.5,-175.1C170.1,-156.3,200.2,-120.4,210.9,-80.1C221.6,-39.7,212.8,5.1,198.7,47.3C184.6,89.5,165.1,129.1,133,152.8C100.8,176.5,56,184.3,10.3,189.8C-35.5,195.3,-82.3,198.5,-118.7,179.7C-155.1,160.8,-181.2,119.8,-196.6,75.3C-212,30.8,-216.7,-17.2,-204.1,-58.5C-191.5,-99.8,-161.6,-134.5,-125.4,-154.2C-89.2,-173.8,-46.7,-178.4,-0.2,-178.1C46.4,-177.8,92.8,-193.8,131.5,-175.1Z;M99.1,-131.2C137,-115.1,181.6,-99.7,197.5,-69.8C213.3,-39.9,200.4,4.4,183.5,43.5C166.6,82.6,145.6,116.5,115.1,141C84.6,165.5,44.8,180.5,-2.8,184.3C-50.3,188.1,-105.5,180.5,-143.4,155.1C-181.3,129.7,-201.9,86.4,-207.3,42.5C-212.7,-1.4,-203,-45.9,-181.3,-81.1C-159.7,-116.3,-126.1,-142.3,-90.2,-159.3C-54.3,-176.4,-16.1,-184.5,10.6,-178.5C37.4,-172.5,61.2,-147.3,99.1,-131.2Z;M131.5,-175.1C170.1,-156.3,200.2,-120.4,210.9,-80.1C221.6,-39.7,212.8,5.1,198.7,47.3C184.6,89.5,165.1,129.1,133,152.8C100.8,176.5,56,184.3,10.3,189.8C-35.5,195.3,-82.3,198.5,-118.7,179.7C-155.1,160.8,-181.2,119.8,-196.6,75.3C-212,30.8,-216.7,-17.2,-204.1,-58.5C-191.5,-99.8,-161.6,-134.5,-125.4,-154.2C-89.2,-173.8,-46.7,-178.4,-0.2,-178.1C46.4,-177.8,92.8,-193.8,131.5,-175.1Z"/>
+                    </path>
+                </g>
+                <defs>
+                    <linearGradient id="blobGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="rgba(167,139,250,0.1)"/>
+                        <stop offset="100%" stop-color="rgba(16,185,129,0.1)"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+        </div>
+        <div class="section-wrap">
+            <div class="final-cta-content" data-reveal>
+                <h2 class="section-title">Ready to borrow with less friction<br><span class="text-shimmer">and more trust?</span></h2>
+                <p class="section-sub scrub-text" data-scrub>Join with your university email, browse what is already available on campus, and keep every exchange simple from day one.</p>
+                <a href="#" class="btn-primary btn-large">
+                    <span>Join the Campus Waitlist</span>
+                    <div class="btn-arrow">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 9H14M14 9L9.5 4.5M14 9L9.5 13.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+                    <div class="btn-glow"></div>
+                    <div class="btn-shine"></div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════ FOOTER ═══════════ -->
+    <footer class="footer">
+        <div class="footer-inner">
+            <div class="footer-top">
+                <div class="footer-brand">
+                    <a href="#" class="nav-logo">
+                        <div class="logo-orbit">
+                            <svg viewBox="0 0 40 40" fill="none" class="logo-svg">
+                                <circle cx="20" cy="20" r="8" fill="url(#orbitGradF)"/>
+                                <ellipse cx="20" cy="20" rx="18" ry="7" stroke="rgba(52,211,153,0.4)" stroke-width="1" fill="none"/>
+                                <defs><radialGradient id="orbitGradF" cx="50%" cy="40%"><stop offset="0%" stop-color="#6ee7b7"/><stop offset="100%" stop-color="#059669"/></radialGradient></defs>
+                            </svg>
+                        </div>
+                        <span class="logo-text">Book<span class="logo-highlight">Orbit</span></span>
+                    </a>
+                    <p class="footer-desc">University book exchange made simple, safe, and social.</p>
+                </div>
+                <div class="footer-cols">
+                    <div class="footer-col">
+                        <h4>Platform</h4>
+                        <a href="#">Browse Books</a>
+                        <a href="#">Add a Book</a>
+                        <a href="#">How It Works</a>
+                        <a href="#">Points System</a>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Support</h4>
+                        <a href="#">FAQ</a>
+                        <a href="#">Contact Us</a>
+                        <a href="#">Terms & Conditions</a>
+                        <a href="#">Privacy Policy</a>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Community</h4>
+                        <a href="#">Student Stories</a>
+                        <a href="#">Campus Reps</a>
+                        <a href="#">Blog</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 BookOrbit. All rights reserved.</p>
+                <p>Built for students, by students.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

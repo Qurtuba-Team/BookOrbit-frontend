@@ -3,6 +3,29 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Library, Globe, Mail, MessageSquare, ArrowUp } from "lucide-react";
 
+const OrbitIcon = ({ className = "w-8 h-8" }) => (
+  <svg viewBox="0 0 40 40" fill="none" className={className}>
+    <circle cx="20" cy="20" r="8" fill="url(#footerOrbitGrad)" />
+    <ellipse cx="20" cy="20" rx="18" ry="7" stroke="url(#footerOrbitRing)" strokeWidth="1.5" fill="none" className="orbit-ring-svg" />
+    <ellipse cx="20" cy="20" rx="14" ry="12" stroke="url(#footerOrbitRing2)" strokeWidth="0.8" fill="none" transform="rotate(60 20 20)" className="orbit-ring-svg-2" />
+    <circle cx="36" cy="18" r="2" fill="var(--color-accent)" className="orbit-dot" />
+    <defs>
+      <radialGradient id="footerOrbitGrad" cx="50%" cy="40%">
+        <stop offset="0%" stopColor="var(--color-accent)" />
+        <stop offset="100%" stopColor="var(--color-primary)" />
+      </radialGradient>
+      <linearGradient id="footerOrbitRing" x1="0" y1="0" x2="40" y2="0">
+        <stop offset="0%" stopColor="var(--color-accent)" stopOpacity="0.6" />
+        <stop offset="100%" stopColor="var(--color-accent)" stopOpacity="0.1" />
+      </linearGradient>
+      <linearGradient id="footerOrbitRing2" x1="0" y1="0" x2="40" y2="40">
+        <stop offset="0%" stopColor="var(--color-accent)" stopOpacity="0.3" />
+        <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0.3" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
+
 const Footer = () => {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -21,9 +44,7 @@ const Footer = () => {
           {/* Brand */}
           <div className="max-w-sm">
             <div className="flex items-center gap-2.5 mb-5">
-              <div className="w-8 h-8 rounded-lg bg-library-accent/10 border border-library-accent/20 flex items-center justify-center">
-                <Library size={16} className="text-library-accent" strokeWidth={1.5} />
-              </div>
+              <OrbitIcon />
               <span className="text-lg font-black tracking-tight text-white">
                 Book <span className="text-library-accent">Orbit</span>
               </span>

@@ -236,11 +236,19 @@ const Home = () => {
   const { scrollYProgress } = useScroll();
   const yHero = useTransform(scrollYProgress, [0, 0.3], [0, 60]);
 
+  const storyRef = useRef(null);
+  const { scrollYProgress: storyProgress } = useScroll({
+    target: storyRef,
+    offset: ["start start", "end end"]
+  });
+
+  const yStory = useTransform(storyProgress, [0, 1], [0, 450]);
+
   const books = [
-    { title: "الفيزياء الجامعية", author: "سيرواي", cat: "علوم" },
-    { title: "الاقتصاد الجزئي", author: "مانكيو", cat: "إدارة" },
-    { title: "هياكل البيانات", author: "سيدجويك", cat: "حاسبات" },
-    { title: "علم الأدوية", author: "ليبينكوت", cat: "طب" },
+    { title: "الفيزياء الجامعية", author: "سيرواي", cat: "علوم", image: "https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&w=400&q=80" },
+    { title: "الاقتصاد الجزئي", author: "مانكيو", cat: "إدارة", image: "https://images.unsplash.com/photo-1554774853-aae0a22c8aa4?auto=format&fit=crop&w=400&q=80" },
+    { title: "هياكل البيانات", author: "سيدجويك", cat: "حاسبات", image: "https://images.unsplash.com/photo-1516116216624-53e697fedbea?auto=format&fit=crop&w=400&q=80" },
+    { title: "علم الأدوية", author: "ليبينكوت", cat: "طب", image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80" },
   ];
 
   const features = [
@@ -262,7 +270,7 @@ const Home = () => {
   ];
 
   return (
-    <div className="bg-texture min-h-screen relative selection:bg-library-accent/30 overflow-hidden">
+    <div className="bg-texture min-h-screen relative selection:bg-library-accent/30 overflow-x-hidden">
       <Navbar />
 
       <main className="relative z-10 pt-24">
@@ -287,7 +295,7 @@ const Home = () => {
                 </h1>
                 <div className="flex items-center justify-center lg:justify-start gap-4 md:gap-5 mt-2">
                   <div className="h-1 w-10 md:w-14 bg-library-accent rounded-full accent-line"></div>
-                  <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-black text-library-accent italic tracking-tight leading-[1.1]">
+                  <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-black text-library-accent italic tracking-tight leading-[1.1] text-shimmer">
                     بل تُمرر.
                   </h1>
                 </div>
@@ -366,26 +374,43 @@ const Home = () => {
           </div>
         </section>
 
-        {/* ════════════════════ STICKY STORY ════════════════════ */}
-        <section className="relative py-20 md:py-32 bg-library-primary text-library-paper dark:bg-[#04060a]">
+        {/* ════════════════════ STICKY STORY (How it Works) ════════════════════ */}
+        <section ref={storyRef} className="relative py-20 md:py-32 bg-library-primary text-library-paper dark:bg-[#04060a]">
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
-            <div className="grid lg:grid-cols-2 gap-16 md:gap-24">
-              {/* Sticky Visual */}
-              <div className="relative">
-                <SpringReveal className="lg:sticky lg:top-40">
-                  <div className="w-full aspect-square bg-white/[0.03] rounded-3xl border border-white/[0.06] flex flex-col items-center justify-center p-10 md:p-16">
-                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-library-accent/10 flex items-center justify-center mb-6 md:mb-8 border border-library-accent/20">
-                      <Lock
-                        className="text-library-accent w-8 h-8 md:w-10 md:h-10"
-                        strokeWidth={1}
-                      />
+            <div className="grid lg:grid-cols-2 gap-16 md:gap-24 relative">
+              {/* Manual Sticky Visual via Framer Motion */}
+              <div className="hidden lg:block relative">
+                <motion.div 
+                  style={{ y: yStory }}
+                  className="w-full"
+                >
+                  <SpringReveal>
+                    <div className="w-full aspect-square bg-white/[0.03] rounded-3xl border border-white/[0.06] flex flex-col items-center justify-center p-10 md:p-16">
+                      <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-library-accent/10 flex items-center justify-center mb-6 md:mb-8 border border-library-accent/20">
+                        <Repeat
+                          className="text-library-accent w-8 h-8 md:w-10 md:h-10"
+                          strokeWidth={1}
+                        />
+                      </div>
+                      <h3 className="text-2xl md:text-3xl font-black text-white mb-3 text-center">
+                        رحلة المعرفة
+                      </h3>
+                      <p className="text-library-paper/40 text-center text-sm md:text-base leading-relaxed max-w-xs font-medium">
+                        دورة تبادل مستمرة تضمن وصول الكتاب للطالب الذي يحتاجه في الوقت المناسب وبكل أمان.
+                      </p>
                     </div>
-                    <h3 className="text-2xl md:text-3xl font-black text-white mb-3 text-center">
-                      أمان أكاديمي
-                    </h3>
-                    <p className="text-library-paper/40 text-center text-sm md:text-base leading-relaxed max-w-xs font-medium">
-                      نظام مغلق يضمن أن كل مستخدم هو طالب جامعي فعلي تم التحقق
-                      من هويته لضمان سلامة التبادل.
+                  </SpringReveal>
+                </motion.div>
+              </div>
+
+              {/* Mobile version (non-sticky) */}
+              <div className="lg:hidden">
+                <SpringReveal>
+                  <div className="w-full aspect-square bg-white/[0.03] rounded-3xl border border-white/[0.06] flex flex-col items-center justify-center p-8 mb-12">
+                    <Repeat className="text-library-accent mb-6" size={40} />
+                    <h3 className="text-2xl font-black text-white mb-3 text-center">رحلة المعرفة</h3>
+                    <p className="text-library-paper/40 text-center text-sm leading-relaxed max-w-xs font-medium">
+                      دورة تبادل مستمرة تضمن وصول الكتاب للطالب الذي يحتاجه في الوقت المناسب وبكل أمان.
                     </p>
                   </div>
                 </SpringReveal>
@@ -395,32 +420,37 @@ const Home = () => {
               <div className="flex flex-col justify-center space-y-24 md:space-y-40 py-10 md:py-20">
                 <SpringReveal className="text-center lg:text-right">
                   <div className="inline-block px-4 py-1.5 bg-library-accent/10 text-library-accent font-bold mb-6 text-[10px] tracking-widest border border-library-accent/15 rounded">
-                    01. التوثيق
+                    01. البحث والإيداع
                   </div>
                   <h2 className="text-2xl md:text-3xl font-black mb-5 leading-tight">
-                    بوابة الحرم الجامعي.
+                    أرشيفك بين يديك.
                   </h2>
                   <p className="text-base md:text-lg text-library-paper/40 leading-relaxed font-medium max-w-lg mx-auto lg:mr-0 lg:ml-0">
-                    نحن نؤمن بالأمان قبل المعرفة.{" "}
-                    <span className="text-library-accent font-bold">
-                      كل حساب يخضع لمراجعة يدوية
-                    </span>
-                    ، لضمان بيئة أكاديمية نقية وخالية من الهويات المجهولة.
+                    تصفح آلاف المراجع المتاحة في جامعتك، أو قم بتصوير مراجعك القديمة وإيداعها في الأرشيف الرقمي لتفيد بها غيرك من الطلاب.
                   </p>
                 </SpringReveal>
 
                 <SpringReveal delay={0.1} className="text-center lg:text-right">
                   <div className="inline-block px-4 py-1.5 bg-library-accent/10 text-library-accent font-bold mb-6 text-[10px] tracking-widest border border-library-accent/15 rounded">
-                    02. التبادل
+                    02. التواصل الآمن
                   </div>
                   <h2 className="text-2xl md:text-3xl font-black mb-5 leading-tight">
-                    التسليم الذكي (OTP).
+                    لقاء داخل الحرم.
                   </h2>
                   <p className="text-base md:text-lg text-library-paper/40 leading-relaxed font-medium max-w-lg mx-auto lg:mr-0 lg:ml-0">
-                    نظام حماية متبادل. رمز الـ{" "}
-                    <span className="text-library-accent font-bold">OTP</span>{" "}
-                    لا يتم تبادله إلا عند اللقاء الفعلي داخل الجامعة، لضمان
-                    استلام الكتاب وتوثيقه.
+                    بعد طلب الكتاب، تواصل مع زميلك من خلال المنصة لتحديد موعد للمقابلة داخل الحرم الجامعي، مما يضمن بيئة تبادل آمنة وموثقة.
+                  </p>
+                </SpringReveal>
+
+                <SpringReveal delay={0.2} className="text-center lg:text-right">
+                  <div className="inline-block px-4 py-1.5 bg-library-accent/10 text-library-accent font-bold mb-6 text-[10px] tracking-widest border border-library-accent/15 rounded">
+                    03. التوثيق الذكي
+                  </div>
+                  <h2 className="text-2xl md:text-3xl font-black mb-5 leading-tight">
+                    رمز الـ OTP.
+                  </h2>
+                  <p className="text-base md:text-lg text-library-paper/40 leading-relaxed font-medium max-w-lg mx-auto lg:mr-0 lg:ml-0">
+                    عند الاستلام، يتم تبادل رمز توثيق ذكي لمرة واحدة لضمان أن الكتاب قد وصل لصاحبه الجديد، مما يحافظ على سجلات دقيقة للأمانة الأكاديمية.
                   </p>
                 </SpringReveal>
               </div>
@@ -434,11 +464,14 @@ const Home = () => {
             {/* Header */}
             <SpringReveal className="flex flex-col md:flex-row justify-between items-center md:items-end mb-14 md:mb-20 pb-10 border-b border-library-primary/[0.06] dark:border-white/[0.06] gap-6 text-center md:text-right">
               <div>
+                <p className="text-library-accent text-[10px] font-bold uppercase tracking-[0.4em] mb-4">
+                  Digital Collection
+                </p>
                 <h2 className="text-3xl md:text-4xl font-black text-library-primary dark:text-library-paper mb-3 tracking-tight">
                   الأرشيف الرقمي.
                 </h2>
-                <p className="text-library-primary/50 dark:text-gray-400 text-base md:text-lg font-medium">
-                  تصفح عينة من المراجع المتوفرة حالياً لزملائك.
+                <p className="text-library-primary/50 dark:text-gray-400 text-base md:text-lg font-medium max-w-md">
+                  تصفح آلاف المراجع المتاحة. كل كتاب هنا هو فرصة لنجاح زميل آخر.
                 </p>
               </div>
               <Link

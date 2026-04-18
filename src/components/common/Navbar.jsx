@@ -3,6 +3,29 @@ import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Moon, Sun, Menu, X } from "lucide-react";
 
+const OrbitIcon = ({ className = "w-9 h-9" }) => (
+  <svg viewBox="0 0 40 40" fill="none" className={className}>
+    <circle cx="20" cy="20" r="8" fill="url(#navOrbitGrad)" />
+    <ellipse cx="20" cy="20" rx="18" ry="7" stroke="url(#navOrbitRing)" strokeWidth="1.5" fill="none" className="orbit-ring-svg" />
+    <ellipse cx="20" cy="20" rx="14" ry="12" stroke="url(#navOrbitRing2)" strokeWidth="0.8" fill="none" transform="rotate(60 20 20)" className="orbit-ring-svg-2" />
+    <circle cx="36" cy="18" r="2" fill="var(--color-accent)" className="orbit-dot" />
+    <defs>
+      <radialGradient id="navOrbitGrad" cx="50%" cy="40%">
+        <stop offset="0%" stopColor="var(--color-accent)" />
+        <stop offset="100%" stopColor="var(--color-primary)" />
+      </radialGradient>
+      <linearGradient id="navOrbitRing" x1="0" y1="0" x2="40" y2="0">
+        <stop offset="0%" stopColor="var(--color-accent)" stopOpacity="0.6" />
+        <stop offset="100%" stopColor="var(--color-accent)" stopOpacity="0.1" />
+      </linearGradient>
+      <linearGradient id="navOrbitRing2" x1="0" y1="0" x2="40" y2="40">
+        <stop offset="0%" stopColor="var(--color-accent)" stopOpacity="0.3" />
+        <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0.3" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
+
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [isDark, setIsDark] = useState(false);
@@ -52,8 +75,8 @@ const Navbar = () => {
           <div className="flex justify-between items-center">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2.5 group relative z-50">
-              <div className="w-9 h-9 rounded-lg bg-library-primary dark:bg-library-accent flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
-                <span className="text-white dark:text-library-primary font-black text-sm">BO</span>
+              <div className="transition-transform duration-300 group-hover:scale-110">
+                <OrbitIcon />
               </div>
               <span className="font-extrabold text-xl tracking-tight text-library-primary dark:text-library-paper">
                 Book<span className="text-library-accent"> Orbit</span>
