@@ -1,40 +1,71 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
+import { Toaster } from 'react-hot-toast';
 
 // Pages
-import Home          from './pages/Home';
-import AuthPage      from './pages/AuthPage';
-import Dashboard     from './pages/Dashboard';
+import Home from './pages/Home';
+import AuthPage from './pages/AuthPage';
+import Dashboard from './pages/Dashboard';
 import StudentDashboard from './pages/StudentDashboard';
 import StudentProfile from './pages/StudentProfile';
-import BookDetail    from './pages/BookDetail';
-import MyCopies      from './pages/MyCopies';
-import LendingList   from './pages/LendingList';
+import BookDetail from './pages/BookDetail';
+import MyCopies from './pages/MyCopies';
+import LendingList from './pages/LendingList';
 import AdminStudents from './pages/AdminStudents';
-import AdminBooks    from './pages/AdminBooks';
-import ConfirmEmail  from './pages/ConfirmEmail';
+import AdminBooks from './pages/AdminBooks';
+import ConfirmEmail from './pages/ConfirmEmail';
 
 // Effects
 import Preloader from './components/effects/Preloader';
-import Aurora    from './components/effects/Aurora';
+import Aurora from './components/effects/Aurora';
 
 // Auth
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 // ── Guards ───────────────────────────────────────────────────────────────────
 const ProtectedRoute = ({ children }) => {
-  const { isLoggedIn } = useAuth();
-  return isLoggedIn ? children : <Navigate to="/login" replace />;
+  const { isLoggedIn, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-library-paper dark:bg-dark-bg">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-library-accent"></div>
+      </div>
+    );
+  }
+
+  if (!isLoggedIn) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
 };
 
-// Admin guard — to be wired with real role from API later
 const AdminRoute = ({ children }) => {
-  const { isLoggedIn } = useAuth();
-  return isLoggedIn ? children : <Navigate to="/login" replace />;
+  const { isLoggedIn, loading, user } = useAuth();
+  if (loading) return null;
+  if (!isLoggedIn) {
+    return <Navigate to="/login" replace />;
+  }
+  // تحقق من صلاحية الأدمن
+  if (user?.role?.toLowerCase() !== "admin") {
+    return <Navigate to="/app" replace />;
+  }
+  return children;
 };
 
-// ── Routes ───────────────────────────────────────────────────────────────────
+// حارس للصفحات العامة — يمنع المستخدم المسجل من الرجوع للهوم أو اللوجين
+const GuestRoute = ({ children }) => {
+  const { isLoggedIn, loading } = useAuth();
+  if (loading) return null;
+  if (isLoggedIn) {
+    return <Navigate to="/app" replace />;
+  }
+  return children;
+};
+
+// ── Routes ──────────────────────────────────────────────────────────────────
 function AppRoutes() {
   const [loading, setLoading] = useState(true);
 
@@ -43,33 +74,32 @@ function AppRoutes() {
       {loading ? (
         <Preloader key="loader" onComplete={() => setLoading(false)} />
       ) : (
-        <div key="content" className="relative">
+        <div key="content" className="relative min-h-screen">
           <Aurora />
-          <div className="App">
+          <div className="App relative z-10">
+            <Toaster position="top-center" reverseOrder={false} />
+            
             <Routes>
-              {/* ── Public ── */}
-              <Route path="/"               element={<Home />} />
-              <Route path="/login"          element={<AuthPage />} />
-              <Route path="/register"       element={<AuthPage />} />
-              <Route path="/confirm-email"  element={<ConfirmEmail />} />
+              {/* ─ Public Routes (محمية من المسجلين) ─ */}
+              <Route path="/" element={<GuestRoute><Home /></GuestRoute>} />
+              <Route path="/login" element={<GuestRoute><AuthPage /></GuestRoute>} />
+              <Route path="/register" element={<GuestRoute><AuthPage /></GuestRoute>} />
+              <Route path="/confirm-email" element={<ConfirmEmail />} />
 
-              {/* ── Student (protected) ── */}
-              {/* Main entry point after login */}
-              <Route path="/app"      element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
-              <Route path="/profile"  element={<ProtectedRoute><StudentProfile /></ProtectedRoute>} />
-              
-              {/* Book routing handles the catalog in Dashboard and specific details here */}
+              {/* ── Student Protected Routes (محمية) ── */}
+              <Route path="/app" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><StudentProfile /></ProtectedRoute>} />
               <Route path="/catalog/:bookId" element={<ProtectedRoute><BookDetail /></ProtectedRoute>} />
               <Route path="/my-copies" element={<ProtectedRoute><MyCopies /></ProtectedRoute>} />
-              <Route path="/lending"   element={<ProtectedRoute><LendingList /></ProtectedRoute>} />
+              <Route path="/lending" element={<ProtectedRoute><LendingList /></ProtectedRoute>} />
 
-              {/* ── Admin (protected) ── */}
+              {/* ── Admin Protected Routes (محمية) ── */}
               <Route path="/admin/students" element={<AdminRoute><AdminStudents /></AdminRoute>} />
-              <Route path="/admin/books"    element={<AdminRoute><AdminBooks /></AdminRoute>} />
+              <Route path="/admin/books" element={<AdminRoute><AdminBooks /></AdminRoute>} />
 
-              {/* ── Legacy / team routes (untouched) ── */}
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/books"     element={<Dashboard />} />
+              {/* ── Legacy Routes (تم حمايتها الآن) ─ */}
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/books" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
 
               {/* ── Fallback ── */}
               <Route path="*" element={<Navigate to="/" replace />} />

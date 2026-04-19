@@ -1,102 +1,26 @@
 // ─── BookOrbit API Configuration ────────────────────────────────────────────
-export const API_BASE_URL = "https://localhost:7240";
-export const API_V1 = `${API_BASE_URL}/api/v1`;
-
-// ─── Token Storage ───────────────────────────────────────────────────────────
-export const tokenStore = {
-  get: () => ({
-    accessToken:  localStorage.getItem("accessToken"),
-    refreshToken: localStorage.getItem("refreshToken"),
-    expiresOnUtc: localStorage.getItem("expiresOnUtc"),
-  }),
-  set: ({ accessToken, refreshToken, expiresOnUtc }) => {
-    localStorage.setItem("accessToken",  accessToken);
-    localStorage.setItem("refreshToken", refreshToken);
-    localStorage.setItem("expiresOnUtc", expiresOnUtc);
-  },
-  clear: () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("expiresOnUtc");
-  },
-};
-
-// ─── Image URL Helpers ───────────────────────────────────────────────────────
-export const getStudentImageUrl = (studentId) =>
-  `${API_V1}/images/students/${studentId}`;
-
-export const getBookImageUrl = (bookId) =>
-  `${API_V1}/images/books/${bookId}`;
-
-// ─── Enum Display Labels ─────────────────────────────────────────────────────
-export const STUDENT_STATE_LABELS = {
-  Pending:  "قيد المراجعة",
-  Approved: "موافق عليه",
-  Active:   "نشط",
-  Rejected: "مرفوض",
-  Banned:   "محظور",
-  UnBanned: "تم رفع الحظر",
-};
-
-export const BOOK_COPY_CONDITION_LABELS = {
-  New:        "جديد",
-  LikeNew:    "كالجديد",
-  Acceptable: "مقبول",
-  Poor:       "متهالك",
-};
-
-export const BOOK_COPY_STATE_LABELS = {
-  Available:  "متاح",
-  Borrowed:   "مستعار",
-  Reserved:   "محجوز",
-  Lost:       "مفقود",
-  Damaged:    "تالف",
-  UnAvilable: "غير متاح",
-};
-
-export const LENDING_STATE_LABELS = {
-  Available: "متاح",
-  Reserved:  "محجوز",
-  Borrowed:  "مستعار",
-  Expired:   "منتهي",
-  Closed:    "مغلق",
-};
-
-export const BOOK_CATEGORY_LABELS = {
-  Fiction:                  "خيال",
-  Nonfiction:               "غير خيالي",
-  Mystery:                  "غموض",
-  Thriller:                 "إثارة",
-  Romance:                  "رومانسية",
-  ScienceFiction:           "خيال علمي",
-  Fantasy:                  "فانتازيا",
-  Horror:                   "رعب",
-  HistoricalFiction:        "تاريخي",
-  Biography:                "سيرة ذاتية",
-  Autobiography:            "سيرة شخصية",
-  SelfHelp:                 "تطوير ذات",
-  Business:                 "أعمال",
-  Science:                  "علوم",
-  Philosophy:               "فلسفة",
-  Psychology:               "علم نفس",
-  ReligionAndSpirituality:  "دين وروحانيات",
-  Travel:                   "سفر",
-  Cooking:                  "طبخ",
-  ChildrenBooks:            "كتب أطفال",
-};
+import { API_V1, tokenStore } from "../utils/constants";
 
 // ─── Core API Client ─────────────────────────────────────────────────────────
 async function apiRequest(path, options = {}) {
   const { accessToken } = tokenStore.get();
+  
+  // ننشئ نسخة من الـ headers لتجنب التعديل على الكائن الأصلي
   const headers = { ...options.headers };
 
+  // إضافة التوكن إذا وجد ولم نطلب تخطيه
   if (accessToken && !options.skipAuth) {
     headers["Authorization"] = `Bearer ${accessToken}`;
   }
 
-  // Don't set Content-Type for FormData — browser handles it
+  // التعديل الجوهري هنا:
+  // إذا كانت البيانات FormData، نترك المتصفح يضع الـ Content-Type بنفسه (ليضيف الـ boundary)
+  // إذا كانت البيانات JSON (أو أي شيء آخر)، نضع application/json
   if (!(options.body instanceof FormData)) {
     headers["Content-Type"] = "application/json";
+  } else {
+    // نضمن حذف أي Content-Type قد يكون مرر يدوياً في حالة الـ FormData
+    delete headers["Content-Type"];
   }
 
   const response = await fetch(`${API_V1}${path}`, {
@@ -105,11 +29,12 @@ async function apiRequest(path, options = {}) {
   });
 
   if (!response.ok) {
+    // محاولة قراءة الخطأ من السيرفر لإظهاره للمستخدم (مثل رسالة الصورة مطلوبة)
     const error = await response.json().catch(() => ({ message: "خطأ غير متوقع" }));
-    throw new Error(error.detail || error.message || `HTTP ${response.status}`);
+    throw new Error(error.detail || error.message || (error.errors && JSON.stringify(error.errors)) || `HTTP ${response.status}`);
   }
 
-  // No content responses (204)
+  // للتعامل مع Responses الـ 204 (No Content)
   if (response.status === 204) return null;
 
   return response.json();
@@ -141,6 +66,34 @@ export const identityApi = {
     apiRequest(`/identity/users/${userId}/send-email-confirmation`, {
       method: "POST",
     }),
+
+    // Change-Password / send OTP 
+  confirmEmail: (userId, token) =>
+  apiRequest(`/identity/confirm-email?Id=${userId}&token=${token}`, {
+    method: "GET",
+    skipAuth: true,
+  }),
+
+requestPasswordReset: (email) =>
+  apiRequest("/identity/users/request-password-reset", {
+    method: "POST",
+    skipAuth: true,
+    body: JSON.stringify({ email }),
+  }),
+
+verifyPasswordResetOtp: (data) =>
+  apiRequest("/identity/users/verify-password-reset-otp", {
+    method: "POST",
+    skipAuth: true,
+    body: JSON.stringify(data),
+  }),
+
+resetPassword: (data) =>
+  apiRequest("/identity/users/reset-password", {
+    method: "POST",
+    skipAuth: true,
+    body: JSON.stringify(data),
+  }),
 };
 
 // ─── 2. STUDENTS ─────────────────────────────────────────────────────────────
@@ -157,7 +110,7 @@ export const studentsApi = {
   getMe: () => apiRequest("/students/me"),
 
   /** GET /students/{id} — Student by ID */
-  getById: (studentId) => apiRequest(`/students/${studentId}`),
+ getById: (studentId) => apiRequest(`/students/${studentId}`),
 
   /** GET /students — All students (Admin only) */
   getAll: (params = {}) => {
@@ -166,98 +119,64 @@ export const studentsApi = {
   },
 
   /** PATCH /students/{id}/approve */
-  approve:  (id) => apiRequest(`/students/${id}/approve`,  { method: "PATCH" }),
-  /** PATCH /students/{id}/activate */
-  activate: (id) => apiRequest(`/students/${id}/activate`, { method: "PATCH" }),
+approve:  (studentId) => apiRequest(`/students/${studentId}/approve`,  { method: "PATCH" }),  /** PATCH /students/{id}/activate */
+  activate: (studentId) => apiRequest(`/students/${studentId}/activate`, { method: "PATCH" }),
   /** PATCH /students/{id}/ban */
-  ban:      (id) => apiRequest(`/students/${id}/ban`,      { method: "PATCH" }),
+  ban: (studentId) => apiRequest(`/students/${studentId}/ban`, { method: "PATCH" }),
   /** PATCH /students/{id}/unban */
-  unban:    (id) => apiRequest(`/students/${id}/unban`,    { method: "PATCH" }),
+  unban: (studentId) => apiRequest(`/students/${studentId}/unban`, { method: "PATCH" }),
   /** PATCH /students/{id}/reject */
-  reject:   (id) => apiRequest(`/students/${id}/reject`,   { method: "PATCH" }),
+  reject: (studentId) => apiRequest(`/students/${studentId}/reject`, { method: "PATCH" }),
   /** PATCH /students/{id}/pend */
-  pend:     (id) => apiRequest(`/students/${id}/pend`,     { method: "PATCH" }),
+  pend: (studentId) => apiRequest(`/students/${studentId}/pend`, { method: "PATCH" }),
 };
 
-// ─── 3. BOOKS ────────────────────────────────────────────────────────────────
+// بقية الكود (Books, BookCopies, LendingList) تظل كما هي لأنها تستخدم نفس apiRequest
 export const booksApi = {
-  /** POST /books — Create book (Admin, multipart/form-data) */
-  create: (formData) =>
-    apiRequest("/books", { method: "POST", body: formData }),
-
-  /** GET /books — Paginated book list */
+  create: (formData) => apiRequest("/books", { method: "POST", body: formData }),
   getAll: (params = {}) => {
     const query = new URLSearchParams(params).toString();
     return apiRequest(`/books?${query}`);
   },
-
-  /** GET /books/{id} */
   getById: (bookId) => apiRequest(`/books/${bookId}`),
-
-  /** PATCH /books/{id} — Update book (Admin, JSON) */
   update: (bookId, data) =>
     apiRequest(`/books/${bookId}`, {
       method: "PATCH",
       body: JSON.stringify(data),
     }),
-
-  /** DELETE /books/{id} */
   delete: (bookId) => apiRequest(`/books/${bookId}`, { method: "DELETE" }),
 };
 
 // ─── 4. BOOK COPIES ──────────────────────────────────────────────────────────
 export const bookCopiesApi = {
-  /** POST /students/{studentId}/books/copies — Student creates a copy */
-  create: (studentId, bookId, condition) =>
-    apiRequest(`/students/${studentId}/books/copies`, {
+  /** POST /students/me/books/copies — لاحظ التغيير لـ /me بدل الـ ID */
+  create: (bookId, condition) =>
+    apiRequest(`/students/me/books/copies`, {
       method: "POST",
       body: JSON.stringify({ bookId, condition }),
     }),
 
-  /** GET /books/copies — All copies (Admin) */
-  getAll: (params = {}) => {
-    const query = new URLSearchParams(params).toString();
-    return apiRequest(`/books/copies?${query}`);
-  },
-
-  /** GET /books/copies/{id} */
+  /** GET /books/copies/{bookCopyId} */
   getById: (bookCopyId) => apiRequest(`/books/copies/${bookCopyId}`),
 
-  /** GET /books/{bookId}/copies — Copies for a specific book */
-  getByBook: (bookId, params = {}) => {
-    const query = new URLSearchParams(params).toString();
-    return apiRequest(`/books/${bookId}/copies?${query}`);
-  },
-
-  /** GET /students/{studentId}/books/copies — Copies owned by a student */
-  getByStudent: (studentId, params = {}) => {
-    const query = new URLSearchParams(params).toString();
-    return apiRequest(`/students/${studentId}/books/copies?${query}`);
-  },
-
-  /** PATCH /books/copies/{id} — Update copy (Admin) */
+  /** PATCH /books/copies/{bookCopyId} */
   update: (bookCopyId, condition) =>
     apiRequest(`/books/copies/${bookCopyId}`, {
       method: "PATCH",
       body: JSON.stringify({ condition }),
     }),
 
-  /** POST /students/{studentId}/books/copies/{copyId}/list — List for lending */
-  listForLending: (studentId, bookCopyId, borrowingDurationInDays) =>
+  /** POST /students/me/books/copies/{bookCopyId}/list — لاحظ التغيير لـ /me */
+  listForLending: (bookCopyId, borrowingDurationInDays) =>
     apiRequest(
-      `/students/${studentId}/books/copies/${bookCopyId}/list?borrowingDurationInDays=${borrowingDurationInDays}`,
+      `/students/me/books/copies/${bookCopyId}/list?borrowingDurationInDays=${borrowingDurationInDays}`,
       { method: "POST" }
     ),
 };
 
-// ─── 5. LENDING LIST ─────────────────────────────────────────────────────────
 export const lendingApi = {
-  /** GET /lendinglist — All lending records */
   getAll: (params = {}) => {
     const query = new URLSearchParams(params).toString();
     return apiRequest(`/lendinglist?${query}`);
   },
-
-  /** GET /lendinglist/{id} */
-  getById: (recordId) => apiRequest(`/lendinglist/${recordId}`),
-};
+getById: (lendingListRecordId) => apiRequest(`/lendinglist/${lendingListRecordId}`),};

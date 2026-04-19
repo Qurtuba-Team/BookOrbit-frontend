@@ -1,14 +1,40 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Moon, Sun, Menu, X } from "lucide-react";
+import { Moon, Sun, Menu, X, LogOut, User } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
 
 const OrbitIcon = ({ className = "w-9 h-9" }) => (
   <svg viewBox="0 0 40 40" fill="none" className={className}>
     <circle cx="20" cy="20" r="8" fill="url(#navOrbitGrad)" />
-    <ellipse cx="20" cy="20" rx="18" ry="7" stroke="url(#navOrbitRing)" strokeWidth="1.5" fill="none" className="orbit-ring-svg" />
-    <ellipse cx="20" cy="20" rx="14" ry="12" stroke="url(#navOrbitRing2)" strokeWidth="0.8" fill="none" transform="rotate(60 20 20)" className="orbit-ring-svg-2" />
-    <circle cx="36" cy="18" r="2" fill="var(--color-accent)" className="orbit-dot" />
+    <ellipse
+      cx="20"
+      cy="20"
+      rx="18"
+      ry="7"
+      stroke="url(#navOrbitRing)"
+      strokeWidth="1.5"
+      fill="none"
+      className="orbit-ring-svg"
+    />
+    <ellipse
+      cx="20"
+      cy="20"
+      rx="14"
+      ry="12"
+      stroke="url(#navOrbitRing2)"
+      strokeWidth="0.8"
+      fill="none"
+      transform="rotate(60 20 20)"
+      className="orbit-ring-svg-2"
+    />
+    <circle
+      cx="36"
+      cy="18"
+      r="2"
+      fill="var(--color-accent)"
+      className="orbit-dot"
+    />
     <defs>
       <radialGradient id="navOrbitGrad" cx="50%" cy="40%">
         <stop offset="0%" stopColor="var(--color-accent)" />
@@ -20,7 +46,11 @@ const OrbitIcon = ({ className = "w-9 h-9" }) => (
       </linearGradient>
       <linearGradient id="navOrbitRing2" x1="0" y1="0" x2="40" y2="40">
         <stop offset="0%" stopColor="var(--color-accent)" stopOpacity="0.3" />
-        <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0.3" />
+        <stop
+          offset="100%"
+          stopColor="var(--color-primary)"
+          stopOpacity="0.3"
+        />
       </linearGradient>
     </defs>
   </svg>
@@ -31,6 +61,7 @@ const Navbar = () => {
   const [isDark, setIsDark] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { isLoggedIn, user, logout } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -66,15 +97,16 @@ const Navbar = () => {
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
         className={`fixed top-0 w-full z-50 transition-all duration-500 ${
-          scrolled
-            ? "glass-card py-3"
-            : "bg-transparent py-5"
+          scrolled ? "glass-card py-3" : "bg-transparent py-5"
         }`}
       >
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex justify-between items-center">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2.5 group relative z-50">
+            <Link
+              to="/"
+              className="flex items-center gap-2.5 group relative z-50"
+            >
               <div className="transition-transform duration-300 group-hover:scale-110">
                 <OrbitIcon />
               </div>
@@ -103,19 +135,39 @@ const Navbar = () => {
 
               {/* Desktop Nav Links */}
               <div className="hidden sm:flex items-center gap-5">
-                <Link
-                  to="/login"
-                  className="text-sm font-bold text-library-primary/70 dark:text-library-paper/70 hover:text-library-accent dark:hover:text-library-accent transition-colors"
-                >
-                  تسجيل الدخول
-                </Link>
-
-                <Link
-                  to="/register"
-                  className="bg-library-primary dark:bg-library-paper text-library-paper dark:text-library-primary px-6 py-2.5 rounded-full text-sm font-bold transition-all duration-300 hover:shadow-lg hover:shadow-library-accent/20 hover:-translate-y-0.5 active:scale-[0.97]"
-                >
-                  ابدأ رحلتك
-                </Link>
+                {isLoggedIn ? (
+                  <>
+                    <Link
+                      to="/app"
+                      className="flex items-center gap-2 text-sm font-bold text-library-primary/70 dark:text-library-paper/70 hover:text-library-accent dark:hover:text-library-accent transition-colors"
+                    >
+                      <User size={16} />
+                      {user?.name || "حسابي"}
+                    </Link>
+                    <button
+                      onClick={logout}
+                      className="flex items-center gap-2 bg-red-500/10 text-red-500 px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-300 hover:bg-red-500/20 active:scale-[0.97]"
+                    >
+                      <LogOut size={15} />
+                      خروج
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      to="/login"
+                      className="text-sm font-bold text-library-primary/70 dark:text-library-paper/70 hover:text-library-accent dark:hover:text-library-accent transition-colors"
+                    >
+                      تسجيل الدخول
+                    </Link>
+                    <Link
+                      to="/register"
+                      className="bg-library-primary dark:bg-library-paper text-library-paper dark:text-library-primary px-6 py-2.5 rounded-full text-sm font-bold transition-all duration-300 hover:shadow-lg hover:shadow-library-accent/20 hover:-translate-y-0.5 active:scale-[0.97]"
+                    >
+                      ابدأ رحلتك
+                    </Link>
+                  </>
+                )}
               </div>
 
               {/* Mobile Menu Button */}
@@ -157,20 +209,40 @@ const Navbar = () => {
               transition={{ delay: 0.1, duration: 0.4 }}
               className="flex flex-col gap-8 text-center"
             >
-              <Link
-                to="/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-3xl font-black text-library-primary dark:text-white hover:text-library-accent transition-colors"
-              >
-                تسجيل الدخول
-              </Link>
-              <Link
-                to="/register"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-3xl font-black text-library-primary dark:text-white hover:text-library-accent transition-colors"
-              >
-                إنشاء حساب
-              </Link>
+              {isLoggedIn ? (
+                <>
+                  <Link
+                    to="/app"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-3xl font-black text-library-primary dark:text-white hover:text-library-accent transition-colors"
+                  >
+                    لوحة التحكم
+                  </Link>
+                  <button
+                    onClick={() => { setMobileMenuOpen(false); logout(); }}
+                    className="text-3xl font-black text-red-500 hover:text-red-400 transition-colors"
+                  >
+                    تسجيل الخروج
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-3xl font-black text-library-primary dark:text-white hover:text-library-accent transition-colors"
+                  >
+                    تسجيل الدخول
+                  </Link>
+                  <Link
+                    to="/register"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-3xl font-black text-library-primary dark:text-white hover:text-library-accent transition-colors"
+                  >
+                    إنشاء حساب
+                  </Link>
+                </>
+              )}
               <div className="w-12 h-0.5 bg-library-accent/30 mx-auto rounded-full" />
               <Link
                 to="/"
