@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { User, BookOpen, Layers, Repeat, ArrowUpRight, Sparkles } from 'lucide-react';
 import Navbar from '../components/common/Navbar';
 import Aurora from '../components/effects/Aurora';
+import { useAuth } from '../context/AuthContext';
 
 // ─── ELEGANT 3D PLANETARY ORBIT ──────────────────────────────────────────────
 // A glitch-free 3D orbit using a single tilted plane to prevent CSS rendering artifacts
@@ -92,6 +93,8 @@ const DashboardCard = ({ icon: Icon, title, desc, to, delay = 0 }) => (
 
 // ─── STUDENT DASHBOARD ───────────────────────────────────────────────────────
 const StudentDashboard = () => {
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen bg-library-paper dark:bg-dark-bg text-library-primary dark:text-library-paper transition-colors duration-500 overflow-hidden" dir="rtl">
       <Navbar />
@@ -121,7 +124,7 @@ const StudentDashboard = () => {
                   </div>
                   
                   <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-library-primary dark:text-white leading-[1.2] mb-4">
-                    مرحباً بك يا <span className="text-library-accent">إبراهيم</span>،<br />
+                    مرحباً بك يا <span className="text-library-accent">{user?.name || "طالب"}</span>،<br />
                     في مدار المعرفة.
                   </h1>
                   

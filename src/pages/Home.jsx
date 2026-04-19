@@ -1,11 +1,6 @@
 import React, { useRef } from "react";
 import { Link } from "react-router-dom";
-import {
-  motion,
-  useScroll,
-  useTransform,
-  useInView,
-} from "framer-motion";
+import { motion, useScroll, useTransform, useInView } from "framer-motion";
 import {
   BookMarked,
   ArrowUpLeft,
@@ -41,7 +36,9 @@ const SpringReveal = ({ children, className = "", delay = 0 }) => {
 // ─── Stats Counter ──────────────────────────────────────────────────────────
 const StatItem = ({ number, label, delay = 0 }) => (
   <SpringReveal delay={delay} className="text-center">
-    <p className="text-3xl md:text-4xl font-black text-library-accent mb-1">{number}</p>
+    <p className="text-3xl md:text-4xl font-black text-library-accent mb-1">
+      {number}
+    </p>
     <p className="text-xs md:text-sm font-bold text-library-primary/40 dark:text-library-paper/40 uppercase tracking-wider">
       {label}
     </p>
@@ -68,8 +65,18 @@ const FeatureCard = ({ icon: Icon, title, desc, delay = 0 }) => (
 // ─── Marquee Ticker ─────────────────────────────────────────────────────────
 const MarqueeTicker = () => {
   const items = [
-    "هندسة", "طب", "صيدلة", "حاسبات", "علوم", "إدارة أعمال",
-    "إعلام", "حقوق", "فنون", "تربية", "آداب", "تجارة",
+    "هندسة",
+    "طب",
+    "صيدلة",
+    "حاسبات",
+    "علوم",
+    "إدارة أعمال",
+    "إعلام",
+    "حقوق",
+    "فنون",
+    "تربية",
+    "آداب",
+    "تجارة",
   ];
 
   return (
@@ -174,14 +181,22 @@ const ContactSection = () => (
             تواصل معنا.
           </h2>
           <p className="text-base md:text-lg text-white/40 mb-12 max-w-md font-medium leading-relaxed">
-            هل لديك استفسار أو اقتراح لتطوير الأرشيف؟ فريقنا دائماً هنا
-            للاستماع لطلابنا.
+            هل لديك استفسار أو اقتراح لتطوير الأرشيف؟ فريقنا دائماً هنا للاستماع
+            لطلابنا.
           </p>
 
           <div className="space-y-5">
             {[
-              { icon: Mail, label: "البريد الإلكتروني", value: "support@tabaadol.edu" },
-              { icon: MapPin, label: "الموقع", value: "الجامعات المصرية، القاهرة" },
+              {
+                icon: Mail,
+                label: "البريد الإلكتروني",
+                value: "support@tabaadol.edu",
+              },
+              {
+                icon: MapPin,
+                label: "الموقع",
+                value: "الجامعات المصرية، القاهرة",
+              },
             ].map((item, i) => (
               <div
                 key={i}
@@ -205,10 +220,22 @@ const ContactSection = () => (
         <SpringReveal delay={0.15}>
           <form className="space-y-4 p-7 md:p-9 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
             <div className="grid md:grid-cols-2 gap-4">
-              <input type="text" placeholder="الاسم" className="contact-input" />
-              <input type="email" placeholder="البريد الإلكتروني" className="contact-input" />
+              <input
+                type="text"
+                placeholder="الاسم"
+                className="contact-input"
+              />
+              <input
+                type="email"
+                placeholder="البريد الإلكتروني"
+                className="contact-input"
+              />
             </div>
-            <input type="text" placeholder="الموضوع" className="contact-input" />
+            <input
+              type="text"
+              placeholder="الموضوع"
+              className="contact-input"
+            />
             <textarea
               placeholder="رسالتك..."
               rows="5"
@@ -239,16 +266,40 @@ const Home = () => {
   const storyRef = useRef(null);
   const { scrollYProgress: storyProgress } = useScroll({
     target: storyRef,
-    offset: ["start start", "end end"]
+    offset: ["start start", "end end"],
   });
 
   const yStory = useTransform(storyProgress, [0, 1], [0, 450]);
 
   const books = [
-    { title: "الفيزياء الجامعية", author: "سيرواي", cat: "علوم", image: "https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&w=400&q=80" },
-    { title: "الاقتصاد الجزئي", author: "مانكيو", cat: "إدارة", image: "https://images.unsplash.com/photo-1554774853-aae0a22c8aa4?auto=format&fit=crop&w=400&q=80" },
-    { title: "هياكل البيانات", author: "سيدجويك", cat: "حاسبات", image: "https://images.unsplash.com/photo-1516116216624-53e697fedbea?auto=format&fit=crop&w=400&q=80" },
-    { title: "علم الأدوية", author: "ليبينكوت", cat: "طب", image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80" },
+    {
+      title: "الفيزياء الجامعية",
+      author: "سيرواي",
+      cat: "علوم",
+      image:
+        "https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&w=400&q=80",
+    },
+    {
+      title: "الاقتصاد الجزئي",
+      author: "مانكيو",
+      cat: "إدارة",
+      image:
+        "https://images.unsplash.com/photo-1554774853-aae0a22c8aa4?auto=format&fit=crop&w=400&q=80",
+    },
+    {
+      title: "هياكل البيانات",
+      author: "سيدجويك",
+      cat: "حاسبات",
+      image:
+        "https://images.unsplash.com/photo-1516116216624-53e697fedbea?auto=format&fit=crop&w=400&q=80",
+    },
+    {
+      title: "علم الأدوية",
+      author: "ليبينكوت",
+      cat: "طب",
+      image:
+        "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80",
+    },
   ];
 
   const features = [
@@ -375,15 +426,15 @@ const Home = () => {
         </section>
 
         {/* ════════════════════ STICKY STORY (How it Works) ════════════════════ */}
-        <section ref={storyRef} className="relative py-20 md:py-32 bg-library-primary text-library-paper dark:bg-[#04060a]">
+        <section
+          ref={storyRef}
+          className="relative py-20 md:py-32 bg-library-primary text-library-paper dark:bg-[#04060a]"
+        >
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
             <div className="grid lg:grid-cols-2 gap-16 md:gap-24 relative">
               {/* Manual Sticky Visual via Framer Motion */}
               <div className="hidden lg:block relative">
-                <motion.div 
-                  style={{ y: yStory }}
-                  className="w-full"
-                >
+                <motion.div style={{ y: yStory }} className="w-full">
                   <SpringReveal>
                     <div className="w-full aspect-square bg-white/[0.03] rounded-3xl border border-white/[0.06] flex flex-col items-center justify-center p-10 md:p-16">
                       <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-library-accent/10 flex items-center justify-center mb-6 md:mb-8 border border-library-accent/20">
@@ -396,7 +447,8 @@ const Home = () => {
                         رحلة المعرفة
                       </h3>
                       <p className="text-library-paper/40 text-center text-sm md:text-base leading-relaxed max-w-xs font-medium">
-                        دورة تبادل مستمرة تضمن وصول الكتاب للطالب الذي يحتاجه في الوقت المناسب وبكل أمان.
+                        دورة تبادل مستمرة تضمن وصول الكتاب للطالب الذي يحتاجه في
+                        الوقت المناسب وبكل أمان.
                       </p>
                     </div>
                   </SpringReveal>
@@ -408,9 +460,12 @@ const Home = () => {
                 <SpringReveal>
                   <div className="w-full aspect-square bg-white/[0.03] rounded-3xl border border-white/[0.06] flex flex-col items-center justify-center p-8 mb-12">
                     <Repeat className="text-library-accent mb-6" size={40} />
-                    <h3 className="text-2xl font-black text-white mb-3 text-center">رحلة المعرفة</h3>
+                    <h3 className="text-2xl font-black text-white mb-3 text-center">
+                      رحلة المعرفة
+                    </h3>
                     <p className="text-library-paper/40 text-center text-sm leading-relaxed max-w-xs font-medium">
-                      دورة تبادل مستمرة تضمن وصول الكتاب للطالب الذي يحتاجه في الوقت المناسب وبكل أمان.
+                      دورة تبادل مستمرة تضمن وصول الكتاب للطالب الذي يحتاجه في
+                      الوقت المناسب وبكل أمان.
                     </p>
                   </div>
                 </SpringReveal>
@@ -426,7 +481,8 @@ const Home = () => {
                     أرشيفك بين يديك.
                   </h2>
                   <p className="text-base md:text-lg text-library-paper/40 leading-relaxed font-medium max-w-lg mx-auto lg:mr-0 lg:ml-0">
-                    تصفح آلاف المراجع المتاحة في جامعتك، أو قم بتصوير مراجعك القديمة وإيداعها في الأرشيف الرقمي لتفيد بها غيرك من الطلاب.
+                    تصفح آلاف المراجع المتاحة في جامعتك، أو قم بتصوير مراجعك
+                    القديمة وإيداعها في الأرشيف الرقمي لتفيد بها غيرك من الطلاب.
                   </p>
                 </SpringReveal>
 
@@ -438,7 +494,9 @@ const Home = () => {
                     لقاء داخل الحرم.
                   </h2>
                   <p className="text-base md:text-lg text-library-paper/40 leading-relaxed font-medium max-w-lg mx-auto lg:mr-0 lg:ml-0">
-                    بعد طلب الكتاب، تواصل مع زميلك من خلال المنصة لتحديد موعد للمقابلة داخل الحرم الجامعي، مما يضمن بيئة تبادل آمنة وموثقة.
+                    بعد طلب الكتاب، تواصل مع زميلك من خلال المنصة لتحديد موعد
+                    للمقابلة داخل الحرم الجامعي، مما يضمن بيئة تبادل آمنة
+                    وموثقة.
                   </p>
                 </SpringReveal>
 
@@ -450,7 +508,9 @@ const Home = () => {
                     رمز الـ OTP.
                   </h2>
                   <p className="text-base md:text-lg text-library-paper/40 leading-relaxed font-medium max-w-lg mx-auto lg:mr-0 lg:ml-0">
-                    عند الاستلام، يتم تبادل رمز توثيق ذكي لمرة واحدة لضمان أن الكتاب قد وصل لصاحبه الجديد، مما يحافظ على سجلات دقيقة للأمانة الأكاديمية.
+                    عند الاستلام، يتم تبادل رمز توثيق ذكي لمرة واحدة لضمان أن
+                    الكتاب قد وصل لصاحبه الجديد، مما يحافظ على سجلات دقيقة
+                    للأمانة الأكاديمية.
                   </p>
                 </SpringReveal>
               </div>
@@ -499,7 +559,7 @@ const Home = () => {
                 >
                   <Link
                     to="/login"
-                    className="block w-full aspect-[3/4] bg-library-primary dark:bg-dark-surface rounded-2xl relative overflow-hidden flex flex-col justify-between p-7 md:p-8 card-lift"
+                    className="w-full aspect-[3/4] bg-library-primary dark:bg-dark-surface rounded-2xl relative overflow-hidden flex flex-col justify-between p-7 md:p-8 card-lift"
                   >
                     <div className="text-library-paper/20 text-[10px] font-black uppercase tracking-[0.4em] relative z-10">
                       {book.cat}
