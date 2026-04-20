@@ -22,7 +22,6 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // استرجاع الجلسة عند الفتح
   useEffect(() => {
     const initAuth = async () => {
       const tokens = tokenStore.get();
@@ -41,31 +40,51 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, []);
 
-  const login = async (email, password) => {
+  const login = async (email, password, rememberMe = true) => {
     try {
+      // ✅ 1. استدعاء الـ API بمتغيرين كما هو متوقع
       const tokens = await identityApi.login(email, password);
-      tokenStore.set(tokens);
+
+      if (!tokens?.accessToken) {
+        return {
+          success: false,
+          error: "لم يتم استلام توكن من الخادم",
+        };
+      }
+
+      // ✅ 2. تخزين التوكن باستخدام tokenStore لكي يعمل api.js
+      tokenStore.set(tokens, rememberMe);
+
+      // ✅ 3. جلب بيانات المستخدم (ستعمل الآن لأن التوكن مخزن صح)
       const userData = await identityApi.getMe();
+
+      if (!userData?.emailConfirmed) {
+        tokenStore.clear(); // منع الدخول إذا كان الإيميل غير مؤكد
+        return {
+          success: true,
+          user: userData,
+          requiresEmailConfirmation: true,
+        };
+      }
+
+      // ✅ 4. تحديث حالة المستخدم في الـ Context
       setUser(userData);
 
-      // ✅ التوجيه لصفحة محمية مع استبدال التاريخ
-      // بنستخدم setTimeout صغير جداً عشان نتأكد من تحديث الـ State أولاً
-      setTimeout(() => {
-        navigate("/app", { replace: true });
-      }, 0);
-
-      return { success: true };
+      return {
+        success: true,
+        user: userData,
+        requiresEmailConfirmation: false,
+      };
     } catch (err) {
+      // ✅ 5. التنظيف الصحيح في حالة الفشل
+      tokenStore.clear();
+
       return {
         success: false,
-        error:
-          err.response?.data?.detail ||
-          err.message ||
-          "حدث خطأ أثناء تسجيل الدخول",
+        error: err.detail || err.message || "حدث خطأ أثناء تسجيل الدخول",
       };
     }
   };
-
   const register = async (formData) => {
     try {
       const response = await studentsApi.create(formData);
@@ -77,24 +96,31 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       return {
         success: false,
-        error: err.response?.data?.detail || err.message,
+        error: err.detail || err.message,
+        status: err.status,
+        errors: err.errors
       };
     }
   };
-
   const logout = () => {
-    // 1. مسح التوكنز فوراً
     tokenStore.clear();
-
-    // 2. تصفير الحالة
     setUser(null);
-
-    // 3. التوجيه للوجين مع استبدال التاريخ (الأهم!)
-    // بنستخدم setTimeout عشان نتأكد إن المتصفح خلص عملية المسح قبل ما يغير الصفحة
     setTimeout(() => {
       navigate("/login", { replace: true });
     }, 0);
   };
+
+  useEffect(() => {
+    const handleLogout = () => {
+      tokenStore.clear();
+      setUser(null);
+      setTimeout(() => {
+        navigate("/login", { replace: true });
+      }, 0);
+    };
+    window.addEventListener("auth:logout", handleLogout);
+    return () => window.removeEventListener("auth:logout", handleLogout);
+  }, [navigate]);
 
   return (
     <AuthContext.Provider

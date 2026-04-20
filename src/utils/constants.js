@@ -1,23 +1,33 @@
-export const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:7240";
+export const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:7240"; // من ال env او هنا الإتنبن واحد
 export const API_V1 = `${API_BASE_URL}/api/v1`;
 
+// دول بتوع السيرفر (ngrok) مش هتحتاجوهم بس سايبهم ليا
+// export const API_BASE_URL = " https://trapeze-sprawl-moneyless.ngrok-free.dev";
+// export const API_V1 = `${API_BASE_URL}/api/v1`;
 
 // ─── Token Storage ───────────────────────────────────────────────────────────
 export const tokenStore = {
-  get: () => ({
-    accessToken:  localStorage.getItem("accessToken"),
-    refreshToken: localStorage.getItem("refreshToken"),
-    expiresOnUtc: localStorage.getItem("expiresOnUtc"),
-  }),
-  set: ({ accessToken, refreshToken, expiresOnUtc }) => {
-    localStorage.setItem("accessToken",  accessToken);
-    localStorage.setItem("refreshToken", refreshToken);
-    localStorage.setItem("expiresOnUtc", expiresOnUtc);
+  get: () => {
+    const storage = localStorage.getItem("accessToken") ? localStorage : sessionStorage;
+    return {
+      accessToken:  storage.getItem("accessToken"),
+      refreshToken: storage.getItem("refreshToken"),
+      expiresOnUtc: storage.getItem("expiresOnUtc"),
+    };
+  },
+  set: ({ accessToken, refreshToken, expiresOnUtc }, rememberMe = true) => {
+    const storage = rememberMe ? localStorage : sessionStorage;
+    storage.setItem("accessToken",  accessToken);
+    storage.setItem("refreshToken", refreshToken);
+    storage.setItem("expiresOnUtc", expiresOnUtc);
   },
   clear: () => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("expiresOnUtc");
+    sessionStorage.removeItem("accessToken");
+    sessionStorage.removeItem("refreshToken");
+    sessionStorage.removeItem("expiresOnUtc");
   },
 };
 // ─── Image URL Helpers ───────────────────────────────────────────────────────

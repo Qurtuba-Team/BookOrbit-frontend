@@ -67,12 +67,17 @@ const GuestRoute = ({ children }) => {
 
 // ── Routes ──────────────────────────────────────────────────────────────────
 function AppRoutes() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !sessionStorage.getItem("site_loaded"));
+
+  const handlePreloaderComplete = () => {
+    setLoading(false);
+    sessionStorage.setItem("site_loaded", "true");
+  };
 
   return (
     <AnimatePresence mode="wait">
       {loading ? (
-        <Preloader key="loader" onComplete={() => setLoading(false)} />
+        <Preloader key="loader" onComplete={handlePreloaderComplete} />
       ) : (
         <div key="content" className="relative min-h-screen">
           <Aurora />

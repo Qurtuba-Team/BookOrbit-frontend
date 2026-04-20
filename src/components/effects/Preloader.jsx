@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 const Preloader = ({ onComplete }) => {
   const [count, setCount] = useState(0);
@@ -66,9 +66,7 @@ const Preloader = ({ onComplete }) => {
             transition={{ duration: 1.5, delay: 0.3, ease: "easeInOut" }}
           />
         </svg>
-        <div className="pl-counter">
-          {count.toString().padStart(3, "0")}
-        </div>
+        <div className="pl-counter">{count.toString().padStart(3, "0")}</div>
       </motion.div>
     </div>
   );
