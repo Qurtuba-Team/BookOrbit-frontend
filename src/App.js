@@ -1,24 +1,124 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
+import { Toaster } from 'react-hot-toast';
+
+// Pages
 import Home from './pages/Home';
-import Login from './pages/Login';
-import Register from './pages/Register';
+import AuthPage from './pages/AuthPage';
 import Dashboard from './pages/Dashboard';
 import AddBook from './pages/AddBook';
+import StudentDashboard from './pages/StudentDashboard';
+import StudentProfile from './pages/StudentProfile';
+import BookDetail from './pages/BookDetail';
+import MyCopies from './pages/MyCopies';
+import LendingList from './pages/LendingList';
+import AdminStudents from './pages/AdminStudents';
+import AdminBooks from './pages/AdminBooks';
+import ConfirmEmail from './pages/ConfirmEmail';
+
+// Effects
+import Preloader from './components/effects/Preloader';
+import Aurora from './components/effects/Aurora';
+
+// Auth
+import { AuthProvider, useAuth } from './context/AuthContext';
+
+// ── Guards ───────────────────────────────────────────────────────────────────
+const ProtectedRoute = ({ children }) => {
+  const { isLoggedIn, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-library-paper dark:bg-dark-bg">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-library-accent"></div>
+      </div>
+    );
+  }
+
+  if (!isLoggedIn) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+};
+
+const AdminRoute = ({ children }) => {
+  const { isLoggedIn, loading, user } = useAuth();
+  if (loading) return null;
+  if (!isLoggedIn) {
+    return <Navigate to="/login" replace />;
+  }
+  // تحقق من صلاحية الأدمن
+  if (user?.role?.toLowerCase() !== "admin") {
+    return <Navigate to="/app" replace />;
+  }
+  return children;
+};
+
+// حارس للصفحات العامة — يمنع المستخدم المسجل من الرجوع للهوم أو اللوجين
+const GuestRoute = ({ children }) => {
+  const { isLoggedIn, loading } = useAuth();
+  if (loading) return null;
+  if (isLoggedIn) {
+    return <Navigate to="/app" replace />;
+  }
+  return children;
+};
+
+// ── Routes ──────────────────────────────────────────────────────────────────
+function AppRoutes() {
+  const [loading, setLoading] = useState(true);
+
+  return (
+    <AnimatePresence mode="wait">
+      {loading ? (
+        <Preloader key="loader" onComplete={() => setLoading(false)} />
+      ) : (
+        <div key="content" className="relative min-h-screen">
+          <Aurora />
+          <div className="App relative z-10">
+            <Toaster position="top-center" reverseOrder={false} />
+            
+            <Routes>
+              {/* ─ Public Routes (محمية من المسجلين) ─ */}
+              <Route path="/" element={<GuestRoute><Home /></GuestRoute>} />
+              <Route path="/login" element={<GuestRoute><AuthPage /></GuestRoute>} />
+              <Route path="/register" element={<GuestRoute><AuthPage /></GuestRoute>} />
+              <Route path="/confirm-email" element={<ConfirmEmail />} />
+
+              {/* ── Student Protected Routes (محمية) ── */}
+              <Route path="/app" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><StudentProfile /></ProtectedRoute>} />
+              <Route path="/catalog/:bookId" element={<ProtectedRoute><BookDetail /></ProtectedRoute>} />
+              <Route path="/my-copies" element={<ProtectedRoute><MyCopies /></ProtectedRoute>} />
+              <Route path="/lending" element={<ProtectedRoute><LendingList /></ProtectedRoute>} />
+
+              {/* ── Admin Protected Routes (محمية) ── */}
+              <Route path="/admin/students" element={<AdminRoute><AdminStudents /></AdminRoute>} />
+              <Route path="/admin/books" element={<AdminRoute><AdminBooks /></AdminRoute>} />
+              <Route path="/addbook" element={<AdminRoute><AddBook /></AdminRoute>} />
+
+              {/* ── Legacy Routes (تم حمايتها الآن) ─ */}
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/books" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+
+              {/* ── Fallback ── */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+}
 
 function App() {
   return (
     <Router>
-      <div className="App">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/addbook" element={<AddBook />} />
-          <Route path="/books" element={<Dashboard />} /> {/* Alias for now */}
-        </Routes>
-      </div>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
     </Router>
   );
 }
