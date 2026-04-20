@@ -35,12 +35,27 @@ const AuthPage = () => {
   };
 
   const ConfirmationScreen = () => {
-    const [resendCooldown, setResendCooldown] = useState(0);
+    const [resendCooldown, setResendCooldown] = useState(() => {
+      const saved = sessionStorage.getItem("resendCooldownTime");
+      if (saved) {
+        const remaining = Math.floor((parseInt(saved, 10) - Date.now()) / 1000);
+        return remaining > 0 ? remaining : 0;
+      }
+      return 0;
+    });
 
     useEffect(() => {
       let timer;
       if (resendCooldown > 0) {
-        timer = setInterval(() => setResendCooldown(prev => prev - 1), 1000);
+        timer = setInterval(() => {
+          setResendCooldown((prev) => {
+            if (prev <= 1) {
+              sessionStorage.removeItem("resendCooldownTime");
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
       }
       return () => clearInterval(timer);
     }, [resendCooldown]);
@@ -48,46 +63,58 @@ const AuthPage = () => {
     const handleResend = async () => {
       if (resendCooldown > 0) return;
       try {
-        setResendCooldown(60);
-        await identityApi.sendEmailConfirmation(confirmedEmail, { skipAuth: true });
-        toast.success("✅ تم إرسال رابط تفعيل جديد");
+        const cooldownTime = 60;
+        setResendCooldown(cooldownTime);
+        sessionStorage.setItem("resendCooldownTime", (Date.now() + cooldownTime * 1000).toString());
+        
+        await identityApi.sendEmailConfirmation(confirmedEmail);
+        toast.success("✅ تم إرسال رابط تفعيل جديد لبريدك الجامعي");
       } catch (err) {
         setResendCooldown(0);
-        toast.error("❌ فشل إرسال الرابط");
+        sessionStorage.removeItem("resendCooldownTime");
+        toast.error("❌ فشل إرسال الرابط، حاول مرة أخرى");
       }
     };
 
     return (
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        className="text-center py-4"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="text-center py-6 bg-white/5 dark:bg-black/20 rounded-3xl p-8 backdrop-blur-md border border-white/10"
       >
-        <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
-          <CheckCircle2 size={32} className="text-emerald-500" />
+        <div className="w-20 h-20 bg-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-500/10">
+          <CheckCircle2 size={40} className="text-emerald-500" />
         </div>
-        <h3 className="text-xl font-bold text-library-primary dark:text-white mb-2">
+        <h3 className="text-2xl font-black text-white mb-3">
           تحقق من بريدك الجامعي
         </h3>
-        <p className="text-library-primary/60 dark:text-gray-400 text-sm leading-relaxed mb-4">
-          أرسلنا رابط التفعيل إلى <br />
-          <span className="font-semibold text-library-primary dark:text-white break-all">
+        <p className="text-white/60 text-sm leading-relaxed mb-8">
+          لقد أرسلنا رسالة تأكيد إلى:<br />
+          <span className="font-bold text-emerald-400 break-all select-all">
             {confirmedEmail}
           </span>
           <br />
-          <span className="text-[10px] opacity-70 mt-1 block">
-            💡 لم تصلك الرسالة؟ تحقق من مجلد Spam
+          <span className="text-[10px] mt-4 block opacity-50 italic">
+            إذا لم تجد الرسالة في صندوق الوارد، يرجى مراجعة مجلد الرسائل غير المرغوب فيها (Spam).
           </span>
         </p>
         
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
           <button
             onClick={handleResend}
             disabled={resendCooldown > 0}
-            className="text-xs font-bold text-library-primary dark:text-white bg-library-primary/5 dark:bg-white/5 py-2 px-4 rounded-lg hover:bg-library-primary/10 transition-colors disabled:opacity-50"
+            className={`w-full py-4 px-6 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
+              resendCooldown > 0 
+              ? "bg-white/5 text-white/40 cursor-not-allowed" 
+              : "bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20"
+            }`}
           >
-            {resendCooldown > 0 ? `أعد المحاولة بعد ${resendCooldown} ثانية` : "إعادة إرسال الرابط"}
+            {resendCooldown > 0 ? (
+              `أعد الإرسال خلال ${resendCooldown} ثانية`
+            ) : (
+              "إرسال الرابط مرة أخرى"
+            )}
           </button>
           
           <button
@@ -95,7 +122,7 @@ const AuthPage = () => {
               setIsWaitingConfirmation(false);
               setIsLogin(true);
             }}
-            className="text-library-accent font-bold hover:underline text-sm flex items-center justify-center gap-1 mx-auto mt-2"
+            className="text-white/40 hover:text-white font-bold text-xs transition-colors flex items-center justify-center gap-1 mt-2"
           >
             <ArrowRight size={14} /> العودة لتسجيل الدخول
           </button>
@@ -118,7 +145,7 @@ const AuthPage = () => {
       <div className="flex min-h-screen">
         {/* LEFT half → Register form (Desktop Only) */}
         <div
-          className="hidden lg:flex w-1/2 bg-library-primary dark:bg-dark-surface p-12 text-white flex-col justify-center relative overflow-hidden"
+          className="hidden lg:flex w-1/2 bg-library-paper dark:bg-dark-bg p-12 flex-col justify-center relative overflow-hidden"
           style={{ direction: "rtl" }}
         >
           {/* Abstract background shapes */}
@@ -127,12 +154,6 @@ const AuthPage = () => {
           <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-library-primary-light/5 rounded-full blur-2xl" />
 
           <div className="relative z-10 max-w-md mx-auto w-full">
-            <Link
-              to="/"
-              className="text-white/60 hover:text-white flex items-center gap-2 mb-8 w-fit text-sm font-bold transition-colors"
-            >
-              <ArrowRight size={16} /> العودة للأرشيف
-            </Link>
 
             <AnimatePresence mode="wait">
               {isWaitingConfirmation ? (
@@ -145,7 +166,7 @@ const AuthPage = () => {
                   exit={{ opacity: 0, x: 20 }}
                   transition={{ duration: 0.25 }}
                 >
-                  <RegisterForm switchMode={switchMode} onSuccess={handleRegisterSuccess} />
+                  <RegisterForm switchMode={switchMode} onSuccess={handleRegisterSuccess} onDark={false} />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -160,9 +181,12 @@ const AuthPage = () => {
           <div className="max-w-md w-full">
             <Link
               to="/"
-              className="text-library-primary/60 dark:text-library-paper/60 hover:text-library-accent flex items-center gap-2 mb-10 w-fit text-sm font-bold lg:hidden"
+              className="text-library-primary/40 dark:text-gray-500 hover:text-library-primary dark:hover:text-gray-300 flex items-center gap-2 mb-8 w-fit text-xs font-black transition-all lg:hidden"
             >
-              <ArrowRight size={16} /> العودة للأرشيف
+              <div className="w-8 h-8 rounded-lg bg-library-primary/5 dark:bg-white/5 border border-library-primary/10 dark:border-white/10 flex items-center justify-center">
+                 <ArrowRight size={14} className="rotate-180" />
+              </div>
+              <span>العودة للرئيسية</span>
             </Link>
 
             {/* Mobile Tabs */}
@@ -204,30 +228,34 @@ const AuthPage = () => {
             </div>
 
             <AnimatePresence mode="wait">
-              {isLogin ? (
+              {isWaitingConfirmation ? (
                 <motion.div
-                  key="login-mobile"
+                  key="confirmation-desktop-right"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                >
+                   <ConfirmationScreen />
+                </motion.div>
+              ) : isLogin ? (
+                <motion.div
+                  key="login-desktop"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.25 }}
                 >
-                  <LoginForm onForgotPassword={handleForgotPassword} />
+                  <LoginForm 
+                    onForgotPassword={handleForgotPassword} 
+                    onUnconfirmed={handleRegisterSuccess}
+                  />
                 </motion.div>
               ) : (
                 <motion.div
-                  key="register-mobile"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  transition={{ duration: 0.25 }}
+                  key="register-mobile-placeholder"
                   className="lg:hidden"
                 >
-                  {isWaitingConfirmation ? (
-                    <ConfirmationScreen />
-                  ) : (
-                    <RegisterForm switchMode={null} onSuccess={handleRegisterSuccess} />
-                  )}
+                  <RegisterForm switchMode={null} onSuccess={handleRegisterSuccess} onDark={false} />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -244,6 +272,18 @@ const AuthPage = () => {
       >
         <div className="absolute inset-0 bg-texture opacity-30" />
         <div className="absolute top-1/3 right-1/4 w-64 h-64 bg-library-accent/[0.05] rounded-full blur-[100px]" />
+        
+        {/* Fixed Home Link in Overlay */}
+        <Link
+          to="/"
+          className="absolute top-12 right-12 text-white/50 hover:text-white flex items-center gap-2 text-xs font-black transition-all group z-30"
+          style={{ direction: "rtl" }}
+        >
+          <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 transition-colors">
+             <ArrowRight size={14} />
+          </div>
+          <span>العودة للرئيسية</span>
+        </Link>
 
         <AnimatePresence mode="wait">
           {isLogin ? (
@@ -256,28 +296,29 @@ const AuthPage = () => {
               className="relative z-10 max-w-sm text-center"
               style={{ direction: "rtl" }}
             >
-              <div className="w-14 h-14 rounded-2xl bg-library-accent/10 border border-library-accent/20 flex items-center justify-center mx-auto mb-7">
+              <div className="w-16 h-16 rounded-2xl bg-library-accent/10 border border-library-accent/20 flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-library-accent/5">
                 <BookOpen
-                  size={24}
+                  size={32}
                   className="text-library-accent"
                   strokeWidth={1.5}
                 />
               </div>
-              <h2 className="text-3xl font-black text-library-paper mb-4 leading-relaxed">
+              <h2 className="text-4xl font-black text-library-paper mb-6 leading-[1.2] tracking-tight">
                 "المكتبة هي المستشفى
                 <br />
                 الوحيد للروح."
               </h2>
-              <div className="w-10 h-0.5 bg-library-accent/30 mx-auto mb-4 rounded-full" />
-              <p className="text-library-paper/35 font-medium text-sm leading-relaxed max-w-xs mx-auto mb-10">
+              <div className="w-12 h-1 bg-library-accent/30 mx-auto mb-6 rounded-full" />
+              <p className="text-library-paper/40 font-bold text-sm leading-relaxed max-w-xs mx-auto mb-12">
                 شارك في بناء أكبر مكتبة جامعية تعاونية في مصر. آلاف الكتب
                 والمراجع في انتظارك.
               </p>
               <button
                 onClick={switchMode}
-                className="inline-flex items-center gap-2 px-7 py-3 border border-library-paper/15 text-library-paper rounded-full text-sm font-bold hover:bg-library-paper/10 transition-all"
+                className="inline-flex items-center gap-3 px-8 py-3.5 border-2 border-library-paper/10 text-library-paper rounded-full text-sm font-black hover:bg-library-paper/5 transition-all shadow-lg active:scale-95"
               >
-                <UserPlus size={15} /> أنشئ حساب جديد
+                <UserPlus size={18} />
+                <span>أنشئ حساب جديد</span>
               </button>
             </motion.div>
           ) : (
@@ -290,28 +331,29 @@ const AuthPage = () => {
               className="relative z-10 max-w-sm text-center"
               style={{ direction: "rtl" }}
             >
-              <div className="w-14 h-14 rounded-2xl bg-library-accent/10 border border-library-accent/20 flex items-center justify-center mx-auto mb-7">
+              <div className="w-16 h-16 rounded-2xl bg-library-accent/10 border border-library-accent/20 flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-library-accent/5">
                 <Shield
-                  size={24}
+                  size={32}
                   className="text-library-accent"
                   strokeWidth={1.5}
                 />
               </div>
-              <h2 className="text-3xl font-black text-library-paper mb-4 leading-relaxed">
+              <h2 className="text-4xl font-black text-library-paper mb-6 leading-[1.2] tracking-tight">
                 بناء مجتمع
                 <br />
                 جامعي موثوق.
               </h2>
-              <div className="w-10 h-0.5 bg-library-accent/30 mx-auto mb-4 rounded-full" />
-              <p className="text-library-paper/35 font-medium text-sm leading-relaxed max-w-xs mx-auto mb-10">
+              <div className="w-12 h-1 bg-library-accent/30 mx-auto mb-6 rounded-full" />
+              <p className="text-library-paper/40 font-bold text-sm leading-relaxed max-w-xs mx-auto mb-12">
                 تتم مراجعة البطاقات الجامعية لكل طالب مسجل لضمان بيئة أكاديمية
                 خالية من الغرباء.
               </p>
               <button
                 onClick={switchMode}
-                className="inline-flex items-center gap-2 px-7 py-3 border border-library-paper/15 text-library-paper rounded-full text-sm font-bold hover:bg-library-paper/10 transition-all"
+                className="inline-flex items-center gap-3 px-8 py-3.5 border-2 border-library-paper/10 text-library-paper rounded-full text-sm font-black hover:bg-library-paper/5 transition-all shadow-lg active:scale-95"
               >
-                <Lock size={15} /> لدي حساب بالفعل
+                <Lock size={18} />
+                <span>لدي حساب بالفعل</span>
               </button>
             </motion.div>
           )}

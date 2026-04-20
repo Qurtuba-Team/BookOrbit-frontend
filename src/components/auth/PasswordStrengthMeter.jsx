@@ -1,7 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 
-const PasswordStrengthMeter = ({ password }) => {
+const PasswordStrengthMeter = ({ password, onDark = false }) => {
   if (!password) return null;
 
   const calculateStrength = (pass) => {
@@ -41,6 +41,9 @@ const PasswordStrengthMeter = ({ password }) => {
 
   const { label, textColor, activeStep, color } = getStrengthData();
 
+  const labelColor = onDark ? "text-white/60" : "text-library-primary/60 dark:text-gray-400";
+  const bgColor = onDark ? "bg-white/10" : "bg-library-primary/10 dark:bg-gray-700";
+
   return (
     <motion.div
       initial={{ opacity: 0, height: 0 }}
@@ -48,12 +51,12 @@ const PasswordStrengthMeter = ({ password }) => {
       className="mt-2"
     >
       <div className="flex justify-between items-center mb-1">
-        <span className="text-[10px] font-bold text-library-primary/60 dark:text-gray-400">
+        <span className={`text-[10px] font-bold ${labelColor}`}>
           قوة كلمة المرور:
         </span>
         <span className={`text-[10px] font-bold ${textColor}`}>{label}</span>
       </div>
-      <div className="h-1.5 w-full bg-library-primary/10 dark:bg-gray-700 rounded-full flex gap-1">
+      <div className={`h-1 w-full ${bgColor} rounded-full flex gap-1`}>
         {[1, 2, 3].map((step) => (
           <div
             key={step}

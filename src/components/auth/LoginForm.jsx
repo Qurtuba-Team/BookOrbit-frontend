@@ -5,8 +5,9 @@ import { ArrowRight, Eye, EyeOff, Loader2, LogIn, Mail } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
 import { identityApi } from "../../services/api";
+import { tokenStore } from "../../utils/constants";
 
-const LoginForm = ({ onForgotPassword }) => {
+const LoginForm = ({ onForgotPassword, onUnconfirmed }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -17,16 +18,6 @@ const LoginForm = ({ onForgotPassword }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
-  
-  const [requiresConfirmationEmail, setRequiresConfirmationEmail] = useState("");
-  const [resendCooldown, setResendCooldown] = useState(() => {
-    const saved = sessionStorage.getItem("resendCooldownTime");
-    if (saved) {
-      const remaining = Math.floor((parseInt(saved, 10) - Date.now()) / 1000);
-      return remaining > 0 ? remaining : 0;
-    }
-    return 0;
-  });
 
   const loginEmailRef = useRef(null);
 
@@ -35,33 +26,6 @@ const LoginForm = ({ onForgotPassword }) => {
       setTimeout(() => loginEmailRef.current.focus(), 100);
     }
   }, []);
-
-  useEffect(() => {
-    let timer;
-    if (resendCooldown > 0) {
-      timer = setInterval(() => {
-        setResendCooldown((prev) => prev - 1);
-      }, 1000);
-    } else {
-      sessionStorage.removeItem("resendCooldownTime");
-    }
-    return () => clearInterval(timer);
-  }, [resendCooldown]);
-
-  const handleResendConfirmation = async () => {
-    if (resendCooldown > 0) return;
-    try {
-      setResendCooldown(60);
-      sessionStorage.setItem("resendCooldownTime", (Date.now() + 60000).toString());
-      await identityApi.sendEmailConfirmation(requiresConfirmationEmail, {
-        skipAuth: true,
-      });
-      toast.success("✅ تم إرسال رابط تفعيل جديد لبريدك الجامعي");
-    } catch (err) {
-      setResendCooldown(0);
-      toast.error("❌ فشل إرسال الرابط، حاول مرة أخرى لاحقاً");
-    }
-  };
 
   const validateEmail = (email) => {
     const universityEmailRegex = /^[^\s@]+@(std\.mans\.edu\.eg|mans\.edu\.eg)$/;
@@ -72,7 +36,6 @@ const LoginForm = ({ onForgotPassword }) => {
     const { name, value } = e.target;
     setLoginData((p) => ({ ...p, [name]: value }));
     
-    // Real-time validation
     if (name === "email") {
       if (!value) {
         setErrors(p => ({ ...p, loginEmail: "البريد الإلكتروني مطلوب" }));
@@ -133,9 +96,20 @@ const LoginForm = ({ onForgotPassword }) => {
       }
 
       if (loginResult.requiresEmailConfirmation) {
-        setLoginError("يجب تأكيد بريدك الجامعي أولاً");
-        setRequiresConfirmationEmail(loginData.email.trim());
+        setLoginError("يجب تأكيد بريدك الجامعي أولاً ⚠️");
         setIsLoading(false);
+        const shakeForm = () => {
+          const formElement = document.getElementById("login-form-container");
+          if (formElement) {
+            formElement.classList.add("animate-shake");
+            setTimeout(() => formElement.classList.remove("animate-shake"), 500);
+          }
+        };
+        shakeForm();
+
+        setTimeout(() => {
+          onUnconfirmed(loginData.email.trim());
+        }, 1500);
         return;
       }
 
@@ -147,36 +121,36 @@ const LoginForm = ({ onForgotPassword }) => {
       navigate(from, { replace: true });
     } catch (err) {
       setIsLoading(false);
-      const errorMsg =
-        err?.message ||
-        err?.detail ||
-        err?.errors?.[0] ||
-        "حدث خطأ غير متوقع أثناء تسجيل الدخول";
-
+      let errorMsg = err?.message || err?.detail || "حدث خطأ غير متوقع";
+      if (err.status === 400 || err.status === 401) {
+        errorMsg = "البريد الإلكتروني أو كلمة المرور غير صحيحة";
+      } else if (err.status === 429) {
+        errorMsg = "محاولات كثيرة جداً! يرجى الانتظار دقيقة قبل المحاولة مرة أخرى.";
+      }
       setLoginError(errorMsg);
       toast.error(errorMsg);
-      localStorage.removeItem("token");
+      tokenStore.clear();
     }
   };
 
   const getInputClass = (name) =>
-    `w-full px-4 py-3 bg-white dark:bg-dark-surface border ${
+    `w-full px-4 py-3.5 bg-white dark:bg-dark-surface border-2 ${
       errors[name]
-        ? "border-red-500/50 focus:ring-red-500/30 focus:border-red-500/50 animate-shake"
-        : "border-library-primary/10 dark:border-white/[0.08] focus:ring-library-accent/50 focus:border-library-accent shadow-sm focus:shadow-md focus:shadow-library-accent/10"
-    } rounded-xl focus:outline-none focus:ring-2 dark:text-white transition-all text-sm`;
+        ? "border-red-500/50 focus:ring-red-500/10 focus:border-red-500 animate-shake"
+        : "border-library-primary/5 dark:border-white/[0.05] focus:border-library-accent focus:ring-0 shadow-sm"
+    } rounded-xl focus:outline-none dark:text-white transition-all text-sm font-medium placeholder:text-gray-300`;
 
   return (
     <>
-      <h2 className="text-3xl font-black text-library-primary dark:text-white mb-2">
+      <h2 className="text-4xl font-black text-library-primary dark:text-white mb-2 tracking-tight">
         مرحباً بعودتك.
       </h2>
-      <p className="text-library-primary/50 dark:text-gray-400 mb-8 text-sm font-medium">
+      <p className="text-library-primary/40 dark:text-gray-400 mb-10 text-sm font-bold">
         سجل دخولك لمتابعة كتبك المستعارة أو لإضافة مراجع جديدة.
       </p>
-      <form onSubmit={handleLoginSubmit} className="space-y-5">
+      <form id="login-form-container" onSubmit={handleLoginSubmit} className="space-y-6">
         <div>
-          <label className="block text-xs font-bold text-library-primary/70 dark:text-gray-300 mb-2">
+          <label className="block text-[11px] font-black text-library-primary/60 dark:text-gray-300 mb-2 mr-1">
             البريد الجامعي
           </label>
           <input
@@ -192,24 +166,24 @@ const LoginForm = ({ onForgotPassword }) => {
             disabled={isLoading}
           />
           {errors.loginEmail && (
-            <p className="text-red-500 text-[11px] font-bold mt-1.5">
+            <p className="text-red-500 text-[10px] font-bold mt-2 mr-1">
               {errors.loginEmail}
             </p>
           )}
         </div>
         <div>
-          <div className="flex justify-between mb-2">
-            <label className="block text-xs font-bold text-library-primary/70 dark:text-gray-300">
-              كلمة المرور
-            </label>
+          <div className="flex justify-between items-center mb-2 px-1">
             <button
               type="button"
               onClick={() => onForgotPassword(loginData.email)}
-              className="text-xs font-bold text-library-accent hover:underline disabled:opacity-50 disabled:no-underline"
+              className="text-[11px] font-black text-library-accent hover:opacity-80 transition-opacity disabled:opacity-50"
               disabled={isLoading}
             >
               نسيت كلمة المرور؟
             </button>
+            <label className="block text-[11px] font-black text-library-primary/60 dark:text-gray-300">
+              كلمة المرور
+            </label>
           </div>
           <div className="relative">
             <input
@@ -217,7 +191,7 @@ const LoginForm = ({ onForgotPassword }) => {
               name="password"
               value={loginData.password}
               onChange={handleLoginChange}
-              className={`${getInputClass("loginPassword")} pl-10`}
+              className={`${getInputClass("loginPassword")} pl-12`}
               required
               dir="ltr"
               disabled={isLoading}
@@ -225,79 +199,62 @@ const LoginForm = ({ onForgotPassword }) => {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-library-primary/60 dark:text-library-paper/60 hover:text-library-primary dark:hover:text-library-paper transition-colors ease-in-out"
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-library-primary/30 dark:text-library-paper/30 hover:text-library-primary transition-colors"
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
           {errors.loginPassword && (
-            <p className="text-red-500 text-[11px] font-bold mt-1.5">
+            <p className="text-red-500 text-[10px] font-bold mt-2 mr-1">
               {errors.loginPassword}
             </p>
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-end gap-2 px-1">
+          <label
+            htmlFor="remember"
+            className="text-[11px] font-black text-library-primary/60 dark:text-gray-300 cursor-pointer select-none"
+          >
+            تذكرني
+          </label>
           <input
             type="checkbox"
             id="remember"
             checked={rememberMe}
             onChange={(e) => setRememberMe(e.target.checked)}
-            className="w-4 h-4 accent-library-accent rounded"
+            className="w-4 h-4 accent-library-accent rounded-md cursor-pointer"
           />
-          <label
-            htmlFor="remember"
-            className="text-xs font-bold text-library-primary/70 dark:text-gray-300 cursor-pointer"
-          >
-            تذكرني
-          </label>
         </div>
 
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-library-primary dark:bg-white text-library-paper dark:text-library-primary font-bold py-3.5 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.98] transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+          className="w-full bg-library-primary dark:bg-white text-white dark:text-library-primary font-black py-4 rounded-xl shadow-xl shadow-library-primary/20 dark:shadow-none hover:shadow-2xl hover:-translate-y-0.5 active:scale-[0.98] transition-all text-sm flex items-center justify-center gap-3 disabled:opacity-50 mt-4"
         >
           {isLoading ? (
-            <>
-              <Loader2 size={16} className="animate-spin" /> جاري
-              الدخول...
-            </>
+            <Loader2 size={18} className="animate-spin" />
           ) : (
             <>
-              <LogIn size={16} />
-              تسجيل الدخول
+               <span>تسجيل الدخول</span>
+               <ArrowRight size={18} className="rotate-180" />
             </>
           )}
         </button>
       </form>
 
-      {/* رسالة الخطأ العام / تأكيد البريد */}
       {loginError && (
         <motion.div
           initial={{ opacity: 0, y: 5 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mt-6 p-4 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 rounded-xl flex items-start gap-3"
+          className="mt-8 p-4 bg-red-500/5 border border-red-500/10 rounded-2xl flex items-center gap-3"
         >
-          <div className="text-red-500 mt-0.5">
+          <div className="text-red-500 bg-red-500/10 p-2 rounded-lg">
             <Mail size={16} />
           </div>
-          <div className="flex-1">
-            <p className="text-red-600 dark:text-red-400 text-xs font-bold leading-relaxed">
-              {loginError}
-            </p>
-            {requiresConfirmationEmail && (
-              <button
-                onClick={handleResendConfirmation}
-                disabled={resendCooldown > 0}
-                className="mt-2 text-[11px] font-bold text-library-primary dark:text-white bg-white dark:bg-dark-surface px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-500/30 hover:bg-red-50 dark:hover:bg-red-500/20 transition-colors disabled:opacity-50 flex items-center gap-2"
-              >
-                {resendCooldown > 0
-                  ? `أعد المحاولة بعد ${resendCooldown} ثانية`
-                  : "إعادة إرسال رابط التفعيل"}
-              </button>
-            )}
-          </div>
+          <p className="text-red-600 dark:text-red-400 text-[11px] font-black leading-relaxed">
+            {loginError}
+          </p>
         </motion.div>
       )}
     </>

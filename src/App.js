@@ -14,7 +14,8 @@ import MyCopies from './pages/MyCopies';
 import LendingList from './pages/LendingList';
 import AdminStudents from './pages/AdminStudents';
 import AdminBooks from './pages/AdminBooks';
-import ConfirmEmail from './pages/ConfirmEmail';
+import EmailVerified from './redircets/EmailVerfied';
+import ReSetPassword from './redircets/ReSetPassword';
 
 // Effects
 import Preloader from './components/effects/Preloader';
@@ -89,7 +90,8 @@ function AppRoutes() {
               <Route path="/" element={<GuestRoute><Home /></GuestRoute>} />
               <Route path="/login" element={<GuestRoute><AuthPage /></GuestRoute>} />
               <Route path="/register" element={<GuestRoute><AuthPage /></GuestRoute>} />
-              <Route path="/confirm-email" element={<ConfirmEmail />} />
+              <Route path="/EmailVerfied" element={<EmailVerified />} />
+              <Route path='/ReSetPassword' element={<ReSetPassword />} />
 
               {/* ── Student Protected Routes (محمية) ── */}
               <Route path="/app" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
@@ -105,9 +107,10 @@ function AppRoutes() {
               {/* ── Legacy Routes (تم حمايتها الآن) ─ */}
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/books" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-
+              
               {/* ── Fallback ── */}
               <Route path="*" element={<Navigate to="/" replace />} />
+              
             </Routes>
           </div>
         </div>

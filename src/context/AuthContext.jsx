@@ -28,7 +28,14 @@ export const AuthProvider = ({ children }) => {
       if (tokens?.accessToken) {
         try {
           const userData = await identityApi.getMe();
-          setUser(userData);
+          // التأكد من أن الإيميل مؤكد قبل اعتماد الجلسة
+          if (userData && userData.emailConfirmed) {
+            setUser(userData);
+          } else {
+            console.warn("Unconfirmed email session detected and cleared.");
+            tokenStore.clear();
+            setUser(null);
+          }
         } catch (err) {
           console.error("Session expired or invalid", err);
           tokenStore.clear();
@@ -42,28 +49,27 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password, rememberMe = true) => {
     try {
-      // ✅ 1. استدعاء الـ API بمتغيرين كما هو متوقع
+      // ✅ 1. استدعاء الـ API
       const tokens = await identityApi.login(email, password);
 
       if (!tokens?.accessToken) {
-        return {
-          success: false,
-          error: "لم يتم استلام توكن من الخادم",
-        };
+        return { success: false, error: "لم يتم استلام توكن من الخادم" };
       }
 
-      // ✅ 2. تخزين التوكن باستخدام tokenStore لكي يعمل api.js
+      // ✅ 2. تخزين مؤقت للتوكن لجلب البيانات
       tokenStore.set(tokens, rememberMe);
 
-      // ✅ 3. جلب بيانات المستخدم (ستعمل الآن لأن التوكن مخزن صح)
+      // ✅ 3. جلب بيانات المستخدم والتحقق من التفعيل
       const userData = await identityApi.getMe();
 
       if (!userData?.emailConfirmed) {
-        tokenStore.clear(); // منع الدخول إذا كان الإيميل غير مؤكد
+        // 🚨 حماية: مسح التوكن فوراً إذا لم يكن الإيميل مؤكداً
+        tokenStore.clear(); 
         return {
-          success: true,
-          user: userData,
+          success: true, 
+          user: null, // لا نضع المستخدم في الحالة
           requiresEmailConfirmation: true,
+          email: userData.email
         };
       }
 
@@ -78,6 +84,32 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       // ✅ 5. التنظيف الصحيح في حالة الفشل
       tokenStore.clear();
+
+      // إذا كان الخطأ بسبب بيانات غير صالحة (400) أو غير صحيحة (401)
+      if (err.status === 400 || err.status === 401) {
+        const lowerMsg = (err.detail || err.message || "").toLowerCase();
+        
+        // التحقق مما إذا كان السيرفر يرفض الدخول بسبب عدم تأكيد الإيميل
+        if (lowerMsg.includes("confirm") || lowerMsg.includes("verify") || lowerMsg.includes("تأكيد")) {
+          return {
+            success: true,
+            requiresEmailConfirmation: true,
+          };
+        }
+
+        return {
+          success: false,
+          error: "البريد الإلكتروني أو كلمة المرور غير صحيحة",
+        };
+      }
+
+      // إذا كان الخطأ بسبب كثرة المحاولات (429)
+      if (err.status === 429) {
+        return {
+          success: false,
+          error: "محاولات كثيرة جداً! يرجى الانتظار دقيقة قبل المحاولة مرة أخرى.",
+        };
+      }
 
       return {
         success: false,

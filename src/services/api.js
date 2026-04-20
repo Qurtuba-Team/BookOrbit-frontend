@@ -101,6 +101,18 @@ async function apiRequest(path, options = {}) {
       errorData = { detail: responseText || `HTTP ${response.status}` };
     }
 
+    // ─── Rate Limit (429) Handling ──────────────────────────────────────────
+    if (response.status === 429) {
+      const retryAfter = response.headers.get("Retry-After");
+      const waitTime = retryAfter ? parseInt(retryAfter, 10) * 1000 : 2000;
+      
+      const retryCount = options._retryCount || 0;
+      if (retryCount < 2) { // Retry up to 2 times
+        await new Promise(resolve => setTimeout(resolve, waitTime * (retryCount + 1)));
+        return apiRequest(path, { ...options, _retryCount: retryCount + 1 });
+      }
+    }
+
     // ─── Token Refresh Interceptor ───────────────────────────────────────────
     if (response.status === 401 && !options.skipAuth && storedRefreshToken) {
       if (!isRefreshing) {
@@ -206,39 +218,31 @@ export const identityApi = {
   /** GET /identity/users/me — Current user info */
   getMe: () => apiRequest("/identity/users/me"),
 
-  /** ✅ POST /identity/users/send-email-confirmation?email={email} */
+  /** ✅ POST /identity/send-email-confirmation?email={email} */
   sendEmailConfirmation: (email) =>
-    apiRequest(`/identity/users/send-email-confirmation?email=${encodeURIComponent(email)}`, {
+    apiRequest(`/identity/send-email-confirmation?email=${encodeURIComponent(email)}`, {
       method: "POST",
-      skipAuth: true,  // ← ← ← ده التعديل السحري! ✨
-    }),
-
-  /** GET /identity/confirm-email?email={email}&token={token} */
-  confirmEmail: (email, token) =>
-    apiRequest(`/identity/confirm-email?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`, {
-      method: "GET",
       skipAuth: true,
     }),
 
-  /** POST /identity/users/request-password-reset */
+  /** POST /identity/confirm-email?email={email}&token={token} */
+  confirmEmail: (email, token) =>
+    apiRequest(`/identity/confirm-email?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`, {
+      method: "POST",
+      skipAuth: true,
+    }),
+
+  /** POST /identity/forgot-password */
   requestPasswordReset: (email) =>
-    apiRequest("/identity/users/request-password-reset", {
+    apiRequest("/identity/forgot-password", {
       method: "POST",
       skipAuth: true,
       body: JSON.stringify({ email }),
     }),
 
-  /** POST /identity/users/verify-password-reset-otp */
-  verifyPasswordResetOtp: (data) =>
-    apiRequest("/identity/users/verify-password-reset-otp", {
-      method: "POST",
-      skipAuth: true,
-      body: JSON.stringify(data),
-    }),
-
-  /** POST /identity/users/reset-password */
+  /** POST /identity/reset-password */
   resetPassword: (data) =>
-    apiRequest("/identity/users/reset-password", {
+    apiRequest("/identity/reset-password", {
       method: "POST",
       skipAuth: true,
       body: JSON.stringify(data),
