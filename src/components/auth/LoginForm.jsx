@@ -63,8 +63,40 @@ const LoginForm = ({ onForgotPassword }) => {
     }
   };
 
-  const handleLoginChange = (e) =>
-    setLoginData((p) => ({ ...p, [e.target.name]: e.target.value }));
+  const validateEmail = (email) => {
+    const universityEmailRegex = /^[^\s@]+@(std\.mans\.edu\.eg|mans\.edu\.eg)$/;
+    return universityEmailRegex.test(email);
+  };
+
+  const handleLoginChange = (e) => {
+    const { name, value } = e.target;
+    setLoginData((p) => ({ ...p, [name]: value }));
+    
+    // Real-time validation
+    if (name === "email") {
+      if (!value) {
+        setErrors(p => ({ ...p, loginEmail: "البريد الإلكتروني مطلوب" }));
+      } else if (!validateEmail(value)) {
+        setErrors(p => ({ ...p, loginEmail: "يجب استخدام البريد الجامعي الصحيح" }));
+      } else {
+        setErrors(p => {
+          const newE = { ...p };
+          delete newE.loginEmail;
+          return newE;
+        });
+      }
+    } else if (name === "password") {
+      if (!value) {
+        setErrors(p => ({ ...p, loginPassword: "كلمة المرور مطلوبة" }));
+      } else {
+        setErrors(p => {
+          const newE = { ...p };
+          delete newE.loginPassword;
+          return newE;
+        });
+      }
+    }
+  };
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
@@ -72,7 +104,12 @@ const LoginForm = ({ onForgotPassword }) => {
     setLoginError("");
 
     const newErrors = {};
-    if (!loginData.email) newErrors.loginEmail = "البريد الإلكتروني مطلوب";
+    if (!loginData.email) {
+      newErrors.loginEmail = "البريد الإلكتروني مطلوب";
+    } else if (!validateEmail(loginData.email)) {
+      newErrors.loginEmail = "البريد الجامعي غير صحيح";
+    }
+    
     if (!loginData.password) newErrors.loginPassword = "كلمة المرور مطلوبة";
 
     if (Object.keys(newErrors).length > 0) {
@@ -168,7 +205,8 @@ const LoginForm = ({ onForgotPassword }) => {
             <button
               type="button"
               onClick={() => onForgotPassword(loginData.email)}
-              className="text-xs font-bold text-library-accent hover:underline"
+              className="text-xs font-bold text-library-accent hover:underline disabled:opacity-50 disabled:no-underline"
+              disabled={isLoading}
             >
               نسيت كلمة المرور؟
             </button>

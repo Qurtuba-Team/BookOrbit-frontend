@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, BookOpen, Shield, CheckCircle2, UserPlus, Lock } from "lucide-react";
+import toast from "react-hot-toast";
+import { identityApi } from "../services/api";
 
 import LoginForm from "../components/auth/LoginForm";
 import RegisterForm from "../components/auth/RegisterForm";
@@ -32,40 +34,75 @@ const AuthPage = () => {
     setIsWaitingConfirmation(true);
   };
 
-  const ConfirmationScreen = () => (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      className="text-center py-4"
-    >
-      <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
-        <CheckCircle2 size={32} className="text-emerald-500" />
-      </div>
-      <h3 className="text-xl font-bold text-library-primary dark:text-white mb-2">
-        تحقق من بريدك الجامعي
-      </h3>
-      <p className="text-library-primary/60 dark:text-gray-400 text-sm leading-relaxed mb-4">
-        أرسلنا رابط التفعيل إلى <br />
-        <span className="font-semibold text-library-primary dark:text-white break-all">
-          {confirmedEmail}
-        </span>
-        <br />
-        <span className="text-[10px] opacity-70 mt-1 block">
-          💡 لم تصلك الرسالة؟ تحقق من مجلد Spam
-        </span>
-      </p>
-      <button
-        onClick={() => {
-          setIsWaitingConfirmation(false);
-          setIsLogin(true);
-        }}
-        className="text-library-accent font-bold hover:underline text-sm flex items-center justify-center gap-1 mx-auto"
+  const ConfirmationScreen = () => {
+    const [resendCooldown, setResendCooldown] = useState(0);
+
+    useEffect(() => {
+      let timer;
+      if (resendCooldown > 0) {
+        timer = setInterval(() => setResendCooldown(prev => prev - 1), 1000);
+      }
+      return () => clearInterval(timer);
+    }, [resendCooldown]);
+
+    const handleResend = async () => {
+      if (resendCooldown > 0) return;
+      try {
+        setResendCooldown(60);
+        await identityApi.sendEmailConfirmation(confirmedEmail, { skipAuth: true });
+        toast.success("✅ تم إرسال رابط تفعيل جديد");
+      } catch (err) {
+        setResendCooldown(0);
+        toast.error("❌ فشل إرسال الرابط");
+      }
+    };
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        className="text-center py-4"
       >
-        <ArrowRight size={14} /> العودة لتسجيل الدخول
-      </button>
-    </motion.div>
-  );
+        <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <CheckCircle2 size={32} className="text-emerald-500" />
+        </div>
+        <h3 className="text-xl font-bold text-library-primary dark:text-white mb-2">
+          تحقق من بريدك الجامعي
+        </h3>
+        <p className="text-library-primary/60 dark:text-gray-400 text-sm leading-relaxed mb-4">
+          أرسلنا رابط التفعيل إلى <br />
+          <span className="font-semibold text-library-primary dark:text-white break-all">
+            {confirmedEmail}
+          </span>
+          <br />
+          <span className="text-[10px] opacity-70 mt-1 block">
+            💡 لم تصلك الرسالة؟ تحقق من مجلد Spam
+          </span>
+        </p>
+        
+        <div className="flex flex-col gap-3">
+          <button
+            onClick={handleResend}
+            disabled={resendCooldown > 0}
+            className="text-xs font-bold text-library-primary dark:text-white bg-library-primary/5 dark:bg-white/5 py-2 px-4 rounded-lg hover:bg-library-primary/10 transition-colors disabled:opacity-50"
+          >
+            {resendCooldown > 0 ? `أعد المحاولة بعد ${resendCooldown} ثانية` : "إعادة إرسال الرابط"}
+          </button>
+          
+          <button
+            onClick={() => {
+              setIsWaitingConfirmation(false);
+              setIsLogin(true);
+            }}
+            className="text-library-accent font-bold hover:underline text-sm flex items-center justify-center gap-1 mx-auto mt-2"
+          >
+            <ArrowRight size={14} /> العودة لتسجيل الدخول
+          </button>
+        </div>
+      </motion.div>
+    );
+  };
 
   return (
     <div

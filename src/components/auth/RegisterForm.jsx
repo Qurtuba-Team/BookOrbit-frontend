@@ -87,8 +87,9 @@ const RegisterForm = ({ switchMode, onSuccess }) => {
     const { name, value, type, checked } = e.target;
     let finalVal = type === "checkbox" ? checked : value;
 
-    if (name === "phone" && typeof finalVal === "string") {
-      finalVal = finalVal.replace(/\s+/g, "");
+    if (name === "phone" && typeof value === "string") {
+      // فقط السماح بالأرقام
+      finalVal = value.replace(/\D/g, "");
     } else if (name === "telegramUserId" && finalVal && !finalVal.startsWith("@")) {
       finalVal = "@" + finalVal;
     }
@@ -467,6 +468,7 @@ const RegisterForm = ({ switchMode, onSuccess }) => {
               required
               disabled={isLoading}
               maxLength={11}
+              inputMode="numeric"
             />
             {errors.PhoneNumber && (
               <p className="text-red-500 text-[11px] font-bold mt-1.5">

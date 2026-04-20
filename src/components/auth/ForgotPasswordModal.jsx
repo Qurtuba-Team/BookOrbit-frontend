@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Lock, X, CheckCircle2, Mail, Loader2, ShieldCheck, Key, Eye, EyeOff } from "lucide-react";
+import { Lock, X, CheckCircle2, Mail, Loader2, ShieldCheck, Key, Eye, EyeOff, AlertCircle } from "lucide-react";
 import toast from "react-hot-toast";
 import { identityApi } from "../../services/api";
+import PasswordStrengthMeter from "./PasswordStrengthMeter";
 
 const ForgotPasswordModal = ({
   showForgotPassword,
@@ -10,6 +11,7 @@ const ForgotPasswordModal = ({
   initialEmail,
 }) => {
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState(initialEmail || "");
+  const [emailError, setEmailError] = useState("");
   const [otpCode, setOtpCode] = useState(["", "", "", "", "", ""]);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -21,6 +23,19 @@ const ForgotPasswordModal = ({
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const emailInputRef = useRef(null);
+
+  useEffect(() => {
+    if (showForgotPassword) {
+      setForgotPasswordEmail(initialEmail || "");
+      setEmailError("");
+      if (initialEmail && !validateEmail(initialEmail)) {
+          setEmailError("البريد الجامعي غير صحيح");
+      }
+      setTimeout(() => emailInputRef.current?.focus(), 100);
+    }
+  }, [showForgotPassword, initialEmail]);
+
   const validateEmail = (email) => {
     const universityEmailRegex = /^[^\s@]+@(std\.mans\.edu\.eg|mans\.edu\.eg)$/;
     return universityEmailRegex.test(email);
@@ -30,6 +45,18 @@ const ForgotPasswordModal = ({
     const passwordRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/;
     return passwordRegex.test(password);
+  };
+
+  const handleEmailChange = (e) => {
+    const val = e.target.value;
+    setForgotPasswordEmail(val);
+    if (!val) {
+      setEmailError("البريد الجامعي مطلوب");
+    } else if (!validateEmail(val)) {
+      setEmailError("يجب استخدام البريد الجامعي الصحيح (@std.mans.edu.eg)");
+    } else {
+      setEmailError("");
+    }
   };
 
   const handleOtpChange = (index, value) => {
@@ -91,7 +118,7 @@ const ForgotPasswordModal = ({
   const handleRequestOtp = async (e) => {
     e.preventDefault();
     if (!forgotPasswordEmail || !validateEmail(forgotPasswordEmail)) {
-      toast.error("الرجاء إدخال بريد جامعي صحيح");
+      setEmailError("الرجاء إدخال بريد جامعي صحيح");
       return;
     }
     setIsSendingReset(true);
@@ -170,6 +197,7 @@ const ForgotPasswordModal = ({
   const resetForgotPassword = () => {
     setShowForgotPassword(false);
     setForgotPasswordEmail("");
+    setEmailError("");
     setOtpCode(["", "", "", "", "", ""]);
     setNewPassword("");
     setConfirmPassword("");
@@ -180,8 +208,12 @@ const ForgotPasswordModal = ({
     setIsResettingPassword(false);
   };
 
-  const inputClass =
-    "w-full px-4 py-3 bg-white dark:bg-dark-surface border border-library-primary/10 dark:border-white/[0.08] rounded-xl focus:outline-none focus:ring-2 focus:ring-library-accent/50 focus:border-library-accent shadow-sm focus:shadow-md focus:shadow-library-accent/10 dark:text-white transition-all text-sm";
+  const inputClass = (hasError) =>
+    `w-full px-4 py-3 bg-white dark:bg-dark-surface border ${
+      hasError 
+        ? "border-red-500/50 focus:ring-red-500/30 animate-shake" 
+        : "border-library-primary/10 dark:border-white/[0.08] focus:ring-library-accent/50"
+    } rounded-xl focus:outline-none focus:ring-2 focus:border-library-accent shadow-sm focus:shadow-md focus:shadow-library-accent/10 dark:text-white transition-all text-sm`;
 
   return (
     <AnimatePresence>
@@ -253,30 +285,42 @@ const ForgotPasswordModal = ({
                   <div className="relative">
                     <Mail
                       size={18}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-library-primary/30"
+                      className={`absolute right-3 top-1/2 -translate-y-1/2 ${emailError ? 'text-red-400' : 'text-library-primary/30'}`}
                     />
                     <input
+                      ref={emailInputRef}
                       type="email"
                       value={forgotPasswordEmail}
-                      onChange={(e) => setForgotPasswordEmail(e.target.value)}
-                      className={`${inputClass} pr-10`}
+                      onChange={handleEmailChange}
+                      className={`${inputClass(!!emailError)} pr-10`}
                       placeholder="example@std.mans.edu.eg"
                       dir="ltr"
                       required
+                      disabled={isSendingReset}
                     />
                   </div>
+                  {emailError && (
+                    <motion.p 
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-red-500 text-[11px] font-bold mt-1.5 flex items-center gap-1"
+                    >
+                      <AlertCircle size={12} /> {emailError}
+                    </motion.p>
+                  )}
                 </div>
                 <div className="flex gap-3 pt-2">
                   <button
                     type="button"
                     onClick={resetForgotPassword}
                     className="flex-1 px-4 py-3 border border-library-primary/20 dark:border-white/20 text-library-primary dark:text-white font-bold rounded-xl hover:bg-library-primary/5 dark:hover:bg-white/5 transition-colors text-sm"
+                    disabled={isSendingReset}
                   >
                     إلغاء
                   </button>
                   <button
                     type="submit"
-                    disabled={isSendingReset || !forgotPasswordEmail}
+                    disabled={isSendingReset || !forgotPasswordEmail || !!emailError}
                     className="flex-1 px-4 py-3 bg-library-primary dark:bg-white text-library-paper dark:text-library-primary font-bold rounded-xl hover:shadow-lg transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSendingReset ? (
@@ -298,7 +342,8 @@ const ForgotPasswordModal = ({
             {resetStep === 2 && (
               <form onSubmit={handleVerifyOtp} className="space-y-4">
                 <p className="text-sm text-library-primary/60 dark:text-gray-400 mb-4 text-center">
-                  أدخل رمز التحقق المكون من 6 أرقام
+                  أدخل رمز التحقق المكون من 6 أرقام المرسل إلى <br/>
+                  <span className="font-bold text-library-primary dark:text-white">{forgotPasswordEmail}</span>
                 </p>
                 <div className="flex justify-center gap-2 mb-4" dir="ltr">
                   {otpCode.map((digit, index) => (
@@ -378,7 +423,7 @@ const ForgotPasswordModal = ({
                       type={showNewPassword ? "text" : "password"}
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      className={`${inputClass} px-10`}
+                      className={`${inputClass(false)} px-10`}
                       dir="ltr"
                       placeholder="••••••••"
                       required
@@ -391,6 +436,7 @@ const ForgotPasswordModal = ({
                       {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
+                  <PasswordStrengthMeter password={newPassword} />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-library-primary/70 dark:text-gray-300 mb-2">
@@ -405,7 +451,7 @@ const ForgotPasswordModal = ({
                       type={showConfirmPassword ? "text" : "password"}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className={`${inputClass} px-10`}
+                      className={`${inputClass(newPassword !== confirmPassword && confirmPassword !== "")} px-10`}
                       dir="ltr"
                       placeholder="••••••••"
                       required
@@ -418,6 +464,9 @@ const ForgotPasswordModal = ({
                       {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
+                  {newPassword !== confirmPassword && confirmPassword !== "" && (
+                    <p className="text-red-500 text-[11px] font-bold mt-1">كلمتا المرور غير متطابقتين</p>
+                  )}
                 </div>
                 <div className="flex gap-3 pt-2">
                   <button
@@ -429,7 +478,7 @@ const ForgotPasswordModal = ({
                   </button>
                   <button
                     type="submit"
-                    disabled={isResettingPassword || !newPassword || !confirmPassword}
+                    disabled={isResettingPassword || !newPassword || !confirmPassword || newPassword !== confirmPassword}
                     className="flex-1 px-4 py-3 bg-library-primary dark:bg-white text-library-paper dark:text-library-primary font-bold rounded-xl hover:shadow-lg transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isResettingPassword ? (
