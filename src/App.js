@@ -90,8 +90,8 @@ function AppRoutes() {
               <Route path="/" element={<GuestRoute><Home /></GuestRoute>} />
               <Route path="/login" element={<GuestRoute><AuthPage /></GuestRoute>} />
               <Route path="/register" element={<GuestRoute><AuthPage /></GuestRoute>} />
-              <Route path="/EmailVerfied" element={<EmailVerified />} />
-              <Route path='/ReSetPassword' element={<ReSetPassword />} />
+              <Route path="/EmailVerfied" element={<GuestRoute><EmailVerified /></GuestRoute>} />
+              <Route path='/ReSetPassword' element={<GuestRoute><ReSetPassword /></GuestRoute>} />
 
               {/* ── Student Protected Routes (محمية) ── */}
               <Route path="/app" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />

@@ -19,7 +19,7 @@ const processQueue = (error, token = null) => {
 // ─── Core API Client ─────────────────────────────────────────────────────────
 async function apiRequest(path, options = {}) {
   let { accessToken, refreshToken: storedRefreshToken, expiresOnUtc } = tokenStore.get();
-  
+
   // ─── Proactive Token Refresh (Before 15m expiration) ──────────────────────
   if (accessToken && storedRefreshToken && expiresOnUtc && !options.skipAuth) {
     const expiresAt = new Date(expiresOnUtc).getTime();
@@ -37,9 +37,9 @@ async function apiRequest(path, options = {}) {
               "Content-Type": "application/json",
               "ngrok-skip-browser-warning": "69420"
             },
-            body: JSON.stringify({ 
-              refreshToken: storedRefreshToken, 
-              expiredAccessToken: accessToken 
+            body: JSON.stringify({
+              refreshToken: storedRefreshToken,
+              expiredAccessToken: accessToken
             }),
           });
 
@@ -72,7 +72,7 @@ async function apiRequest(path, options = {}) {
     }
   }
 
-  const headers = { ...options.headers,"ngrok-skip-browser-warning": "69420" };
+  const headers = { ...options.headers, "ngrok-skip-browser-warning": "69420" };
 
   if (accessToken && !options.skipAuth) {
     headers["Authorization"] = `Bearer ${accessToken}`;
@@ -105,7 +105,7 @@ async function apiRequest(path, options = {}) {
     if (response.status === 429) {
       const retryAfter = response.headers.get("Retry-After");
       const waitTime = retryAfter ? parseInt(retryAfter, 10) * 1000 : 2000;
-      
+
       const retryCount = options._retryCount || 0;
       if (retryCount < 2) { // Retry up to 2 times
         await new Promise(resolve => setTimeout(resolve, waitTime * (retryCount + 1)));
@@ -124,9 +124,9 @@ async function apiRequest(path, options = {}) {
               "Content-Type": "application/json",
               "ngrok-skip-browser-warning": "69420"
             },
-            body: JSON.stringify({ 
-              refreshToken: storedRefreshToken, 
-              expiredAccessToken: accessToken 
+            body: JSON.stringify({
+              refreshToken: storedRefreshToken,
+              expiredAccessToken: accessToken
             }),
           });
 
@@ -162,20 +162,20 @@ async function apiRequest(path, options = {}) {
     }
 
     const errorMessage = errorData.detail || errorData.message || errorData.title || `HTTP ${response.status}`;
-    
+
     const error = new Error(errorMessage);
     error.status = response.status;
     error.detail = errorData.detail;
     error.title = errorData.title;
     error.instance = errorData.instance;
-    
+
     // ✅ دعم أخطاء التحقق من الحقول (لو موجودة)
     if (errorData.errors) {
       error.errors = errorData.errors;
     } else if (errorData.extensions?.errors) {
       error.errors = errorData.extensions.errors;
     }
-    
+
     throw error;
   }
 
@@ -184,7 +184,7 @@ async function apiRequest(path, options = {}) {
 
   // ✅ التعامل مع الـ Response بناءً على الـ Content-Type
   const contentType = response.headers.get("content-type");
-  
+
   if (contentType?.includes("application/json")) {
     try {
       return responseText ? JSON.parse(responseText) : null;
@@ -232,20 +232,30 @@ export const identityApi = {
       skipAuth: true,
     }),
 
-  /** POST /identity/forgot-password */
+  /** POST /identity/users/send-reset-password?email={email} */
   requestPasswordReset: (email) =>
-    apiRequest("/identity/forgot-password", {
+    apiRequest(`/identity/users/send-reset-password?email=${encodeURIComponent(email)}`, {
       method: "POST",
       skipAuth: true,
-      body: JSON.stringify({ email }),
     }),
 
   /** POST /identity/reset-password */
-  resetPassword: (data) =>
+  resetPassword: ({ email, token, newPassword }) =>
     apiRequest("/identity/reset-password", {
       method: "POST",
       skipAuth: true,
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        email: email,              // ✅ lowercase
+        encodedToken: token,       // ✅ camelCase (مش Token!)
+        newPassword: newPassword   // ✅ camelCase
+      }),
+    }),
+
+  /** POST /identity/users/me/change-password */
+  changePassword: ({ currentPassword, newPassword }) =>
+    apiRequest("/identity/users/me/change-password", {
+      method: "POST",
+      body: JSON.stringify({ currentPassword, newPassword }),
     }),
 };
 
@@ -253,17 +263,17 @@ export const identityApi = {
 export const studentsApi = {
   /** POST /students — Register new student (multipart/form-data) */
   create: (formData) =>
-    apiRequest("/students", { 
-      method: "POST", 
-      skipAuth: true, 
-      body: formData 
+    apiRequest("/students", {
+      method: "POST",
+      skipAuth: true,
+      body: formData
     }),
 
   /** PATCH /students/{studentId} — Update student profile (multipart/form-data) */
   update: (studentId, formData) =>
-    apiRequest(`/students/${studentId}`, { 
-      method: "PATCH", 
-      body: formData 
+    apiRequest(`/students/${studentId}`, {
+      method: "PATCH",
+      body: formData
     }),
 
   /** GET /students/me — Current student profile */
@@ -279,37 +289,37 @@ export const studentsApi = {
   },
 
   /** PATCH /students/{studentId}/approve */
-  approve: (studentId) => 
+  approve: (studentId) =>
     apiRequest(`/students/${studentId}/approve`, { method: "PATCH" }),
 
   /** PATCH /students/{studentId}/activate */
-  activate: (studentId) => 
+  activate: (studentId) =>
     apiRequest(`/students/${studentId}/activate`, { method: "PATCH" }),
 
   /** PATCH /students/{studentId}/ban */
-  ban: (studentId) => 
+  ban: (studentId) =>
     apiRequest(`/students/${studentId}/ban`, { method: "PATCH" }),
 
   /** PATCH /students/{studentId}/unban */
-  unban: (studentId) => 
+  unban: (studentId) =>
     apiRequest(`/students/${studentId}/unban`, { method: "PATCH" }),
 
   /** PATCH /students/{studentId}/reject */
-  reject: (studentId) => 
+  reject: (studentId) =>
     apiRequest(`/students/${studentId}/reject`, { method: "PATCH" }),
 
   /** PATCH /students/{studentId}/pend */
-  pend: (studentId) => 
+  pend: (studentId) =>
     apiRequest(`/students/${studentId}/pend`, { method: "PATCH" }),
 };
 
 // ─── 3. BOOKS ────────────────────────────────────────────────────────────────
 export const booksApi = {
   /** POST /books — Create new book (multipart/form-data) */
-  create: (formData) => 
-    apiRequest("/books", { 
-      method: "POST", 
-      body: formData 
+  create: (formData) =>
+    apiRequest("/books", {
+      method: "POST",
+      body: formData
     }),
 
   /** GET /books — Paginated list of books */
@@ -329,9 +339,9 @@ export const booksApi = {
     }),
 
   /** DELETE /books/{bookId} — Delete book */
-  delete: (bookId) => 
-    apiRequest(`/books/${bookId}`, { 
-      method: "DELETE" 
+  delete: (bookId) =>
+    apiRequest(`/books/${bookId}`, {
+      method: "DELETE"
     }),
 };
 
@@ -389,7 +399,7 @@ export const lendingApi = {
   },
 
   /** GET /lendinglist/{lendingListRecordId} — Record by ID */
-  getById: (lendingListRecordId) => 
+  getById: (lendingListRecordId) =>
     apiRequest(`/lendinglist/${lendingListRecordId}`),
 };
 
@@ -402,7 +412,7 @@ export const borrowingApi = {
   },
 
   /** GET /borrowingrequests/{borrowingRequestId} — Request by ID */
-  getById: (borrowingRequestId) => 
+  getById: (borrowingRequestId) =>
     apiRequest(`/borrowingrequests/${borrowingRequestId}`),
 
   /** POST /lendinglist/{lendingListRecordId}/request — Create borrowing request */

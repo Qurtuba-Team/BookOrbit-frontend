@@ -100,7 +100,6 @@ const Navbar = () => {
           scrolled ? "glass-card py-3" : "bg-transparent py-5"
         }`}
       >
-        <Link to="/ReSetPassword">HHHHHHHHHHHHHHHHH</Link>
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex justify-between items-center">
             {/* Logo */}

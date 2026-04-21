@@ -75,7 +75,7 @@ const ReSetPassword = () => {
 
       // Redirect to login after 3 seconds
       setTimeout(() => {
-        navigate("/login");
+        navigate("/login", { replace: true });
       }, 3000);
     } catch (err) {
       const msg =
