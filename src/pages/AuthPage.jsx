@@ -17,6 +17,21 @@ const AuthPage = () => {
   const [isWaitingConfirmation, setIsWaitingConfirmation] = useState(false);
   const [confirmedEmail, setConfirmedEmail] = useState("");
 
+  // Cross-tab communication for email verification
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === "email_verified_signal") {
+        setIsWaitingConfirmation(false);
+        setIsLogin(true);
+        // Clean up the signal
+        localStorage.removeItem("email_verified_signal");
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
   const switchMode = () => {
     const next = !isLogin;
     setIsLogin(next);

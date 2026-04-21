@@ -36,7 +36,9 @@ const EmailVerified = () => {
           setCountdown((prev) => {
             if (prev <= 1) {
               clearInterval(timer);
-              navigate("/login");
+              // Signal other tabs that verification was successful
+              localStorage.setItem("email_verified_signal", Date.now().toString());
+              navigate("/login", { replace: true });
               return 0;
             }
             return prev - 1;
@@ -120,13 +122,13 @@ const EmailVerified = () => {
               </p>
 
               <div className="space-y-4">
-                <Link
-                  to="/login"
+                <button
+                  onClick={() => navigate("/login", { replace: true })}
                   className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 group"
                 >
                   تسجيل الدخول الآن
                   <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-                </Link>
+                </button>
                 
                 <p className="text-[11px] text-library-primary/40 dark:text-gray-500 font-bold">
                   سيتم تحويلك تلقائياً خلال {countdown} ثوانٍ...
@@ -154,13 +156,13 @@ const EmailVerified = () => {
               </p>
 
               <div className="space-y-4">
-                <Link
-                  to="/login"
+                <button
+                  onClick={() => navigate("/login", { replace: true })}
                   className="w-full bg-library-primary dark:bg-white text-library-paper dark:text-library-primary font-bold py-4 rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2"
                 >
                   <ArrowLeft size={18} />
                   العودة للرئيسية
-                </Link>
+                </button>
                 
                 <p className="text-[11px] text-library-primary/40 dark:text-gray-500 font-bold">
                   إذا كنت تواجه مشكلة، تواصل مع الدعم الفني.

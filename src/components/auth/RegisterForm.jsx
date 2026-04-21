@@ -232,17 +232,9 @@ const RegisterForm = ({ switchMode, onSuccess }) => {
       const result = await register(formData);
 
       if (result.success && result.userId) {
-        try {
-          await identityApi.sendEmailConfirmation(registerData.email);
-          toast.success("تم تسجيل بياناتك بنجاح! افحص بريدك الجامعي.");
-          onSuccess(registerData.email);
-        } catch (emailError) {
-          console.error("Email confirmation error:", emailError);
-          toast.success("تم التسجيل بنجاح! سيتم إرسال بريد التأكيد لاحقاً.");
-          onSuccess(registerData.email);
-        } finally {
-          setIsLoading(false);
-        }
+        toast.success("تم تسجيل بياناتك بنجاح! افحص بريدك الجامعي.");
+        onSuccess(registerData.email);
+        setIsLoading(false);
       } else if (!result.success) {
         const error = new Error(result.error || "فشل التسجيل");
         error.status = result.status;
