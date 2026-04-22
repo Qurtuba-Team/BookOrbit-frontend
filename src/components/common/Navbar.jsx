@@ -219,7 +219,10 @@ const Navbar = () => {
                     لوحة التحكم
                   </Link>
                   <button
-                    onClick={() => { setMobileMenuOpen(false); logout(); }}
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      logout();
+                    }}
                     className="text-3xl font-black text-red-500 hover:text-red-400 transition-colors"
                   >
                     تسجيل الخروج

@@ -15,7 +15,8 @@ import MyCopies from './pages/MyCopies';
 import LendingList from './pages/LendingList';
 import AdminStudents from './pages/AdminStudents';
 import AdminBooks from './pages/AdminBooks';
-import ConfirmEmail from './pages/ConfirmEmail';
+import EmailVerified from './redircets/EmailVerfied';
+import ReSetPassword from './redircets/ReSetPassword';
 
 // Effects
 import Preloader from './components/effects/Preloader';
@@ -68,12 +69,17 @@ const GuestRoute = ({ children }) => {
 
 // ── Routes ──────────────────────────────────────────────────────────────────
 function AppRoutes() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !sessionStorage.getItem("site_loaded"));
+
+  const handlePreloaderComplete = () => {
+    setLoading(false);
+    sessionStorage.setItem("site_loaded", "true");
+  };
 
   return (
     <AnimatePresence mode="wait">
       {loading ? (
-        <Preloader key="loader" onComplete={() => setLoading(false)} />
+        <Preloader key="loader" onComplete={handlePreloaderComplete} />
       ) : (
         <div key="content" className="relative min-h-screen">
           <Aurora />
@@ -85,7 +91,8 @@ function AppRoutes() {
               <Route path="/" element={<GuestRoute><Home /></GuestRoute>} />
               <Route path="/login" element={<GuestRoute><AuthPage /></GuestRoute>} />
               <Route path="/register" element={<GuestRoute><AuthPage /></GuestRoute>} />
-              <Route path="/confirm-email" element={<ConfirmEmail />} />
+              <Route path="/EmailVerfied" element={<GuestRoute><EmailVerified /></GuestRoute>} />
+              <Route path='/ReSetPassword' element={<GuestRoute><ReSetPassword /></GuestRoute>} />
 
               {/* ── Student Protected Routes (محمية) ── */}
               <Route path="/app" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
@@ -102,9 +109,10 @@ function AppRoutes() {
               {/* ── Legacy Routes (تم حمايتها الآن) ─ */}
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/books" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-
+              
               {/* ── Fallback ── */}
               <Route path="*" element={<Navigate to="/" replace />} />
+              
             </Routes>
           </div>
         </div>

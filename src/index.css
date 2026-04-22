@@ -16,6 +16,7 @@
 
   html {
     scroll-behavior: smooth;
+    @apply relative;
   }
 
   html.dark {
@@ -23,7 +24,7 @@
   }
 
   body {
-    @apply bg-library-paper text-library-ink font-sans antialiased overflow-x-hidden;
+    @apply bg-library-paper text-library-ink font-sans antialiased overflow-x-hidden relative min-h-screen;
     direction: rtl;
   }
 

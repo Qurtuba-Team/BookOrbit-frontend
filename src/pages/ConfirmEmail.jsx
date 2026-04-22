@@ -13,15 +13,15 @@ const ConfirmEmail = () => {
   const [status, setStatus] = useState("loading"); // loading | success | error
 
   useEffect(() => {
-    const id = params.get("Id");
+    const email = params.get("email");
     const token = params.get("token");
-    if (!id || !token) {
+    if (!email || !token) {
       setStatus("error");
       return;
     }
 
     identityApi
-      .confirmEmail(id, token)
+      .confirmEmail(email, token)
       .then(() => setStatus("success"))
       .catch(() => setStatus("error"));
   }, [params]);
