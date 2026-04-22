@@ -22,22 +22,49 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  // Helper to fetch full user profile (Identity + Student info)
+  const fetchFullProfile = async () => {
+    try {
+      const identityData = await identityApi.getMe();
+      
+      if (identityData && identityData.emailConfirmed) {
+        try {
+          const studentData = await studentsApi.getMe();
+          // Merge data - Supporting "Name" field from Swagger
+          return {
+            ...identityData,
+            // Try all possible name fields from the student API
+            fullName: studentData.Name || studentData.name || studentData.fullName || studentData.FullName,
+            phoneNumber: studentData.PhoneNumber || studentData.phoneNumber,
+            major: studentData.Major || studentData.major,
+            university: studentData.University || studentData.university,
+            studentId: studentData.id || studentData.Id,
+            image: studentData.PersonalPhoto || studentData.image || studentData.profileImage
+          };
+        } catch (sErr) {
+          console.warn("User is not a student or profile not found", sErr);
+          // Fallback to identity name if student profile fails
+          return {
+            ...identityData,
+            fullName: identityData.Name || identityData.name || identityData.userName
+          };
+        }
+      }
+      return null;
+    } catch (err) {
+      console.error("Failed to fetch profile", err);
+      return null;
+    }
+  };
+
   useEffect(() => {
     const initAuth = async () => {
       const tokens = tokenStore.get();
       if (tokens?.accessToken) {
-        try {
-          const userData = await identityApi.getMe();
-          // التأكد من أن الإيميل مؤكد قبل اعتماد الجلسة
-          if (userData && userData.emailConfirmed) {
-            setUser(userData);
-          } else {
-            console.warn("Unconfirmed email session detected and cleared.");
-            tokenStore.clear();
-            setUser(null);
-          }
-        } catch (err) {
-          console.error("Session expired or invalid", err);
+        const fullUser = await fetchFullProfile();
+        if (fullUser) {
+          setUser(fullUser);
+        } else {
           tokenStore.clear();
           setUser(null);
         }
@@ -49,74 +76,54 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password, rememberMe = true) => {
     try {
-      // ✅ 1. استدعاء الـ API
       const tokens = await identityApi.login(email, password);
 
       if (!tokens?.accessToken) {
         return { success: false, error: "لم يتم استلام توكن من الخادم" };
       }
 
-      // ✅ 2. تخزين مؤقت للتوكن لجلب البيانات
       tokenStore.set(tokens, rememberMe);
 
-      // ✅ 3. جلب بيانات المستخدم والتحقق من التفعيل
-      const userData = await identityApi.getMe();
+      const fullUser = await fetchFullProfile();
 
-      if (!userData?.emailConfirmed) {
-        // 🚨 حماية: مسح التوكن فوراً إذا لم يكن الإيميل مؤكداً
-        tokenStore.clear(); 
-        return {
-          success: true, 
-          user: null, // لا نضع المستخدم في الحالة
-          requiresEmailConfirmation: true,
-          email: userData.email
-        };
+      if (!fullUser) {
+        const identityData = await identityApi.getMe().catch(() => null);
+        if (identityData && !identityData.emailConfirmed) {
+          tokenStore.clear(); 
+          return {
+            success: true, 
+            user: null,
+            requiresEmailConfirmation: true,
+            email: identityData.email
+          };
+        }
+        tokenStore.clear();
+        return { success: false, error: "فشل في جلب بيانات الملف الشخصي" };
       }
 
-      // ✅ 4. تحديث حالة المستخدم في الـ Context
-      setUser(userData);
+      setUser(fullUser);
 
       return {
         success: true,
-        user: userData,
+        user: fullUser,
         requiresEmailConfirmation: false,
       };
     } catch (err) {
-      // ✅ 5. التنظيف الصحيح في حالة الفشل
       tokenStore.clear();
-
-      // إذا كان الخطأ بسبب بيانات غير صالحة (400) أو غير صحيحة (401)
       if (err.status === 400 || err.status === 401) {
         const lowerMsg = (err.detail || err.message || "").toLowerCase();
-        
-        // التحقق مما إذا كان السيرفر يرفض الدخول بسبب عدم تأكيد الإيميل
         if (lowerMsg.includes("confirm") || lowerMsg.includes("verify") || lowerMsg.includes("تأكيد")) {
-          return {
-            success: true,
-            requiresEmailConfirmation: true,
-          };
+          return { success: true, requiresEmailConfirmation: true };
         }
-
-        return {
-          success: false,
-          error: "البريد الإلكتروني أو كلمة المرور غير صحيحة",
-        };
+        return { success: false, error: "البريد الإلكتروني أو كلمة المرور غير صحيحة" };
       }
-
-      // إذا كان الخطأ بسبب كثرة المحاولات (429)
       if (err.status === 429) {
-        return {
-          success: false,
-          error: "محاولات كثيرة جداً! يرجى الانتظار دقيقة قبل المحاولة مرة أخرى.",
-        };
+        return { success: false, error: "محاولات كثيرة جداً! يرجى الانتظار دقيقة." };
       }
-
-      return {
-        success: false,
-        error: err.detail || err.message || "حدث خطأ أثناء تسجيل الدخول",
-      };
+      return { success: false, error: err.detail || err.message || "حدث خطأ أثناء تسجيل الدخول" };
     }
   };
+
   const register = async (formData) => {
     try {
       const response = await studentsApi.create(formData);
@@ -134,6 +141,7 @@ export const AuthProvider = ({ children }) => {
       };
     }
   };
+
   const logout = () => {
     tokenStore.clear();
     setUser(null);

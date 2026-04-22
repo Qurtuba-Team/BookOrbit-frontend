@@ -15,7 +15,7 @@ import toast from "react-hot-toast";
 import { identityApi } from "../services/api";
 import PasswordStrengthMeter from "../components/auth/PasswordStrengthMeter";
 
-const ReSetPassword = () => {
+const ResetPassword = () => {
   const [params] = useSearchParams();
   const navigate = useNavigate();
 
@@ -311,4 +311,4 @@ const ReSetPassword = () => {
   );
 };
 
-export default ReSetPassword;
+export default ResetPassword;

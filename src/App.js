@@ -15,15 +15,16 @@ import MyCopies from './pages/MyCopies';
 import LendingList from './pages/LendingList';
 import AdminStudents from './pages/AdminStudents';
 import AdminBooks from './pages/AdminBooks';
-import EmailVerified from './redircets/EmailVerfied';
-import ReSetPassword from './redircets/ReSetPassword';
+import EmailVerified from './redirects/EmailVerified';
+import ResetPassword from './redirects/ResetPassword';
 
 // Effects
 import Preloader from './components/effects/Preloader';
 import Aurora from './components/effects/Aurora';
 
-// Auth
+// Contexts
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 
 // ── Guards ───────────────────────────────────────────────────────────────────
 const ProtectedRoute = ({ children }) => {
@@ -91,8 +92,8 @@ function AppRoutes() {
               <Route path="/" element={<GuestRoute><Home /></GuestRoute>} />
               <Route path="/login" element={<GuestRoute><AuthPage /></GuestRoute>} />
               <Route path="/register" element={<GuestRoute><AuthPage /></GuestRoute>} />
-              <Route path="/EmailVerfied" element={<GuestRoute><EmailVerified /></GuestRoute>} />
-              <Route path='/ReSetPassword' element={<GuestRoute><ReSetPassword /></GuestRoute>} />
+              <Route path="/EmailVerified" element={<GuestRoute><EmailVerified /></GuestRoute>} />
+              <Route path='/ResetPassword' element={<GuestRoute><ResetPassword /></GuestRoute>} />
 
               {/* ── Student Protected Routes (محمية) ── */}
               <Route path="/app" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
@@ -100,11 +101,11 @@ function AppRoutes() {
               <Route path="/catalog/:bookId" element={<ProtectedRoute><BookDetail /></ProtectedRoute>} />
               <Route path="/my-copies" element={<ProtectedRoute><MyCopies /></ProtectedRoute>} />
               <Route path="/lending" element={<ProtectedRoute><LendingList /></ProtectedRoute>} />
+              <Route path="/addbook" element={<ProtectedRoute><AddBook /></ProtectedRoute>} />
 
               {/* ── Admin Protected Routes (محمية) ── */}
               <Route path="/admin/students" element={<AdminRoute><AdminStudents /></AdminRoute>} />
               <Route path="/admin/books" element={<AdminRoute><AdminBooks /></AdminRoute>} />
-              <Route path="/addbook" element={<AdminRoute><AddBook /></AdminRoute>} />
 
               {/* ── Legacy Routes (تم حمايتها الآن) ─ */}
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
@@ -124,9 +125,11 @@ function AppRoutes() {
 function App() {
   return (
     <Router>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </ThemeProvider>
     </Router>
   );
 }
