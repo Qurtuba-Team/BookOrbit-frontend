@@ -104,17 +104,19 @@ const StudentProfile = () => {
               <h2 className="text-base font-black text-library-primary dark:text-white mb-1">{user?.fullName}</h2>
               <p className="text-[10px] font-bold text-library-accent uppercase tracking-widest mb-4">{user?.role || "طالب جامعي"}</p>
               
-              <div className="flex items-center justify-center gap-4 py-3 border-t border-gray-50 dark:border-white/5 mt-4">
-                <div className="text-center">
-                  <p className="text-[14px] font-black text-library-primary dark:text-white">12</p>
-                  <p className="text-[8px] text-gray-400 font-bold uppercase">كتاب مستعار</p>
+              {user?.role?.toLowerCase() !== 'admin' && (
+                <div className="flex items-center justify-center gap-4 py-3 border-t border-gray-50 dark:border-white/5 mt-4">
+                  <div className="text-center">
+                    <p className="text-[14px] font-black text-library-primary dark:text-white">12</p>
+                    <p className="text-[8px] text-gray-400 font-bold uppercase">كتاب مستعار</p>
+                  </div>
+                  <div className="w-px h-6 bg-gray-100 dark:bg-white/5" />
+                  <div className="text-center">
+                    <p className="text-[14px] font-black text-library-primary dark:text-white">5</p>
+                    <p className="text-[8px] text-gray-400 font-bold uppercase">كتبي الخاصة</p>
+                  </div>
                 </div>
-                <div className="w-px h-6 bg-gray-100 dark:bg-white/5" />
-                <div className="text-center">
-                  <p className="text-[14px] font-black text-library-primary dark:text-white">5</p>
-                  <p className="text-[8px] text-gray-400 font-bold uppercase">كتبي الخاصة</p>
-                </div>
-              </div>
+              )}
             </motion.div>
 
             {/* Email Verification Status */}
@@ -177,9 +179,18 @@ const StudentProfile = () => {
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <ProfileField icon={User} label="الاسم الكامل" value={user?.fullName} />
-                      <ProfileField icon={Mail} label="البريد الجامعي" value={user?.email} />
-                      <ProfileField icon={Phone} label="رقم الهاتف" value={user?.phoneNumber} />
-                      <ProfileField icon={GraduationCap} label="التخصص الأكاديمي" value={user?.major} />
+                      <ProfileField icon={Mail} label="البريد الإلكتروني" value={user?.email} />
+                      {user?.role?.toLowerCase() !== 'admin' ? (
+                        <>
+                          <ProfileField icon={Phone} label="رقم الهاتف" value={user?.phoneNumber} />
+                          <ProfileField icon={GraduationCap} label="التخصص الأكاديمي" value={user?.major} />
+                        </>
+                      ) : (
+                        <>
+                          <ProfileField icon={ShieldCheck} label="الصلاحية" value="مدير النظام" color="amber" />
+                          <ProfileField icon={Lock} label="الحالة" value="نشط" color="emerald" />
+                        </>
+                      )}
                     </div>
                   </div>
 

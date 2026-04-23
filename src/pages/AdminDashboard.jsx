@@ -1283,8 +1283,8 @@ const AdminDashboard = () => {
       <Navbar />
       <div className="min-h-screen bg-gray-50/50 dark:bg-[#08080a] pt-24 lg:pt-32 pb-12 flex flex-col lg:flex-row gap-0 overflow-hidden" style={{ direction: "rtl" }}>
         
-        {/* New Leaner Glass Sidebar */}
-        <div className="lg:w-[220px] w-full lg:h-[calc(100vh-130px)] lg:sticky lg:top-32 px-4 lg:pl-0 lg:pr-4 mb-6 lg:mb-0">
+        {/* New Leaner Glass Sidebar - Hidden on mobile */}
+        <div className="hidden lg:block lg:w-[220px] lg:h-[calc(100vh-130px)] lg:sticky lg:top-32 pr-4 pl-0">
           <div className="bg-white/80 dark:bg-[#121214]/80 backdrop-blur-2xl h-full rounded-2xl p-4 border border-white dark:border-white/5 shadow-sm flex flex-col relative overflow-hidden">
             <div className="absolute -left-20 -bottom-20 w-40 h-40 bg-library-accent/10 rounded-full blur-[80px]" />
             
@@ -1365,21 +1365,13 @@ const AdminDashboard = () => {
           <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-1.5 text-[8px] font-black text-gray-400 uppercase tracking-widest mb-2 bg-white/50 dark:bg-white/5 w-fit px-2.5 py-1 rounded-full border border-gray-100 dark:border-white/5">
-                <Link to="/admin" className="hover:text-library-accent transition-colors">الرئيسية</Link>
+                <Link to="/admin" className="hover:text-library-accent transition-colors">لوحة الإدارة</Link>
                 <span className="opacity-20">/</span>
                 <span className="text-library-primary dark:text-white">{menuItems.find(i => i.id === activeTab)?.title}</span>
               </div>
               <h1 className="text-2xl font-black text-library-primary dark:text-white tracking-tighter flex items-center gap-2.5">
                 {menuItems.find(i => i.id === activeTab)?.title}
               </h1>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <div className="flex gap-1.5">
-                <button className="lg:hidden w-9 h-9 rounded-lg bg-library-primary text-white flex items-center justify-center shadow-md">
-                  <Menu size={16} />
-                </button>
-              </div>
             </div>
           </header>
 
@@ -1418,6 +1410,30 @@ const AdminDashboard = () => {
               trend="down" 
               onClick={() => { setActiveTab("students"); setSubTab("pending"); }}
             />
+          </div>
+          
+          {/* Mobile Navigation Tabs */}
+          <div className="lg:hidden flex items-center gap-2 overflow-x-auto no-scrollbar pb-6 mb-2">
+            {menuItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`flex items-center gap-2.5 px-5 py-3 rounded-2xl font-black text-[10px] transition-all whitespace-nowrap border ${
+                  activeTab === item.id 
+                    ? "bg-library-primary text-white border-library-primary shadow-lg shadow-library-primary/20" 
+                    : "bg-white dark:bg-white/5 text-gray-400 border-gray-100 dark:border-white/5"
+                }`}
+              >
+                <div className="relative">
+                  <item.icon size={14} className={activeTab === item.id ? "text-library-accent" : ""} />
+                  {((item.id === "students" && parseInt(statsData.requests.value) > 0) || 
+                    (item.id === "books" && (statsData.pendingBooksCount || 0) > 0)) && (
+                    <span className="absolute -top-1.5 -right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white dark:border-[#08080a]" />
+                  )}
+                </div>
+                {item.title}
+              </button>
+            ))}
           </div>
 
           {renderContent()}
