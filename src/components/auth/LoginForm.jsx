@@ -1,16 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Eye, EyeOff, Loader2, LogIn, Mail } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Loader2, Mail, Shield, User } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
-import { identityApi } from "../../services/api";
 import { tokenStore } from "../../utils/constants";
 
 const LoginForm = ({ onForgotPassword, onUnconfirmed }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, mockLogin } = useAuth();
 
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [loginError, setLoginError] = useState("");
@@ -28,7 +27,7 @@ const LoginForm = ({ onForgotPassword, onUnconfirmed }) => {
   }, []);
 
   const validateEmail = (email) => {
-    const universityEmailRegex = /^[^\s@]+@(std\.mans\.edu\.eg|mans\.edu\.eg)$/;
+    const universityEmailRegex = /^[^\s@]+@(std\.mans\.edu\.eg|mans\.edu\.eg|VIP\.admin|bookorbit\.com)$/;
     return universityEmailRegex.test(email);
   };
 
@@ -62,7 +61,7 @@ const LoginForm = ({ onForgotPassword, onUnconfirmed }) => {
   };
 
   const handleLoginSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setIsLoading(true);
     setLoginError("");
 
@@ -114,7 +113,7 @@ const LoginForm = ({ onForgotPassword, onUnconfirmed }) => {
       }
 
       toast.success(
-        `مرحباً بك مجدداً، ${loginResult.user?.name || "أهلاً بك"}! 🎉`,
+        `مرحباً بك مجدداً، ${loginResult.user?.fullName || loginResult.user?.name || "أهلاً بك"}! 🎉`,
       );
 
       const from = location.state?.from?.pathname || "/app";
@@ -133,6 +132,23 @@ const LoginForm = ({ onForgotPassword, onUnconfirmed }) => {
     }
   };
 
+  // ✅ دخول وهمي (Mock) لتخطي الباك إند ورؤية الفرونت إند مباشرة
+  const handleQuickLogin = (role) => {
+    setIsLoading(true);
+    setTimeout(() => {
+      const result = mockLogin(role);
+      if (result.success) {
+        toast.success(`تم الدخول (Mock ${role === 'admin' ? 'Admin' : 'Student'}) بنجاح ⚡`);
+        if (role === 'admin') {
+          navigate("/admin/students", { replace: true });
+        } else {
+          navigate("/app", { replace: true });
+        }
+      }
+      setIsLoading(false);
+    }, 500);
+  };
+
   const getInputClass = (name) =>
     `w-full px-4 py-3.5 bg-white dark:bg-dark-surface border-2 ${
       errors[name]
@@ -142,13 +158,13 @@ const LoginForm = ({ onForgotPassword, onUnconfirmed }) => {
 
   return (
     <>
-      <h2 className="text-4xl font-black text-library-primary dark:text-white mb-2 tracking-tight">
+      <h2 className="text-2xl font-black text-library-primary dark:text-white mb-1 tracking-tight">
         مرحباً بعودتك.
       </h2>
-      <p className="text-library-primary/40 dark:text-gray-400 mb-10 text-sm font-bold">
+      <p className="text-library-primary/40 dark:text-gray-400 mb-6 text-[11px] font-bold">
         سجل دخولك لمتابعة كتبك المستعارة أو لإضافة مراجع جديدة.
       </p>
-      <form id="login-form-container" onSubmit={handleLoginSubmit} className="space-y-6">
+      <form id="login-form-container" onSubmit={handleLoginSubmit} className="space-y-4">
         <div>
           <label className="block text-[11px] font-black text-library-primary/60 dark:text-gray-300 mb-2 mr-1">
             البريد الجامعي
@@ -227,20 +243,44 @@ const LoginForm = ({ onForgotPassword, onUnconfirmed }) => {
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="w-full bg-library-primary dark:bg-white text-white dark:text-library-primary font-black py-4 rounded-xl shadow-xl shadow-library-primary/20 dark:shadow-none hover:shadow-2xl hover:-translate-y-0.5 active:scale-[0.98] transition-all text-sm flex items-center justify-center gap-3 disabled:opacity-50 mt-4"
-        >
-          {isLoading ? (
-            <Loader2 size={18} className="animate-spin" />
-          ) : (
-            <>
-               <span>تسجيل الدخول</span>
-               <ArrowRight size={18} className="rotate-180" />
-            </>
-          )}
-        </button>
+        <div className="space-y-2 mt-2">
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-library-primary dark:bg-white text-white dark:text-library-primary font-black py-3 rounded-xl shadow-lg shadow-library-primary/10 hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.98] transition-all text-xs flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            {isLoading ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <>
+                <span>تسجيل الدخول</span>
+                <ArrowRight size={16} className="rotate-180" />
+              </>
+            )}
+          </button>
+
+          {/* أزرار الدخول السريع للمطورين */}
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => handleQuickLogin("admin")}
+              disabled={isLoading}
+              className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-black py-3 rounded-xl hover:bg-amber-500/20 transition-all text-[10px] flex items-center justify-center gap-2"
+            >
+              <Shield size={14} />
+              <span>دخول سريع (أدمن)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleQuickLogin("student")}
+              disabled={isLoading}
+              className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-black py-3 rounded-xl hover:bg-emerald-500/20 transition-all text-[10px] flex items-center justify-center gap-2"
+            >
+              <User size={14} />
+              <span>دخول سريع (طالب)</span>
+            </button>
+          </div>
+        </div>
       </form>
 
       {loginError && (

@@ -39,12 +39,18 @@ export const getBookImageUrl = (bookId) =>
 
 // ─── Enum Display Labels ─────────────────────────────────────────────────────
 export const STUDENT_STATE_LABELS = {
-  Pending:  "قيد المراجعة",
-  Approved: "موافق عليه",
-  Active:   "نشط",
+  Pending:  "بانتظار تأكيد الإيميل",
+  Approved: "مؤكد (بانتظار التوثيق)",
+  Active:   "نشط وموثق",
   Rejected: "مرفوض",
   Banned:   "محظور",
-  UnBanned: "تم رفع الحظر",
+  UnBanned: "نشط",
+};
+
+export const BOOK_STATE_LABELS = {
+  Pending: "قيد المراجعة",
+  Approved: "موافق عليه",
+  Rejected: "مرفوض",
 };
 
 export const BOOK_COPY_CONDITION_LABELS = {

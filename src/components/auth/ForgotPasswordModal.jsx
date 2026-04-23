@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Lock, X, CheckCircle2, Mail, Loader2, ShieldCheck, AlertCircle, ArrowLeft } from "lucide-react";
+import { Lock, X, Mail, Loader2, ShieldCheck, AlertCircle, ArrowLeft } from "lucide-react";
 import toast from "react-hot-toast";
 import { identityApi } from "../../services/api";
 

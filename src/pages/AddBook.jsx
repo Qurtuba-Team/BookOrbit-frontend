@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import Navbar from '../components/common/Navbar';
 import { booksApi } from '../services/api';
+import { BOOK_CATEGORY_LABELS } from '../utils/constants';
 import { 
   Upload, 
   BookOpen, 
@@ -31,6 +32,7 @@ const AddBook = () => {
     author: '',
     isbn: '',
     publisher: '',
+    category: '',
   });
 
   const handleCoverUpload = (e) => {
@@ -95,11 +97,24 @@ const AddBook = () => {
 
     try {
       const data = new FormData();
-      data.append('Title', formData.title);
-      data.append('Author', formData.author);
-      data.append('ISBN', formData.isbn || "");
-      data.append('Publisher', formData.publisher || "");
-      data.append('CoverImage', coverFile);
+      data.append('Title', formData.title.trim());
+      data.append('Author', formData.author.trim());
+      data.append('ISBN', formData.isbn?.trim() || "");
+      data.append('Publisher', formData.publisher?.trim() || "");
+      
+      // Explicitly check that coverFile is a File object
+      if (coverFile instanceof File || coverFile instanceof Blob) {
+        data.append('CoverImage', coverFile);
+      }
+      
+      if (formData.category) {
+        const categoryIndex = Object.keys(BOOK_CATEGORY_LABELS).indexOf(formData.category);
+        if (categoryIndex !== -1) {
+          // Add as 'Categories' and force it to be a Number (FormData will stringify it, but ASP.NET will parse it correctly)
+          // Some backends expect 'Categories' to be sent multiple times for an array
+          data.append('Categories', Number(categoryIndex));
+        }
+      }
 
       await booksApi.create(data);
       
@@ -110,7 +125,12 @@ const AddBook = () => {
     } catch (error) {
       toast.dismiss(loadingToast);
       if (error.status === 403) {
-        toast.error('عذراً، ليس لديك صلاحية لإضافة كتب جديدة. (للأدمن فقط)');
+        toast.error('عذراً، لا تمتلك الصلاحيات الكافية لإضافة كتاب. يجب أن يكون حسابك موثقاً (Active).');
+      } else if (error.status === 409) {        toast.error('هذا الكتاب (أو الرقم الدولي ISBN) موجود بالفعل في الكتالوج.');
+      } else if (error.data?.errors) {
+        // Detailed validation errors from backend
+        const firstError = Object.values(error.data.errors)[0]?.[0];
+        toast.error(firstError || 'يرجى التحقق من البيانات المدخلة');
       } else {
         toast.error(error.message || 'فشل في إضافة الكتاب');
       }
@@ -168,7 +188,10 @@ const AddBook = () => {
                   <BookOpen size={32} className="text-library-accent" />
                   إضافة كتاب جديد للكتالوج
                 </h1>
-                <p className="text-library-paper/80 opacity-90 text-lg font-medium">قم بتعبئة بيانات الكتاب ليتم إدراجه في المكتبة العامة</p>
+                <p className="text-library-paper/80 opacity-90 text-lg font-medium mb-2">قم بتعبئة بيانات الكتاب لإدراجه في الكتالوج العام للمكتبة.</p>
+                <div className="bg-white/10 backdrop-blur-md rounded-lg p-3 text-sm font-bold border border-white/20 inline-block">
+                  💡 إشعار: بمجرد موافقة الإدارة على إدراج الكتاب، سيتم تسجيل نسختك تلقائياً وعرضها للإعارة. إذا كان الكتاب موجوداً مسبقاً، يمكنك إضافة نسختك مباشرة من صفحة الكتاب.
+                </div>
               </div>
             </div>
 
@@ -306,17 +329,33 @@ const AddBook = () => {
                         className="w-full px-5 py-4 rounded-xl border-2 border-library-primary/5 dark:border-white/[0.05] focus:border-library-accent outline-none transition-all bg-white dark:bg-dark-surface focus:shadow-xl focus:shadow-library-accent/5 text-library-ink dark:text-white placeholder-gray-300 dark:placeholder-gray-600 font-medium text-sm disabled:opacity-50"
                       />
                     </div>
+
+                    {/* Category */}
+                    <div className="space-y-2">
+                      <label className="text-xs font-black text-library-primary/60 dark:text-gray-300 flex items-center gap-2 transition-colors duration-300 mr-1">
+                        <BookOpen size={16} className="text-library-accent" /> التصنيف
+                      </label>
+                      <select
+                        name="category"
+                        value={formData.category}
+                        onChange={handleChange}
+                        disabled={isSubmitting}
+                        className="w-full px-5 py-4 rounded-xl border-2 border-library-primary/5 dark:border-white/[0.05] focus:border-library-accent outline-none transition-all bg-white dark:bg-dark-surface focus:shadow-xl focus:shadow-library-accent/5 text-library-ink dark:text-white font-medium text-sm disabled:opacity-50 appearance-none"
+                        required
+                      >
+                        <option value="" disabled>اختر تصنيف الكتاب...</option>
+                        {Object.entries(BOOK_CATEGORY_LABELS).map(([key, label]) => (
+                          <option key={key} value={key}>{label}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
 
-                  {/* Description (Optional visual placeholder) */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-black text-library-primary/60 dark:text-gray-300 flex items-center gap-2 transition-colors duration-300 mr-1">
-                      <FileText size={16} className="text-library-accent" /> نبذة عن الكتاب (اختياري)
-                    </label>
-                    <textarea
-                      placeholder="اكتب وصفاً موجزاً..."
-                      className="w-full px-5 py-4 rounded-xl border-2 border-library-primary/5 dark:border-white/[0.05] focus:border-library-accent outline-none transition-all bg-white dark:bg-dark-surface text-library-ink dark:text-white placeholder-gray-300 dark:placeholder-gray-600 resize-none font-medium text-sm leading-relaxed h-32"
-                    ></textarea>
+                  {/* Categories Info */}
+                  <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-500/5 border border-amber-200 dark:border-amber-500/10">
+                    <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 leading-relaxed">
+                      * ملاحظة: سيتم مراجعة بيانات الكتاب من قبل الإدارة قبل ظهوره بشكل عام في المكتبة. يرجى التأكد من دقة المعلومات وصورة الغلاف.
+                    </p>
                   </div>
 
                   {/* Submit Button */}

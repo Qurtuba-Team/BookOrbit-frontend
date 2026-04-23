@@ -15,6 +15,7 @@ import MyCopies from './pages/MyCopies';
 import LendingList from './pages/LendingList';
 import AdminStudents from './pages/AdminStudents';
 import AdminBooks from './pages/AdminBooks';
+import AdminDashboard from './pages/AdminDashboard';
 import EmailVerified from './redirects/EmailVerified';
 import ResetPassword from './redirects/ResetPassword';
 
@@ -60,10 +61,10 @@ const AdminRoute = ({ children }) => {
 
 // حارس للصفحات العامة — يمنع المستخدم المسجل من الرجوع للهوم أو اللوجين
 const GuestRoute = ({ children }) => {
-  const { isLoggedIn, loading } = useAuth();
+  const { isLoggedIn, loading, user } = useAuth();
   if (loading) return null;
   if (isLoggedIn) {
-    return <Navigate to="/app" replace />;
+    return <Navigate to={user?.role?.toLowerCase() === "admin" ? "/admin" : "/app"} replace />;
   }
   return children;
 };
@@ -92,7 +93,8 @@ function AppRoutes() {
               <Route path="/" element={<GuestRoute><Home /></GuestRoute>} />
               <Route path="/login" element={<GuestRoute><AuthPage /></GuestRoute>} />
               <Route path="/register" element={<GuestRoute><AuthPage /></GuestRoute>} />
-              <Route path="/EmailVerified" element={<GuestRoute><EmailVerified /></GuestRoute>} />
+              <Route path="/EmailVerified" element={<EmailVerified />} />
+              <Route path="/EmailVerfied" element={<EmailVerified />} />
               <Route path='/ResetPassword' element={<GuestRoute><ResetPassword /></GuestRoute>} />
 
               {/* ── Student Protected Routes (محمية) ── */}
@@ -104,6 +106,7 @@ function AppRoutes() {
               <Route path="/addbook" element={<ProtectedRoute><AddBook /></ProtectedRoute>} />
 
               {/* ── Admin Protected Routes (محمية) ── */}
+              <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
               <Route path="/admin/students" element={<AdminRoute><AdminStudents /></AdminRoute>} />
               <Route path="/admin/books" element={<AdminRoute><AdminBooks /></AdminRoute>} />
 

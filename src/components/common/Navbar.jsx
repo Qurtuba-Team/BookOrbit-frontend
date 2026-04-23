@@ -76,10 +76,11 @@ const Navbar = () => {
   // Try to find the best display name
   const displayName = user?.fullName || user?.Name || user?.name || user?.userName || user?.email?.split('@')[0] || "المستخدم";
   // Try to find the best major/role display
-  const displayRole = user?.major || (user?.role === 'Admin' ? 'Management' : 'University Student');
+  const displayRole = user?.major || (user?.role?.toLowerCase() === 'admin' ? 'إدارة النظام' : 'طالب جامعي');
 
   const isDashboard = location.pathname.startsWith('/app') || 
                       location.pathname.startsWith('/dashboard') || 
+                      location.pathname.startsWith('/admin') || 
                       location.pathname.startsWith('/addbook');
 
   useEffect(() => {
@@ -124,7 +125,7 @@ const Navbar = () => {
               </Link>
 
               <AnimatePresence>
-                {isDashboard && isLoggedIn && (
+                {isDashboard && isLoggedIn && user?.role?.toLowerCase() !== 'admin' && (
                   <motion.div 
                     initial={{ opacity: 0, x: -20, width: 0 }}
                     animate={{ opacity: 1, x: 0, width: 'auto' }}
@@ -165,7 +166,7 @@ const Navbar = () => {
 
               {isLoggedIn ? (
                 <div className="flex items-center gap-3 lg:gap-6">
-                  {isDashboard && (
+                  {isDashboard && user?.role?.toLowerCase() !== 'admin' && (
                     <motion.button 
                       whileHover={{ scale: 1.1 }}
                       className="relative w-11 h-11 rounded-2xl flex items-center justify-center bg-white/50 dark:bg-white/5 text-library-primary/70 dark:text-gray-400 hover:text-library-accent transition-all border border-library-primary/5 dark:border-white/5"
@@ -180,8 +181,19 @@ const Navbar = () => {
                       <p className="text-sm font-black text-library-primary dark:text-white leading-none group-hover:text-library-accent transition-colors">
                         {displayName}
                       </p>
-                      <p className="text-[10px] text-library-primary/40 dark:text-gray-500 mt-1.5 font-black tracking-widest uppercase">
+                      <p className="text-[10px] text-library-primary/40 dark:text-gray-500 mt-1.5 font-black tracking-widest uppercase flex items-center gap-2">
                          {displayRole}
+                         {isLoggedIn && user?.role?.toLowerCase() !== 'admin' && (
+                           <span className={`w-1.5 h-1.5 rounded-full ${
+                             user.status === 'active' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]' : 
+                             user.status === 'approved' ? 'bg-blue-500' : 
+                             'bg-amber-500'
+                           }`} title={
+                             user.status === 'active' ? 'موثق' : 
+                             user.status === 'approved' ? 'بانتظار التوثيق' : 
+                             'بانتظار تأكيد الإيميل'
+                           } />
+                         )}
                       </p>
                     </div>
                     
@@ -197,6 +209,15 @@ const Navbar = () => {
                         )}
                       </div>
                     </motion.div>
+
+                    {user?.role?.toLowerCase() === 'admin' && !location.pathname.startsWith('/admin') && (
+                      <Link 
+                        to="/admin"
+                        className="hidden lg:flex items-center gap-2 px-4 py-2 rounded-xl bg-library-accent/10 text-library-accent border border-library-accent/20 text-xs font-black hover:bg-library-accent/20 transition-all"
+                      >
+                         لوحة الإدارة
+                      </Link>
+                    )}
 
                     <motion.button
                       whileHover={{ scale: 1.1, backgroundColor: 'rgba(239, 68, 68, 0.15)' }}
@@ -271,6 +292,11 @@ const Navbar = () => {
                   <Link to="/app" className="text-3xl font-black text-library-primary dark:text-white flex items-center gap-4 group">
                      <span className="w-2 h-2 rounded-full bg-library-accent group-hover:scale-150 transition-transform"></span> لوحة التحكم
                   </Link>
+                  {user?.role?.toLowerCase() === 'admin' && (
+                    <Link to="/admin" className="text-3xl font-black text-library-primary dark:text-white flex items-center gap-4 group">
+                       <span className="w-2 h-2 rounded-full bg-amber-500"></span> لوحة الإدارة
+                    </Link>
+                  )}
                   <Link to="/profile" className="text-3xl font-black text-library-primary dark:text-white flex items-center gap-4 group">
                      <span className="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-700"></span> حسابي
                   </Link>
