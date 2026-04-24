@@ -1,74 +1,126 @@
-<<<<<<< HEAD
-# Getting Started with Create React App
+# 📚 BookOrbit
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+<div align="center">
+  <p><strong>Empowering Students. Sharing Knowledge. Reducing Costs.</strong></p>
+  
+  [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg?style=for-the-badge)](https://github.com/Abdulrhman65/BookOrbit-frontend)
+  [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=for-the-badge)](LICENSE)
+  [![React](https://img.shields.io/badge/React-19.0-61DAFB.svg?style=for-the-badge&logo=react)](https://react.dev/)
+  [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC.svg?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
+  [![ASP.NET Core](https://img.shields.io/badge/Backend-ASP.NET_Core-512BD4.svg?style=for-the-badge&logo=dotnet)](https://dotnet.microsoft.com/)
+</div>
 
-## Available Scripts
+<br />
 
-In the project directory, you can run:
+## 📖 Introduction
 
-### `npm start`
+**BookOrbit** is a dedicated university platform designed to facilitate the seamless exchange of used books among college students. By creating a localized, secure, and student-only community, BookOrbit significantly reduces educational costs and promotes a sustainable culture of knowledge sharing within the campus.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+---
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 🏗️ Architecture
 
-### `npm test`
+BookOrbit follows a modern, decoupled client-server architecture to ensure high performance, security, and scalability.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- **Frontend (Client):** Built with **React 19** and styled using **Tailwind CSS**, providing a dynamic, responsive, and intuitive User Interface (UI). **Framer Motion** is used to deliver fluid micro-animations, while **React Router v7** handles seamless navigation.
+- **Backend (API):** Powered by an **ASP.NET Core** RESTful API. It handles complex business logic, strict input validation, OTP generation, and secure data transactions.
+- **Authentication:** JWT-based authentication with strict role-based access control (Admin vs. Student), email verification, and secure session management.
 
-### `npm run build`
+---
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## 🔌 API Documentation
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Our API is designed following REST principles. Below are the core endpoints used by the platform:
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+| Endpoint | Method | Description | Auth Required |
+| :--- | :---: | :--- | :---: |
+| `/api/v1/auth/register` | `POST` | Registers a new student account (requires university email). | ❌ |
+| `/api/v1/auth/login` | `POST` | Authenticates the user and returns a JWT token pair. | ❌ |
+| `/api/v1/books` | `GET` | Retrieves a paginated list of available books in the university. | ✅ |
+| `/api/v1/books` | `POST` | Submits a new book for admin review or adds a copy to an existing book. | ✅ |
+| `/api/v1/exchange` | `POST` | Initiates a request to borrow/exchange a book from another student. | ✅ |
+| `/api/v1/exchange/{id}/confirm`| `PUT` | Validates the OTP when students meet to finalize the book transfer. | ✅ |
 
-### `npm run eject`
+> **Note:** All protected routes require a valid `Bearer Token` in the `Authorization` header.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+---
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## 🗄️ Database Schema
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+The system relies on a well-structured relational database. Below are the primary domain models:
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+- **`User` (Student/Admin):** Stores personal information, university ID, major, authentication details, and account status (Active, Pending, Banned).
+- **`Book`:** Contains metadata about the book (Title, Author, ISBN, Category) subject to admin approval.
+- **`BookCopy`:** Represents a physical instance of a book owned by a specific student, including its condition.
+- **`ExchangeRequest`:** Tracks the lifecycle of a borrow/exchange transaction (Pending, Accepted, Rejected, Completed), including the auto-generated OTP for physical handover.
 
-## Learn More
+---
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## ⚙️ Installation & Environment Variables
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Follow these steps to run the frontend application locally.
 
-### Code Splitting
+### 1. Prerequisites
+- [Node.js](https://nodejs.org/) (v18 or higher)
+- npm or yarn
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### 2. Clone the Repository
+```bash
+git clone https://github.com/Abdulrhman65/BookOrbit-frontend.git
+cd BookOrbit-frontend
+```
 
-### Analyzing the Bundle Size
+### 3. Install Dependencies
+```bash
+npm install
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### 4. Environment Variables
+Create a `.env` file in the root directory and configure the required variables. Example:
 
-### Making a Progressive Web App
+```env
+# API Configuration
+REACT_APP_API_BASE_URL=http://localhost:7240/api/v1
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+# Other Configuration
+REACT_APP_ENVIRONMENT=development
+```
 
-### Advanced Configuration
+### 5. Start the Development Server
+```bash
+npm start
+```
+The application will be available at `http://localhost:3000`.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+---
 
-### Deployment
+## 🔄 User Flow: Uploading & Exchanging a Book
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+1. **Upload / Add Book:**
+   - The student navigates to the "Add Book" section.
+   - If the book is new to the platform, the student fills in the details (Title, Author, Cover). This creates a "Pending" book that requires **Admin Approval**.
+   - If the book already exists in the system directory, the student simply adds their physical copy specifying its condition.
+2. **Requesting to Borrow:**
+   - Another student browses the catalog and clicks "Request to Borrow" on the desired book.
+   - The owner receives a notification and can either **Accept** or **Reject** the request.
+3. **Physical Handover & OTP Verification:**
+   - Upon acceptance, the system generates a secure **OTP**.
+   - The students agree to meet on campus.
+   - At the meeting, the borrower provides the OTP to the owner. The owner enters it into the system to officially mark the book as "Exchanged/Delivered", ensuring a trusted transaction.
 
-### `npm run build` fails to minify
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
-=======
-# BookOrbit-frontend
->>>>>>> ffb5c209c11a0683161ac257ac1fbe2de826f2f7
+## 🚀 Future Roadmap
+
+We are constantly looking to improve BookOrbit. Here are some features planned for future releases:
+
+- [ ] **📱 Mobile Application:** Cross-platform mobile app (React Native/Flutter) for on-the-go access and push notifications.
+- [ ] **⭐ Rating & Reputation System:** Allow students to rate each other after a successful exchange to build trust.
+- [ ] **💬 In-App Messaging:** Secure, real-time chat between students to coordinate meeting points without sharing personal phone numbers.
+- [ ] **🏛️ Multi-University Support:** Expanding the platform to support distinct communities across different universities.
+- [ ] **📊 Advanced Analytics Dashboard:** For admins to monitor exchange metrics and popular academic materials.
+
+---
+<div align="center">
+  <i>Built with ❤️ for University Students.</i>
+</div>
