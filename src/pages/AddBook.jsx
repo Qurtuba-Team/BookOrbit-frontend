@@ -231,29 +231,59 @@ const AddBook = () => {
                           exit={{ opacity: 0 }}
                           className="w-full h-full flex flex-col items-center justify-center relative"
                         >
-                          {/* 3D Book Model */}
-                          <div className="relative w-[180px] h-[260px] [perspective:1500px] mt-[-40px] z-10">
-                            <motion.div 
-                              animate={{ y: [-8, 8, -8] }}
-                              transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-                              className="w-full h-full relative [transform-style:preserve-3d] transition-transform duration-700 ease-out [transform:rotateY(35deg)]"
-                            >
-                              <div className="absolute inset-0 bg-library-primary rounded-l-xl shadow-2xl [transform:translateZ(-20px)] overflow-hidden">
-                                  <img src={coverPreview} className="w-full h-full object-cover opacity-60 blur-[1px]" alt="back" />
+                          {/* 3D Book — غلاف أوضح: حواف صفحات + عمق + hover */}
+                          <div className="group/book3d relative z-10 mt-[-32px] h-[300px] w-[210px] [perspective:2200px]">
+                            <motion.div className="relative h-full w-full cursor-default [transform-style:preserve-3d] transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] [transform:rotateY(38deg)_rotateX(8deg)] group-hover/book3d:[transform:rotateY(22deg)_rotateX(4deg)]">
+                              {/* ظهر الغلاف */}
+                              <div className="absolute inset-0 overflow-hidden rounded-l-xl rounded-r-sm border-l border-black/25 bg-library-primary [transform:translateZ(-18px)] shadow-2xl" aria-hidden>
+                                <img
+                                  src={coverPreview}
+                                  className="h-full w-full object-cover opacity-45 brightness-[0.55] dark:opacity-35"
+                                  alt=""
+                                />
                               </div>
-                              <div className="absolute top-[4px] bottom-[4px] left-[2px] w-[36px] bg-[#f5f5f5] [transform:translateX(-18px)_rotateY(-90deg)] flex flex-col justify-evenly border-y border-gray-300">
-                                  {Array.from({length: 20}).map((_, i) => <div key={i} className="h-[1px] bg-[#e0e0e0] w-full" />)}
+                              {/* حافة الصفحات (اليسار في فضاء 3D) */}
+                              <div className="absolute inset-y-[5px] left-[2px] flex w-[26px] flex-col justify-evenly overflow-hidden border-y border-gray-300 bg-[#ececec] shadow-inner [transform:translateX(-13px)_rotateY(-90deg)] dark:border-gray-600 dark:bg-[#2a3038]">
+                                {Array.from({ length: 28 }).map((_, i) => (
+                                  <div key={`sp-${i}`} className="h-px w-full shrink-0 bg-[#d8d8d8] dark:bg-gray-600" />
+                                ))}
                               </div>
-                              <div className="absolute inset-y-0 right-0 w-[40px] bg-library-primary [transform:translateX(20px)_rotateY(90deg)] rounded-r-md shadow-[inset_4px_0_10px_rgba(0,0,0,0.4)]">
-                                  <img src={coverPreview} className="w-full h-full object-cover opacity-85" alt="spine" />
+                              {/* حافة علوية (رأس الكتاب) */}
+                              <div className="absolute left-[3px] right-[3px] top-[2px] flex h-[22px] flex-row justify-evenly overflow-hidden border-x border-gray-300 bg-[#f0f0f0] shadow-inner [transform:translateY(-11px)_rotateX(90deg)] dark:border-gray-600 dark:bg-[#353b44]">
+                                {Array.from({ length: 36 }).map((_, i) => (
+                                  <div key={`tp-${i}`} className="h-full w-px shrink-0 bg-[#dadada] dark:bg-gray-600" />
+                                ))}
                               </div>
-                              {/* Front Cover */}
-                              <div className="absolute inset-0 bg-library-primary rounded-l-xl overflow-hidden [transform:translateZ(20px)] shadow-[-5px_5px_15px_rgba(0,0,0,0.3)] border-l border-white/10">
-                                 <img src={coverPreview} className="w-full h-full object-cover" alt="front" />
-                                 <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent"></div>
+                              {/* حافة سفلية */}
+                              <div className="absolute bottom-[2px] left-[3px] right-[3px] flex h-[22px] flex-row justify-evenly overflow-hidden border-x border-gray-300 bg-[#e4e4e4] [transform:translateY(11px)_rotateX(-90deg)] dark:border-gray-600 dark:bg-[#2f353d]">
+                                {Array.from({ length: 36 }).map((_, i) => (
+                                  <div key={`bt-${i}`} className="h-full w-px shrink-0 bg-[#cfcfcf] dark:bg-gray-600" />
+                                ))}
+                              </div>
+                              {/* قطع الصفحات (يمين الغلاف) */}
+                              <div className="absolute inset-y-[4px] right-0 flex w-[32px] flex-col justify-evenly overflow-hidden rounded-r-sm border-y border-r border-black/15 bg-[#fafafa] shadow-[inset_-6px_0_14px_rgba(0,0,0,0.12)] [transform:translateX(16px)_rotateY(90deg)] dark:border-white/10 dark:bg-[#1e232b] dark:shadow-[inset_-6px_0_18px_rgba(0,0,0,0.5)]">
+                                {Array.from({ length: 36 }).map((_, i) => (
+                                  <div key={`pg-${i}`} className="h-px w-full shrink-0 bg-[#e2e2e2] dark:bg-gray-700" />
+                                ))}
+                              </div>
+                              {/* الغلاف الأمامي */}
+                              <div className="absolute inset-0 overflow-hidden rounded-l-xl rounded-r-sm border-l-2 border-white/25 bg-white [transform:translateZ(18px)] shadow-[-12px_12px_28px_rgba(0,0,0,0.35)] ring-1 ring-black/5 dark:shadow-[-14px_18px_36px_rgba(0,0,0,0.55)] dark:ring-white/10">
+                                <img src={coverPreview} className="h-full w-full object-cover" alt="غلاف الكتاب" />
+                                {/* لمعان ربط خفيف بدون تدرج كامل الشاشة */}
+                                <div
+                                  className="pointer-events-none absolute inset-y-0 start-0 w-[28%] bg-white/25 mix-blend-overlay dark:bg-white/10"
+                                  aria-hidden
+                                />
+                                <div
+                                  className="pointer-events-none absolute inset-0 shadow-[inset_-14px_0_24px_rgba(0,0,0,0.18)] dark:shadow-[inset_-18px_0_32px_rgba(0,0,0,0.45)]"
+                                  aria-hidden
+                                />
                               </div>
                             </motion.div>
-                            <motion.div animate={{ scale: [0.85, 1, 0.85], opacity: [0.2, 0.4, 0.2] }} transition={{ repeat: Infinity, duration: 4 }} className="absolute -bottom-16 left-0 right-0 h-6 bg-black blur-[16px] rounded-[100%]"></motion.div>
+                            <div
+                              className="pointer-events-none absolute -bottom-14 left-1/2 h-8 w-[88%] -translate-x-1/2 rounded-[100%] bg-black/35 blur-xl dark:bg-black/60"
+                              aria-hidden
+                            />
                           </div>
 
                           {!isSubmitting && (

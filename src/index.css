@@ -69,6 +69,24 @@
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+/* Horizontal scroll: fade physical edges (tabs, chips) */
+.mask-fade-edges {
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 28px,
+    #000 calc(100% - 28px),
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 28px,
+    #000 calc(100% - 28px),
+    transparent 100%
+  );
+}
+
 /* =========================================================================
    PREMIUM PRELOADER
    ========================================================================= */

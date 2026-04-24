@@ -1,26 +1,54 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { BookMarked, Filter, ArrowUpLeft, User, ShieldCheck } from 'lucide-react';
+import {
+  BookMarked,
+  Filter,
+  ArrowUpLeft,
+  User,
+  ShieldCheck,
+  Sparkles,
+  Star,
+  LayoutGrid,
+} from 'lucide-react';
 import Navbar from '../components/common/Navbar';
 import { useAuth } from '../context/AuthContext';
 
-// --- Complex Animation Variants ---
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
 };
 
+const bookGridContainer = {
+  hidden: {},
+  visible: {
+    transition: { staggerChildren: 0.07, delayChildren: 0.08 },
+  },
+};
+
+const bookCardItem = {
+  hidden: { opacity: 0, y: 22 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] },
+  },
+};
+
+const CATEGORY_TABS = ['الكل', 'مقررات هندسة', 'مقررات طب', 'علوم أساسية'];
+
 const BookCard3D = ({ book }) => {
+  const available = book.status === 'متاح';
   return (
-    <motion.div 
-      whileHover={{ y: -10 }}
+    <motion.div
+      variants={bookCardItem}
+      whileHover={{ y: -8 }}
       className="relative flex flex-col items-center group h-full"
     >
       {/* 3D Book Container */}
-      <div className="relative w-[130px] h-[190px] [perspective:1200px] z-10 mb-[-25px] mt-2">
-        <motion.div 
-          className="w-full h-full relative [transform-style:preserve-3d] transition-transform duration-500 ease-out [transform:rotateY(30deg)_rotateX(5deg)] group-hover:[transform:rotateY(0deg)_rotateX(0deg)] cursor-pointer drop-shadow-2xl"
+      <div className="relative w-[130px] h-[190px] [perspective:1200px] z-10 mb-[-25px] mt-2 transition-transform duration-300 group-hover:scale-[1.02]">
+        <motion.div
+          className="w-full h-full relative [transform-style:preserve-3d] transition-transform duration-500 ease-out [transform:rotateY(30deg)_rotateX(5deg)] group-hover:[transform:rotateY(0deg)_rotateX(0deg)] cursor-pointer drop-shadow-2xl dark:drop-shadow-[0_20px_40px_rgba(0,0,0,0.45)]"
         >
           <div className={`absolute inset-0 ${book.color || 'bg-library-primary'} rounded-l-md [transform:translateZ(-12px)] overflow-hidden border-l border-black/20`}></div>
           <div className="absolute inset-y-[3px] left-[1px] w-[24px] bg-[#f5f5f5] [transform:translateX(-12px)_rotateY(-90deg)] flex flex-col justify-evenly overflow-hidden border-y border-gray-300 shadow-inner">
@@ -42,37 +70,53 @@ const BookCard3D = ({ book }) => {
                  <p className="text-white/80 text-[10px]">{book.author}</p>
                </div>
             )}
-            <div className="absolute top-2 right-2 z-20">
-               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-sm shadow-md backdrop-blur-md ${book.status === 'متاح' ? 'bg-green-500/90 text-white' : 'bg-red-500/90 text-white'}`}>
-                  {book.status}
-                </span>
+            <div className="absolute top-2 end-2 z-20">
+              <span
+                className={`text-[10px] font-black px-2.5 py-1 rounded-full shadow-md backdrop-blur-md border ${
+                  available
+                    ? 'bg-emerald-500/95 text-white border-emerald-400/30'
+                    : 'bg-rose-500/95 text-white border-rose-400/30'
+                }`}
+              >
+                {book.status}
+              </span>
             </div>
           </div>
         </motion.div>
       </div>
 
-      <div className="w-full bg-white/80 dark:bg-dark-surface/80 backdrop-blur-xl rounded-2xl pt-10 pb-5 px-5 border border-library-primary/10 dark:border-white/10 shadow-lg transition-all relative z-0 flex flex-col items-center flex-grow">
-         <h3 className="font-bold text-library-primary dark:text-white text-center text-base leading-tight mb-1 line-clamp-1 w-full">{book.title}</h3>
-         <p className="text-library-accent text-xs mb-3 text-center line-clamp-1 w-full">{book.author}</p>
-         <div className="w-full mt-auto">
-           <div className="w-full h-px bg-library-primary/5 dark:bg-white/5 mb-3"></div>
-           <div className="flex justify-between items-center w-full mb-4">
-              <div className="flex items-center gap-1.5 text-xs text-library-primary/70 dark:text-gray-400">
-                <User size={12} /> <span className="truncate max-w-[80px]">{book.owner}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                 <span className="text-amber-500 text-[10px]">★</span>
-                 <span className="text-xs font-bold dark:text-white">4.8</span>
-              </div>
+      <div className="w-full bg-white/92 dark:bg-[#141820]/92 backdrop-blur-xl rounded-3xl pt-11 pb-5 px-5 border border-library-primary/[0.07] dark:border-white/[0.07] shadow-lg shadow-library-primary/[0.05] dark:shadow-black/40 transition-all duration-300 relative z-0 flex flex-col items-center flex-grow group-hover:border-library-accent/25 dark:group-hover:border-library-accent/20 group-hover:shadow-xl group-hover:shadow-library-primary/10">
+        <h3 className="font-black text-library-primary dark:text-white text-center text-[15px] leading-snug mb-1 line-clamp-2 w-full min-h-[2.5rem]">
+          {book.title}
+        </h3>
+        <p className="text-library-accent text-xs font-bold mb-3 text-center line-clamp-1 w-full">{book.author}</p>
+        <div className="w-full mt-auto">
+          <div className="mb-3 h-px w-full bg-library-primary/10 dark:bg-white/10" />
+          <div className="flex justify-between items-center w-full mb-4 gap-2">
+            <div className="flex items-center gap-1.5 text-[11px] font-bold text-library-primary/65 dark:text-gray-400 min-w-0">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-library-primary/[0.06] dark:bg-white/[0.06]">
+                <User size={13} className="text-library-accent" strokeWidth={2} />
+              </span>
+              <span className="truncate">{book.owner}</span>
             </div>
-            <button 
-              disabled={book.status !== 'متاح'}
-              className={`w-full py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${book.status === 'متاح' ? 'bg-library-paper/50 text-library-primary border border-library-primary/20 hover:bg-library-accent hover:border-transparent hover:text-white dark:bg-dark-bg/50 dark:text-white dark:border-white/20 dark:hover:bg-library-accent shadow-sm hover:shadow-md' : 'bg-gray-100/50 text-gray-400 dark:bg-white/5 dark:text-gray-600 cursor-not-allowed'}`}
-            >
-              {book.status === 'متاح' ? 'اطلب الإعارة' : 'غير متاح حالياً'} 
-              {book.status === 'متاح' && <ArrowUpLeft size={16} />}
-            </button>
-         </div>
+            <div className="flex items-center gap-1 shrink-0 rounded-lg bg-amber-500/10 px-2 py-1 border border-amber-500/15">
+              <Star size={12} className="fill-amber-400 text-amber-600" strokeWidth={1.5} />
+              <span className="text-xs font-black text-library-primary dark:text-white">4.8</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            disabled={!available}
+            className={`w-full py-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 ${
+              available
+                ? 'bg-library-primary text-white border border-library-primary shadow-md hover:bg-library-accent hover:border-library-accent hover:shadow-lg dark:bg-white dark:text-library-primary dark:border-white dark:hover:bg-library-accent dark:hover:text-white dark:hover:border-library-accent'
+                : 'bg-gray-100/80 text-gray-400 border border-gray-200/80 dark:bg-white/[0.04] dark:text-gray-500 dark:border-white/10 cursor-not-allowed'
+            }`}
+          >
+            {available ? 'اطلب الإعارة' : 'غير متاح حالياً'}
+            {available && <ArrowUpLeft size={15} strokeWidth={2.5} />}
+          </button>
+        </div>
       </div>
     </motion.div>
   );
@@ -96,50 +140,60 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen relative transition-colors duration-300">
-      
-      <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none">
-        <motion.div 
-          initial={{ scale: 1.05 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 20, ease: "linear", repeat: Infinity, repeatType: "reverse" }}
-          className="absolute inset-[-5%] bg-cover bg-center bg-no-repeat"
-          style={{ 
-            backgroundImage: 'url("https://images.unsplash.com/photo-1507842217343-583bb7270b66?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80")',
-          }}
-        />
-        <div className="absolute inset-0 bg-white/85 dark:bg-[#050B14]/90 backdrop-blur-[8px] transition-colors duration-300"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-transparent to-black/10 dark:to-black/40"></div>
+    <div className="min-h-screen relative bg-library-paper dark:bg-dark-bg text-library-primary dark:text-library-paper transition-colors duration-300 overflow-x-hidden">
+      {/* خلفية هادئة — بدون صورة خارجية أو نبض scale يفسد التركيب */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden" aria-hidden>
+        <div className="absolute -top-40 -end-32 w-[min(90vw,520px)] h-[min(90vw,520px)] rounded-full bg-library-primary/[0.06] dark:bg-library-primary/20 blur-3xl" />
+        <div className="absolute top-1/3 -start-40 w-80 h-80 rounded-full bg-library-accent/[0.06] dark:bg-library-accent/10 blur-3xl" />
       </div>
-      
+
       <Navbar />
 
-      <main className="max-w-7xl mx-auto px-6 lg:px-8 py-12 pt-32">
-        
-        {/* Personalized Welcome Section */}
-        <motion.div initial="hidden" animate="visible" variants={fadeUp} className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
-          <div className="bg-white/40 dark:bg-dark-surface/40 backdrop-blur-md p-6 rounded-2xl border border-white/20 shadow-sm">
-            <h1 className="text-3xl font-black text-library-primary dark:text-white mb-2 drop-shadow-sm">
-              مرحباً، {firstName} 👋
-            </h1>
-            <p className="text-library-primary/80 dark:text-gray-300 font-medium">أهلاً بك في مكتبتك التبادلية، تصفح الكتب المتاحة الآن.</p>
+      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-12 pt-24 lg:pt-28">
+        {/* ترحيب — نفس أسلوب البطاقات الزجاجية في لوحة الطالب */}
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
+          className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-5 lg:gap-8 mb-10 lg:mb-12"
+        >
+          <div className="flex-1 rounded-2xl border border-gray-200 bg-white p-6 md:p-8 shadow-sm dark:border-dark-border dark:bg-dark-surface">
+            <div>
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-library-accent/30 bg-library-accent/10 px-3 py-1.5 text-[10px] font-black text-library-accent">
+                <Sparkles size={12} strokeWidth={2} />
+                الأرشيف الرقمي
+              </div>
+              <h1 className="text-2xl md:text-3xl font-black text-library-primary dark:text-white mb-2 leading-tight tracking-tight">
+                مرحباً، {firstName} 👋
+              </h1>
+              <p className="text-sm md:text-base text-library-primary/70 dark:text-gray-400 font-medium leading-relaxed max-w-xl">
+                أهلاً بك في مكتبتك التبادلية؛ تصفّح المراجع المتاحة للإعارة من زملائك.
+              </p>
+            </div>
           </div>
-          <Link to="/addbook" className="bg-library-primary dark:bg-white text-library-paper dark:text-library-primary font-bold px-6 py-4 rounded-xl flex items-center gap-2 hover:bg-library-accent dark:hover:bg-library-accent hover:text-white transition-all shadow-lg hover:shadow-library-accent/30 hover:-translate-y-1">
-            <BookMarked size={20} /> أضف كتاباً لمكتبتك
+          <Link
+            to="/addbook"
+            className="shrink-0 inline-flex items-center justify-center gap-2.5 rounded-2xl bg-library-primary px-7 py-4 text-sm font-black text-white shadow-lg shadow-library-primary/20 ring-1 ring-black/5 transition-all duration-200 hover:-translate-y-0.5 hover:bg-library-accent hover:shadow-xl active:translate-y-0 dark:bg-white dark:text-library-primary dark:ring-white/20 dark:hover:bg-library-accent dark:hover:text-white"
+          >
+            <BookMarked size={20} strokeWidth={2} />
+            أضف كتاباً لمكتبتك
           </Link>
         </motion.div>
 
-        <div className="grid lg:grid-cols-4 gap-8">
-          
-          <motion.div initial="hidden" animate="visible" variants={fadeUp} className="lg:col-span-1 space-y-6">
-            <div className="bg-white/80 dark:bg-dark-surface/80 backdrop-blur-xl rounded-2xl p-6 border border-library-primary/10 dark:border-white/5 shadow-lg">
-              <h3 className="font-bold text-library-primary dark:text-white mb-4 flex items-center gap-2">
-                <Filter size={18} className="text-library-accent" /> تصفية النتائج
+        <div className="grid lg:grid-cols-4 gap-6 lg:gap-8">
+          <motion.div initial="hidden" animate="visible" variants={fadeUp} className="lg:col-span-1 space-y-5 lg:space-y-6">
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-dark-border dark:bg-dark-surface">
+              <h3 className="mb-1 flex items-center gap-2.5 text-base font-black text-library-primary dark:text-white">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-library-accent/25 bg-library-accent/10 text-library-accent">
+                  <Filter size={18} strokeWidth={2} />
+                </span>
+                تصفية النتائج
               </h3>
+              <p className="text-xs text-library-primary/50 dark:text-gray-500 font-bold mb-5">حدّد الكلية لتضييق قائمة الكتب.</p>
               <div className="space-y-4">
                 <div>
-                  <h4 className="text-sm font-bold text-library-primary/70 dark:text-gray-400 mb-2">الكلية</h4>
-                  <select className="w-full bg-white/50 dark:bg-dark-bg/50 border border-library-primary/10 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-library-accent dark:text-white backdrop-blur-sm transition-all">
+                  <h4 className="text-xs font-black text-library-primary/60 dark:text-gray-400 mb-2 uppercase tracking-wide">الكلية</h4>
+                  <select className="w-full bg-library-paper/80 dark:bg-dark-bg/80 border border-library-primary/12 dark:border-white/10 rounded-xl px-3 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-library-accent/30 focus:border-library-accent/50 dark:text-white transition-all">
                     <option>كل الكليات</option>
                     <option>هندسة</option>
                     <option>طب</option>
@@ -149,35 +203,78 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="bg-library-primary dark:bg-[#0a1526]/90 backdrop-blur-xl rounded-2xl p-6 border border-library-primary/10 text-white shadow-xl relative overflow-hidden group">
-              <div className="absolute -right-10 -top-10 w-32 h-32 bg-library-accent/20 blur-3xl rounded-full group-hover:bg-library-accent/30 transition-all"></div>
-              <ShieldCheck size={32} className="text-library-accent mb-4 relative z-10" />
-              <h3 className="font-bold text-lg mb-2 relative z-10">عمليات معلقة</h3>
-              <p className="text-library-paper/70 text-sm mb-5 relative z-10 leading-relaxed">لديك كتاب واحد جاهز للتسليم، يرجى توليد كود الـ OTP عند المقابلة.</p>
-              <button className="w-full bg-library-accent text-library-primary font-bold py-2.5 rounded-xl text-sm hover:bg-white transition-all relative z-10 shadow-lg hover:shadow-white/20">
+            <div className="rounded-2xl bg-library-primary dark:bg-[#0c1628] p-6 border border-white/10 text-white shadow-xl relative overflow-hidden group ring-1 ring-white/10">
+              <div className="absolute start-6 top-0 h-1 w-14 rounded-b-md bg-library-accent" aria-hidden />
+              <div className="absolute -right-10 -top-10 w-36 h-36 bg-library-accent/25 blur-3xl rounded-full group-hover:bg-library-accent/35 transition-all duration-500" />
+              <div className="absolute -left-8 bottom-0 w-24 h-24 bg-white/5 blur-2xl rounded-full" />
+              <ShieldCheck size={30} className="text-library-accent mb-3 relative z-10 mt-2" strokeWidth={1.75} />
+              <h3 className="font-black text-lg mb-2 relative z-10">عمليات معلقة</h3>
+              <p className="text-white/75 text-sm mb-5 relative z-10 leading-relaxed">لديك كتاب واحد جاهز للتسليم؛ يرجى توليد كود الـ OTP عند المقابلة.</p>
+              <button
+                type="button"
+                className="w-full bg-library-accent text-library-primary font-black py-3 rounded-xl text-sm hover:bg-white transition-all relative z-10 shadow-md"
+              >
                 عرض التفاصيل
               </button>
             </div>
           </motion.div>
 
-          <motion.div initial="hidden" animate="visible" variants={fadeUp} className="lg:col-span-3">
-            <div className="flex gap-3 mb-8 pb-4 overflow-x-auto no-scrollbar mask-fade-edges">
-              {['الكل', 'مقررات هندسة', 'مقررات طب', 'علوم أساسية'].map((tab, i) => (
-                <button 
-                  key={i} 
-                  onClick={() => setActiveTab(tab)}
-                  className={`whitespace-nowrap px-6 py-2.5 rounded-full text-sm font-bold transition-all backdrop-blur-md shadow-sm ${activeTab === tab ? 'bg-library-primary text-white dark:bg-white dark:text-library-primary scale-105' : 'bg-white/60 text-library-primary/70 dark:bg-dark-surface/60 dark:text-gray-300 hover:bg-white dark:hover:bg-dark-surface'}`}
-                >
-                  {tab}
-                </button>
-              ))}
+          <motion.div initial="hidden" animate="visible" variants={fadeUp} className="lg:col-span-3 min-w-0 space-y-6">
+            <div className="flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white px-4 py-4 shadow-sm dark:border-dark-border dark:bg-dark-surface sm:flex-row sm:items-center sm:justify-between sm:px-5">
+              <div className="flex items-start gap-3 min-w-0">
+                <span className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-library-primary text-white shadow-md ring-1 ring-library-primary/20 dark:bg-white dark:text-library-primary">
+                  <LayoutGrid size={20} strokeWidth={2} />
+                </span>
+                <div className="min-w-0">
+                  <h2 className="text-base font-black text-library-primary dark:text-white sm:text-lg">كتب الأرشيف</h2>
+                  <p className="mt-0.5 text-xs font-bold text-library-primary/55 dark:text-gray-500">
+                    <span className="text-library-accent">{booksData.length}</span> مرجعاً في العرض · التصنيف:{' '}
+                    <span className="text-library-primary dark:text-gray-300">{activeTab}</span>
+                  </p>
+                </div>
+              </div>
             </div>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-12">
+            <div className="-mx-1 overflow-x-auto px-1 pb-1 no-scrollbar mask-fade-edges">
+              <div className="flex w-max min-w-full items-center gap-1 rounded-2xl border border-gray-200 bg-gray-50 p-1.5 dark:border-dark-border dark:bg-dark-bg sm:w-auto sm:min-w-0">
+                {CATEGORY_TABS.map((tab) => (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => setActiveTab(tab)}
+                    className="relative shrink-0 rounded-xl px-4 py-2.5 text-xs font-black transition-colors sm:px-5"
+                  >
+                    {activeTab === tab && (
+                      <motion.span
+                        layoutId="archive-tab-pill"
+                        className="absolute inset-0 rounded-xl bg-library-primary shadow-md dark:bg-white"
+                        transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                      />
+                    )}
+                    <span
+                      className={`relative z-10 block whitespace-nowrap ${
+                        activeTab === tab
+                          ? 'text-white dark:text-library-primary'
+                          : 'text-library-primary/65 hover:text-library-primary dark:text-gray-400 dark:hover:text-gray-200'
+                      }`}
+                    >
+                      {tab}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <motion.div
+              className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-11 sm:gap-y-12"
+              variants={bookGridContainer}
+              initial="hidden"
+              animate="visible"
+            >
               {booksData.map((book, idx) => (
                 <BookCard3D key={idx} book={book} />
               ))}
-            </div>
+            </motion.div>
           </motion.div>
         </div>
       </main>
