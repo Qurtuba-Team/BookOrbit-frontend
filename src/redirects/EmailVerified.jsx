@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { useSearchParams, Link, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, XCircle, Loader2, ArrowLeft, Mail, ShieldCheck } from "lucide-react";
-import toast from "react-hot-toast";
+import { XCircle, Loader2, ArrowLeft, ShieldCheck } from "lucide-react";
 import { identityApi } from "../services/api";
 
 const EmailVerified = () => {
@@ -72,7 +71,7 @@ const EmailVerified = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-md w-full bg-white dark:bg-[#0c1425]/80 backdrop-blur-xl border border-library-primary/10 dark:border-white/5 rounded-[2.5rem] p-8 md:p-12 shadow-2xl relative z-10 text-center"
+        className="max-w-md w-full bg-white dark:bg-[#0c1425]/80 backdrop-blur-xl border border-library-primary/10 dark:border-white/5 rounded-2xl p-8 shadow-2xl relative z-10 text-center"
       >
         <AnimatePresence mode="wait">
           {status === "loading" && (
@@ -113,7 +112,7 @@ const EmailVerified = () => {
                 />
               </div>
               
-              <h2 className="text-3xl font-black text-library-primary dark:text-white mb-4">
+              <h2 className="text-2xl font-black text-library-primary dark:text-white mb-2">
                 تم التفعيل بنجاح!
               </h2>
               <p className="text-library-primary/60 dark:text-gray-400 font-medium mb-10 leading-relaxed">

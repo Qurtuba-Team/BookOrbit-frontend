@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 
 // ─── ELEGANT 3D PLANETARY ORBIT ──────────────────────────────────────────────
 const Clean3DOrbit = () => (
-  <div className="relative w-64 h-64 md:w-80 md:h-80 flex items-center justify-center">
+  <div className="relative w-56 h-56 md:w-64 md:h-64 flex items-center justify-center">
     
     <motion.div 
       animate={{ scale: [1, 1.05, 1], opacity: [0.9, 1, 0.9] }}
@@ -56,7 +56,7 @@ const DashboardCard = ({ icon: Icon, title, desc, to, delay = 0 }) => (
     className="h-full"
   >
     <Link to={to} className="block h-full group">
-      <div className="p-6 md:p-8 rounded-2xl bg-white/70 dark:bg-dark-surface/70 backdrop-blur-md border border-library-primary/[0.06] dark:border-white/[0.06] hover:border-library-accent/30 dark:hover:border-library-accent/30 transition-all duration-300 card-lift h-full flex flex-col relative overflow-hidden hover:shadow-xl hover:shadow-library-primary/5">
+      <div className="p-5 md:p-6 rounded-xl bg-white/70 dark:bg-dark-surface/70 backdrop-blur-md border border-library-primary/[0.06] dark:border-white/[0.06] hover:border-library-accent/30 dark:hover:border-library-accent/30 transition-all duration-300 card-lift h-full flex flex-col relative overflow-hidden hover:shadow-xl hover:shadow-library-primary/5">
         <div className="absolute -top-10 -right-10 w-24 h-24 bg-library-accent/10 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         <div className="flex justify-between items-center mb-5 relative z-10">
           <div className="w-12 h-12 rounded-xl bg-library-accent/10 flex items-center justify-center group-hover:bg-library-accent/20 transition-colors">
@@ -109,7 +109,7 @@ const StudentDashboard = () => {
                     بوابة الطالب الأكاديمية
                   </div>
                   
-                  <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-library-primary dark:text-white leading-[1.2] mb-4">
+                  <h1 className="text-2xl md:text-3xl lg:text-4xl font-black text-library-primary dark:text-white leading-[1.2] mb-4">
                     مرحباً بك يا <span className="text-library-accent">{firstName}</span>،<br />
                     في مدار المعرفة.
                   </h1>

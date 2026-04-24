@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Camera, Eye, EyeOff, Loader2, UserPlus } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
-import { identityApi } from "../../services/api";
 import PasswordStrengthMeter from "./PasswordStrengthMeter";
 
 const RegisterForm = ({ switchMode, onSuccess }) => {
@@ -26,7 +25,7 @@ const RegisterForm = ({ switchMode, onSuccess }) => {
     useState(false);
 
   const validateEmail = (email) => {
-    const universityEmailRegex = /^[^\s@]+@(std\.mans\.edu\.eg|mans\.edu\.eg)$/;
+    const universityEmailRegex = /^[^\s@]+@(std\.mans\.edu\.eg|mans\.edu\.eg|bookorbit\.com)$/;
     return universityEmailRegex.test(email);
   };
 
@@ -291,16 +290,16 @@ const RegisterForm = ({ switchMode, onSuccess }) => {
 
   return (
     <>
-      <h2 className="text-4xl font-black text-library-primary dark:text-white mb-2 tracking-tight">
+      <h2 className="text-2xl font-black text-library-primary dark:text-white mb-1 tracking-tight">
         توثيق طالب جديد.
       </h2>
-      <p className="text-library-primary/40 dark:text-gray-400 mb-8 text-sm font-bold">
+      <p className="text-library-primary/40 dark:text-gray-400 mb-6 text-[11px] font-bold">
         عملية التوثيق تتم يدوياً لضمان بيئة جامعية آمنة.
       </p>
-      <form onSubmit={handleRegisterSubmit} className="space-y-5">
-        <div className="flex flex-col items-center justify-center mb-4">
+      <form onSubmit={handleRegisterSubmit} className="space-y-3.5">
+        <div className="flex flex-col items-center justify-center mb-2">
           <label
-            className={`relative w-24 h-24 rounded-full border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden group ${
+            className={`relative w-20 h-20 rounded-full border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden group ${
               errors.PersonalPhoto
                 ? "border-red-500/50 bg-red-500/5"
                 : "bg-library-primary/5 dark:bg-white/5 border-library-primary/10 dark:border-white/10 hover:border-library-accent shadow-inner"
@@ -315,10 +314,10 @@ const RegisterForm = ({ switchMode, onSuccess }) => {
             ) : (
               <>
                 <Camera
-                  size={24}
-                  className="text-library-primary/20 dark:text-gray-500 mb-1.5"
+                  size={20}
+                  className="text-library-primary/20 dark:text-gray-500 mb-1"
                 />
-                <span className="text-[10px] text-library-primary/40 dark:text-gray-400 font-black text-center leading-tight uppercase">
+                <span className="text-[9px] text-library-primary/40 dark:text-gray-400 font-black text-center leading-tight uppercase">
                   صورة
                   <br />
                   شخصية
@@ -326,7 +325,7 @@ const RegisterForm = ({ switchMode, onSuccess }) => {
               </>
             )}
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <Camera size={24} className="text-white" />
+              <Camera size={20} className="text-white" />
             </div>
             <input
               type="file"
@@ -388,9 +387,9 @@ const RegisterForm = ({ switchMode, onSuccess }) => {
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-[11px] font-black text-library-primary/60 dark:text-gray-300 mb-2 mr-1">
+            <label className="block text-[10px] font-black text-library-primary/60 dark:text-gray-300 mb-1.5 mr-1">
               الرقم السري
             </label>
             <div className="relative">
@@ -399,7 +398,7 @@ const RegisterForm = ({ switchMode, onSuccess }) => {
                 name="password"
                 value={registerData.password}
                 onChange={handleRegisterChange}
-                className={`${getInputClass("Password")} pl-12`}
+                className={`${getInputClass("Password")} pl-10 py-3`}
                 dir="ltr"
                 placeholder="••••••••"
                 required
@@ -408,24 +407,24 @@ const RegisterForm = ({ switchMode, onSuccess }) => {
               <button
                 type="button"
                 onClick={() => setShowRegisterPassword(!showRegisterPassword)}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-library-primary/20 dark:text-library-paper/20 hover:text-library-primary transition-colors"
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-library-primary/20 dark:text-library-paper/20 hover:text-library-primary transition-colors"
               >
                 {showRegisterPassword ? (
-                  <EyeOff size={18} />
+                  <EyeOff size={16} />
                 ) : (
-                  <Eye size={18} />
+                  <Eye size={16} />
                 )}
               </button>
             </div>
             {errors.Password && (
-              <p className="text-red-500 text-[10px] font-black mt-2 mr-1">
+              <p className="text-red-500 text-[10px] font-black mt-1 mr-1">
                 {errors.Password}
               </p>
             )}
             <PasswordStrengthMeter password={registerData.password} />
           </div>
           <div>
-            <label className="block text-[11px] font-black text-library-primary/60 dark:text-gray-300 mb-2 mr-1">
+            <label className="block text-[10px] font-black text-library-primary/60 dark:text-gray-300 mb-1.5 mr-1">
               تأكيد الرقم السري
             </label>
             <div className="relative">
@@ -434,7 +433,7 @@ const RegisterForm = ({ switchMode, onSuccess }) => {
                 name="registerConfirmPassword"
                 value={registerData.registerConfirmPassword}
                 onChange={handleRegisterChange}
-                className={`${getInputClass("registerConfirmPassword")} pl-12`}
+                className={`${getInputClass("registerConfirmPassword")} pl-10 py-3`}
                 dir="ltr"
                 placeholder="••••••••"
                 required
@@ -445,20 +444,15 @@ const RegisterForm = ({ switchMode, onSuccess }) => {
                 onClick={() =>
                   setShowRegisterConfirmPassword(!showRegisterConfirmPassword)
                 }
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-library-primary/20 dark:text-library-paper/20 hover:text-library-primary transition-colors"
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-library-primary/20 dark:text-library-paper/20 hover:text-library-primary transition-colors"
               >
                 {showRegisterConfirmPassword ? (
-                  <EyeOff size={18} />
+                  <EyeOff size={16} />
                 ) : (
-                  <Eye size={18} />
+                  <Eye size={16} />
                 )}
               </button>
             </div>
-            {errors.registerConfirmPassword && (
-              <p className="text-red-500 text-[10px] font-black mt-2 mr-1">
-                {errors.registerConfirmPassword}
-              </p>
-            )}
           </div>
         </div>
 
@@ -527,20 +521,20 @@ const RegisterForm = ({ switchMode, onSuccess }) => {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-library-primary text-white font-black py-4 rounded-xl shadow-xl shadow-library-primary/20 hover:shadow-2xl hover:-translate-y-0.5 active:scale-[0.98] transition-all text-sm flex items-center justify-center gap-3 disabled:opacity-50 mt-4"
+          className="w-full bg-library-primary text-white font-black py-3 rounded-xl shadow-lg shadow-library-primary/10 hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.98] transition-all text-xs flex items-center justify-center gap-2 disabled:opacity-50 mt-2"
         >
           {isLoading ? (
-            <Loader2 size={18} className="animate-spin" />
+            <Loader2 size={16} className="animate-spin" />
           ) : (
             <>
               <span>إنشاء حساب</span>
-              <UserPlus size={18} />
+              <UserPlus size={16} />
             </>
           )}
         </button>
       </form>
       {switchMode && (
-        <p className="mt-8 text-center text-library-primary/30 dark:text-gray-500 text-xs font-black pb-12 uppercase tracking-widest">
+        <p className="mt-4 text-center text-library-primary/30 dark:text-gray-500 text-[10px] font-black pb-4 uppercase tracking-widest">
           لديك حساب موثق؟{" "}
           <button
             onClick={switchMode}

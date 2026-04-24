@@ -1,9 +1,118 @@
 // ─── BookOrbit API Configuration ────────────────────────────────────────────
-import { API_V1, tokenStore } from "../utils/constants";
+import { API_V1, tokenStore, BOOK_CATEGORY_LABELS } from "../utils/constants";
 
 // ─── Token Refresh Queue ─────────────────────────────────────────────────────
 let isRefreshing = false;
 let failedQueue = [];
+
+const toLowerSafe = (value) => String(value ?? "").toLowerCase();
+
+const studentStateMap = {
+  0: "pending",   // Unconfirmed
+  1: "approved",  // Confirmed (Browsing only)
+  2: "active",    // Verified (Full permissions)
+  3: "rejected",
+  4: "banned",
+};
+
+const borrowingStateMap = {
+  0: "Pending",
+  1: "Approved",
+  2: "Rejected",
+  3: "Expired",
+  4: "Completed",
+};
+
+export const normalizeStudent = (student = {}) => {
+  const stateValue = student.state ?? student.State;
+  
+  // Direct mapping from backend state:
+  // 0 / "pending"  => Pending (waiting for admin approval)
+  // 1 / "approved" => Approved (waiting for admin activation)
+  // 2 / "active"   => Active (fully verified)
+  // 4 / "banned"   => Banned
+  
+  const status = typeof stateValue === "number"
+    ? studentStateMap[stateValue] || "pending"
+    : toLowerSafe(stateValue || "pending");
+
+  return {
+    ...student,
+    id: student.id || student.Id,
+    fullName: student.fullName || student.name || student.Name || "طالب",
+    name: student.name || student.Name || student.fullName,
+    universityMailAddress: student.universityMailAddress || student.UniversityMailAddress || "",
+    phoneNumber: student.phoneNumber || student.PhoneNumber || "",
+    status: status,
+    state: stateValue ?? status,
+    creationDate: student.creationDate || student.joinDate || student.JoinDate,
+  };
+};
+
+
+
+const normalizeBook = (book = {}) => {
+  try {
+    const stateValue = book.state ?? book.State;
+    // Robust check for approval: state 1, or explicit true, or status strings
+    const isApproved = 
+      stateValue === 1 || 
+      stateValue === true ||
+      book.isApproved === true ||
+      book.IsApproved === true ||
+      ["approved", "active", "verified"].includes(String(stateValue ?? "").toLowerCase());
+    
+      const categoryRaw = book.category ?? book.Category;
+      let categoryLabel = categoryRaw;
+      if (typeof categoryRaw === 'number') {
+        try {
+          const labels = Object.values(BOOK_CATEGORY_LABELS);
+          categoryLabel = labels[categoryRaw] || categoryRaw;
+        } catch (e) {
+          categoryLabel = categoryRaw;
+        }
+      }
+
+      return {
+        ...book,
+        id: book.id || book.Id,
+        title: book.title || book.Title || "بدون عنوان",
+        author: book.author || book.Author || "مؤلف مجهول",
+        publisher: book.publisher || book.Publisher || "",
+        isbn: book.isbn || book.ISBN || "",
+        category: categoryLabel || "عام",
+        copiesCount: book.copiesCount ?? book.availableCopiesCount ?? 0,
+        bookCoverImageUrl: book.bookCoverImageUrl || book.BookCoverImageUrl || "",
+        state: stateValue,
+        isApproved: isApproved,
+        status: isApproved ? "active" : (stateValue === 0 || stateValue === "Pending" ? "pending" : "rejected")
+      };
+    } catch (err) {
+      console.error("Error normalizing book:", err, book);
+      return { ...book, id: book?.id || Math.random(), title: "خطأ في البيانات" };
+    }
+};
+
+const normalizeBorrowingRequest = (request = {}) => {
+  const stateValue = request.state ?? request.State;
+  const mappedState = typeof stateValue === "number"
+    ? borrowingStateMap[stateValue] || "Pending"
+    : (stateValue || "Pending");
+
+  return {
+    ...request,
+    id: request.id || request.Id,
+    lendingRecordId: request.lendingRecordId || request.lendingListRecordId || request.LendingRecordId,
+    studentName: request.studentName || request.borrowingStudentName || request.BorrowingStudentName || "",
+    bookTitle: request.bookTitle || request.BookTitle || "",
+    requestDate: request.requestDate || request.createdAtUtc || request.createdAt || request.createdAtUTC,
+    expectedReturnDate: request.expectedReturnDate || request.expirationDateUtc || request.expirationDate,
+    returnDate: request.returnDate || request.expirationDateUtc || request.expirationDate,
+    isOverdue: Boolean(request.isOverdue),
+    status: request.status || mappedState,
+    state: stateValue ?? mappedState,
+  };
+};
 
 const processQueue = (error, token = null) => {
   failedQueue.forEach((prom) => {
@@ -14,6 +123,19 @@ const processQueue = (error, token = null) => {
     }
   });
   failedQueue = [];
+};
+
+const buildQuery = (params) => {
+  const query = new URLSearchParams();
+  
+  Object.entries(params).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      value.forEach(v => query.append(key, v));
+    } else if (value !== undefined && value !== null && value !== "") {
+      query.append(key, value);
+    }
+  });
+  return query.toString();
 };
 
 // ─── Core API Client ─────────────────────────────────────────────────────────
@@ -78,8 +200,10 @@ async function apiRequest(path, options = {}) {
     headers["Authorization"] = `Bearer ${accessToken}`;
   }
 
-  if (!(options.body instanceof FormData)) {
-    headers["Content-Type"] = "application/json";
+  if (options.body) {
+    if (!(options.body instanceof FormData)) {
+      headers["Content-Type"] = "application/json";
+    }
   } else {
     delete headers["Content-Type"];
   }
@@ -114,7 +238,7 @@ async function apiRequest(path, options = {}) {
     }
 
     // ─── Token Refresh Interceptor ───────────────────────────────────────────
-    if (response.status === 401 && !options.skipAuth && storedRefreshToken) {
+    if (response.status === 401 && !options.skipAuth && storedRefreshToken && !accessToken?.startsWith("mock-access-token")) {
       if (!isRefreshing) {
         isRefreshing = true;
         try {
@@ -158,7 +282,11 @@ async function apiRequest(path, options = {}) {
 
     // لو مفيش Refresh Token أو الـ Refresh نفسه فشل
     if (response.status === 401 && !options.skipAuth) {
-      window.dispatchEvent(new CustomEvent("auth:logout"));
+      const { accessToken } = tokenStore.get();
+      // لا تقم بتسجيل الخروج تلقائياً إذا كنا نستخدم توكن تجريبي (Mock)
+      if (!accessToken?.startsWith("mock-access-token")) {
+        window.dispatchEvent(new CustomEvent("auth:logout"));
+      }
     }
 
     const errorMessage = errorData.detail || errorData.message || errorData.title || `HTTP ${response.status}`;
@@ -218,9 +346,9 @@ export const identityApi = {
   /** GET /identity/users/me — Current user info */
   getMe: () => apiRequest("/identity/users/me"),
 
-  /** ✅ POST /identity/send-email-confirmation?email={email} */
+  /** ✅ POST /identity/users/send-email-confirmation?email={email} */
   sendEmailConfirmation: (email) =>
-    apiRequest(`/identity/send-email-confirmation?email=${encodeURIComponent(email)}`, {
+    apiRequest(`/identity/users/send-email-confirmation?email=${encodeURIComponent(email)}`, {
       method: "POST",
       skipAuth: true,
     }),
@@ -252,41 +380,67 @@ export const identityApi = {
     }),
 
   /** POST /identity/users/me/change-password */
-  changePassword: ({ currentPassword, newPassword }) =>
+  changePassword: ({ currentPassword, oldPassword, newPassword }) =>
     apiRequest("/identity/users/me/change-password", {
       method: "POST",
-      body: JSON.stringify({ currentPassword, newPassword }),
+      body: JSON.stringify({
+        oldPassword: oldPassword || currentPassword,
+        newPassword,
+      }),
     }),
 };
 
 // ─── 2. STUDENTS ─────────────────────────────────────────────────────────────
 export const studentsApi = {
   /** POST /students — Register new student (multipart/form-data) */
-  create: (formData) =>
-    apiRequest("/students", {
+  create: async (formData) => {
+    const res = await apiRequest("/students", {
       method: "POST",
       skipAuth: true,
       body: formData
-    }),
+    });
+    return normalizeStudent(res);
+  },
 
   /** PATCH /students/{studentId} — Update student profile (multipart/form-data) */
-  update: (studentId, formData) =>
+  update: async (studentId, formData) => {
+    const res = await apiRequest(`/students/${studentId}`, {
+      method: "PATCH",
+      body: formData
+    });
+    return normalizeStudent(res || {});
+  },
+  
+  /** GET /students/me — Current student profile */
+  getMe: async () => {
+    const res = await apiRequest("/students/me");
+    return normalizeStudent(res);
+  },
+  
+  /** GET /students/{studentId} — Student by ID */
+  getById: async (studentId) => {
+    const res = await apiRequest(`/students/${studentId}`);
+    return normalizeStudent(res);
+  },
+  
+  /** GET /students — All students (Admin only) */
+  getAll: async (params = {}) => {
+    const query = buildQuery(params);
+    const res = await apiRequest(`/students?${query}`);
+    const items = Array.isArray(res?.items) ? res.items.map(normalizeStudent) : [];
+    return {
+      ...res,
+      items,
+      data: items,
+    };
+  },
+
+  /** PATCH /students/{studentId} — Update student profile (multipart/form-data) */
+  updateRaw: (studentId, formData) =>
     apiRequest(`/students/${studentId}`, {
       method: "PATCH",
       body: formData
     }),
-
-  /** GET /students/me — Current student profile */
-  getMe: () => apiRequest("/students/me"),
-
-  /** GET /students/{studentId} — Student by ID */
-  getById: (studentId) => apiRequest(`/students/${studentId}`),
-
-  /** GET /students — All students (Admin only) */
-  getAll: (params = {}) => {
-    const query = new URLSearchParams(params).toString();
-    return apiRequest(`/students?${query}`);
-  },
 
   /** PATCH /students/{studentId}/approve */
   approve: (studentId) =>
@@ -316,20 +470,31 @@ export const studentsApi = {
 // ─── 3. BOOKS ────────────────────────────────────────────────────────────────
 export const booksApi = {
   /** POST /books — Create new book (multipart/form-data) */
-  create: (formData) =>
-    apiRequest("/books", {
+  create: async (formData) => {
+    const res = await apiRequest("/books", {
       method: "POST",
       body: formData
-    }),
+    });
+    return normalizeBook(res);
+  },
 
   /** GET /books — Paginated list of books */
-  getAll: (params = {}) => {
-    const query = new URLSearchParams(params).toString();
-    return apiRequest(`/books?${query}`);
+  getAll: async (params = {}) => {
+    const query = buildQuery(params);
+    const res = await apiRequest(`/books?${query}`);
+    const items = Array.isArray(res?.items) ? res.items.map(normalizeBook) : [];
+    return {
+      ...res,
+      items,
+      data: items,
+    };
   },
 
   /** GET /books/{bookId} — Book by ID */
-  getById: (bookId) => apiRequest(`/books/${bookId}`),
+  getById: async (bookId) => {
+    const res = await apiRequest(`/books/${bookId}`);
+    return normalizeBook(res);
+  },
 
   /** PATCH /books/{bookId} — Update book (JSON) */
   update: (bookId, data) =>
@@ -342,6 +507,17 @@ export const booksApi = {
   delete: (bookId) =>
     apiRequest(`/books/${bookId}`, {
       method: "DELETE"
+    }),
+
+  /** PATCH /books/{bookId}/approve — Approve book (Admin only) */
+  approve: (bookId) =>
+    apiRequest(`/books/${bookId}/approve`, { method: "PATCH" }),
+
+  /** PATCH /books/{bookId}/reject — Reject book (Admin only) */
+  reject: (bookId, rejectionReason) =>
+    apiRequest(`/books/${bookId}/reject`, {
+      method: "PATCH",
+      body: JSON.stringify({ reason: rejectionReason }),
     }),
 };
 
@@ -366,19 +542,19 @@ export const bookCopiesApi = {
 
   /** GET /books/{bookId}/copies — Copies by book ID */
   getByBookId: (bookId, params = {}) => {
-    const query = new URLSearchParams(params).toString();
+    const query = buildQuery(params);
     return apiRequest(`/books/${bookId}/copies?${query}`);
   },
 
   /** GET /students/{studentId}/books/copies — Copies by student ID */
   getByStudentId: (studentId, params = {}) => {
-    const query = new URLSearchParams(params).toString();
+    const query = buildQuery(params);
     return apiRequest(`/students/${studentId}/books/copies?${query}`);
   },
 
   /** GET /books/copies — All copies (paginated) */
   getAll: (params = {}) => {
-    const query = new URLSearchParams(params).toString();
+    const query = buildQuery(params);
     return apiRequest(`/books/copies?${query}`);
   },
 
@@ -393,9 +569,22 @@ export const bookCopiesApi = {
 // ─── 5. LENDING LIST ─────────────────────────────────────────────────────────
 export const lendingApi = {
   /** GET /lendinglist — Paginated list of lending records */
-  getAll: (params = {}) => {
-    const query = new URLSearchParams(params).toString();
-    return apiRequest(`/lendinglist?${query}`);
+  getAll: async (params = {}) => {
+    const query = buildQuery(params);
+    const res = await apiRequest(`/lendinglist?${query}`);
+    const items = Array.isArray(res?.items)
+      ? res.items.map((item) => ({
+          ...item,
+          id: item.id || item.Id,
+          bookTitle: item.bookTitle || item.title || item.Title || "",
+          studentName: item.studentName || item.ownerName || item.OwnerName || "",
+        }))
+      : [];
+    return {
+      ...res,
+      items,
+      data: items,
+    };
   },
 
   /** GET /lendinglist/{lendingListRecordId} — Record by ID */
@@ -406,20 +595,34 @@ export const lendingApi = {
 // ─── 6. BORROWING REQUESTS ───────────────────────────────────────────────────
 export const borrowingApi = {
   /** GET /borrowingrequests — Paginated list of requests */
-  getAll: (params = {}) => {
-    const query = new URLSearchParams(params).toString();
-    return apiRequest(`/borrowingrequests?${query}`);
+  getAll: async (params = {}) => {
+    const query = buildQuery(params);
+    const res = await apiRequest(`/borrowingrequests?${query}`);
+    const items = Array.isArray(res?.items) ? res.items.map(normalizeBorrowingRequest) : [];
+    return {
+      ...res,
+      items,
+      data: items,
+    };
   },
 
   /** GET /borrowingrequests/{borrowingRequestId} — Request by ID */
-  getById: (borrowingRequestId) =>
-    apiRequest(`/borrowingrequests/${borrowingRequestId}`),
+  getById: async (borrowingRequestId) => {
+    const res = await apiRequest(`/borrowingrequests/${borrowingRequestId}`);
+    return normalizeBorrowingRequest(res);
+  },
 
   /** POST /lendinglist/{lendingListRecordId}/request — Create borrowing request */
   create: (lendingListRecordId) =>
     apiRequest(`/lendinglist/${lendingListRecordId}/request`, {
       method: "POST",
     }),
+
+  /** PATCH /borrowingrequests/{id}/approve */
+  approve: (id) => apiRequest(`/borrowingrequests/${id}/approve`, { method: "PATCH" }),
+
+  /** PATCH /borrowingrequests/{id}/reject */
+  reject: (id) => apiRequest(`/borrowingrequests/${id}/reject`, { method: "PATCH" }),
 };
 
 // ─── 7. IMAGES ───────────────────────────────────────────────────────────────

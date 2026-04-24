@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Library, Globe, Mail, MessageSquare, ArrowUp } from "lucide-react";
+import { Globe, Mail, MessageSquare, ArrowUp } from "lucide-react";
 
 const OrbitIcon = ({ className = "w-8 h-8" }) => (
   <svg viewBox="0 0 40 40" fill="none" className={className}>

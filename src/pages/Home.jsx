@@ -36,10 +36,10 @@ const SpringReveal = ({ children, className = "", delay = 0 }) => {
 // ─── Stats Counter ──────────────────────────────────────────────────────────
 const StatItem = ({ number, label, delay = 0 }) => (
   <SpringReveal delay={delay} className="text-center">
-    <p className="text-3xl md:text-4xl font-black text-library-accent mb-1">
+    <p className="text-2xl md:text-3xl font-black text-library-accent mb-1">
       {number}
     </p>
-    <p className="text-xs md:text-sm font-bold text-library-primary/40 dark:text-library-paper/40 uppercase tracking-wider">
+    <p className="text-[10px] md:text-xs font-bold text-library-primary/40 dark:text-library-paper/40 uppercase tracking-wider">
       {label}
     </p>
   </SpringReveal>
@@ -48,7 +48,7 @@ const StatItem = ({ number, label, delay = 0 }) => (
 // ─── Feature Card ───────────────────────────────────────────────────────────
 const FeatureCard = ({ icon: Icon, title, desc, delay = 0 }) => (
   <SpringReveal delay={delay}>
-    <div className="group p-8 rounded-2xl bg-white dark:bg-dark-surface border border-library-primary/[0.06] dark:border-white/[0.06] card-lift">
+    <div className="group p-6 rounded-xl bg-white dark:bg-dark-surface border border-library-primary/[0.06] dark:border-white/[0.06] card-lift">
       <div className="w-12 h-12 rounded-xl bg-library-accent/10 flex items-center justify-center mb-5 group-hover:bg-library-accent/20 transition-colors">
         <Icon size={22} className="text-library-accent" strokeWidth={1.5} />
       </div>
@@ -166,7 +166,7 @@ const BookGraphic = () => (
 
 // ─── Contact Section ────────────────────────────────────────────────────────
 const ContactSection = () => (
-  <section className="py-24 md:py-32 bg-library-primary dark:bg-[#04060a] relative overflow-hidden">
+  <section className="py-16 md:py-20 bg-library-primary dark:bg-[#04060a] relative overflow-hidden">
     {/* Subtle radial glow */}
     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-library-accent/[0.03] rounded-full blur-[120px] pointer-events-none" />
 
@@ -324,10 +324,10 @@ const Home = () => {
     <div className="bg-texture min-h-screen relative selection:bg-library-accent/30 overflow-x-hidden">
       <Navbar />
 
-      <main className="relative z-10 pt-24">
+      <main className="relative z-10 pt-20">
         {/* ════════════════════ HERO SECTION ════════════════════ */}
-        <section className="relative min-h-[85vh] lg:min-h-[80vh] flex items-center pt-20 pb-12 md:pb-20">
-          <div className="max-w-7xl mx-auto px-6 lg:px-8 w-full grid lg:grid-cols-2 gap-12 md:gap-20 items-center">
+        <section className="relative min-h-[75vh] flex items-center pt-16 pb-10">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8 w-full grid lg:grid-cols-2 gap-10 items-center">
             {/* Text */}
             <motion.div
               style={{ y: yHero }}

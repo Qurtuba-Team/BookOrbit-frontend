@@ -196,16 +196,16 @@ const AuthPage = () => {
           <div className="max-w-md w-full">
             <Link
               to="/"
-              className="text-library-primary/40 dark:text-gray-500 hover:text-library-primary dark:hover:text-gray-300 flex items-center gap-2 mb-8 w-fit text-xs font-black transition-all lg:hidden"
+              className="text-library-primary/40 dark:text-gray-500 hover:text-library-primary dark:hover:text-gray-300 flex items-center gap-2 mb-4 w-fit text-[10px] font-black transition-all lg:hidden"
             >
-              <div className="w-8 h-8 rounded-lg bg-library-primary/5 dark:bg-white/5 border border-library-primary/10 dark:border-white/10 flex items-center justify-center">
-                 <ArrowRight size={14} className="rotate-180" />
+              <div className="w-6 h-6 rounded-lg bg-library-primary/5 dark:bg-white/5 border border-library-primary/10 dark:border-white/10 flex items-center justify-center">
+                 <ArrowRight size={12} className="rotate-180" />
               </div>
               <span>العودة للرئيسية</span>
             </Link>
 
             {/* Mobile Tabs */}
-            <div className="lg:hidden relative flex bg-library-primary/[0.04] dark:bg-white/[0.04] rounded-xl p-1 mb-8">
+            <div className="lg:hidden relative flex bg-library-primary/[0.04] dark:bg-white/[0.04] rounded-xl p-1 mb-6">
               <motion.div
                 className="absolute top-1 bottom-1 rounded-lg bg-white dark:bg-library-primary shadow-lg"
                 animate={{

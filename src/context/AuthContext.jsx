@@ -1,14 +1,110 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { identityApi, studentsApi } from "../services/api";
-import { tokenStore } from "../utils/constants";
+import { identityApi, studentsApi, normalizeStudent } from "../services/api";
+import { API_BASE_URL, getStudentImageUrl, tokenStore } from "../utils/constants";
 
 const AuthContext = createContext(null);
+let profileObjectUrl = null;
 
 export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const buildAbsoluteUrl = useCallback((value) => {
+    if (!value) return null;
+    if (value.startsWith("http://") || value.startsWith("https://")) return value;
+    if (value.startsWith("/")) return `${API_BASE_URL}${value}`;
+    return `${API_BASE_URL}/${value.replace(/^\/+/, "")}`;
+  }, []);
+
+  const fetchProtectedImageAsSrc = useCallback(async (url) => {
+    const { accessToken } = tokenStore.get();
+    if (!accessToken) return null;
+
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "ngrok-skip-browser-warning": "69420",
+      },
+    });
+
+    if (!res.ok) return null;
+
+    const contentType = res.headers.get("content-type") || "";
+    const blob = await res.blob();
+
+    // Direct image payload (image/* or binary stream): render as object URL.
+    if (contentType.startsWith("image/") || contentType.includes("octet-stream")) {
+      if (profileObjectUrl) URL.revokeObjectURL(profileObjectUrl);
+      profileObjectUrl = URL.createObjectURL(blob);
+      return profileObjectUrl;
+    }
+
+    const raw = (await blob.text()).trim();
+    if (!raw) return null;
+
+    let encoded = raw;
+    if (encoded.startsWith("\"") && encoded.endsWith("\"")) {
+      encoded = encoded.slice(1, -1);
+    }
+
+    if (encoded.startsWith("{") || encoded.startsWith("[")) {
+      try {
+        const parsed = JSON.parse(encoded);
+        if (typeof parsed === "string") {
+          encoded = parsed;
+        } else if (parsed && typeof parsed === "object") {
+          encoded =
+            parsed.image ||
+            parsed.base64 ||
+            parsed.data ||
+            parsed.content ||
+            parsed.result ||
+            "";
+        } else {
+          encoded = "";
+        }
+      } catch {
+        // keep original encoded value
+      }
+    }
+
+    if (encoded.startsWith("data:image/")) {
+      return encoded;
+    }
+
+    encoded = encoded.replace(/\s/g, "");
+    return encoded ? `data:image/jpeg;base64,${encoded}` : null;
+  }, []);
+
+  const loadStudentProfileImage = useCallback(async (studentId, rawImageValue) => {
+    const imageValue = typeof rawImageValue === "string" ? rawImageValue.trim() : "";
+    if (imageValue) {
+      const imageUrl = buildAbsoluteUrl(imageValue);
+      const isProtectedApiImage = /\/api\/v1\/images\//i.test(imageUrl || "");
+      if (isProtectedApiImage) {
+        try {
+          const protectedSrc = await fetchProtectedImageAsSrc(imageUrl);
+          if (protectedSrc) return protectedSrc;
+          return null;
+        } catch {
+          return null;
+        }
+      }
+      return imageUrl;
+    }
+    if (!studentId) return null;
+    const endpoint = getStudentImageUrl(studentId);
+
+    try {
+      const protectedSrc = await fetchProtectedImageAsSrc(endpoint);
+      if (protectedSrc) return protectedSrc;
+      return null;
+    } catch {
+      return null;
+    }
+  }, [buildAbsoluteUrl, fetchProtectedImageAsSrc]);
 
   // Dark Mode Logic
   useEffect(() => {
@@ -23,30 +119,97 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // Helper to fetch full user profile (Identity + Student info)
-  const fetchFullProfile = async () => {
+  const fetchFullProfile = useCallback(async () => {
+    const tokens = tokenStore.get();
+    if (tokens?.accessToken?.startsWith("mock-access-token")) {
+      const role = tokens.accessToken.split("-").pop();
+      return {
+        id: "mock-id",
+        userName: role === "admin" ? "Admin" : "Student",
+        email: role === "admin" ? "admin@bookorbit.com" : "student@std.mans.edu.eg",
+        fullName: role === "admin" ? "حساب الأدمن" : "طالب تجريبي",
+        role: role,
+        state: "active",
+        isEmailConfirmed: true,
+      };
+    }
+
     try {
       const identityData = await identityApi.getMe();
       
-      if (identityData && identityData.emailConfirmed) {
-        try {
-          const studentData = await studentsApi.getMe();
-          // Merge data - Supporting "Name" field from Swagger
+      if (identityData) {
+        const identityEmailConfirmed = identityData.emailConfirmed === true;
+        
+        // Stage 1: Email not confirmed → force confirmation flow
+        if (!identityEmailConfirmed) {
+           return null;
+        }
+
+        // Extract role
+        const roles = identityData.roles || [];
+        const isAdmin = roles.some(r => r.toLowerCase().includes('admin')) || 
+                        (identityData.role && identityData.role.toLowerCase().includes('admin'));
+        const userRole = isAdmin ? 'Admin' : (roles[0] || 'Student');
+        
+        // Admin → skip student data fetch
+        if (isAdmin) {
           return {
             ...identityData,
-            // Try all possible name fields from the student API
+            id: identityData.userId || identityData.id,
+            role: 'Admin',
+            status: 'active',
+            isEmailConfirmed: true,
+            fullName: identityData.Name || identityData.name || identityData.userName || "مدير النظام"
+          };
+        }
+
+        // Student flow: fetch student data to get the actual state
+        try {
+          const studentData = await studentsApi.getMe();
+          const studentState = studentData.state ?? studentData.State;
+
+          // Stage 2: Email confirmed but state is pending (0) → awaiting admin approval
+          if (studentState === 0 || studentState === "pending" || (typeof studentState === 'string' && studentState.toLowerCase() === 'pending')) {
+            return { awaitingApproval: true, email: identityData.email };
+          }
+
+          const studentId = studentData.id || studentData.Id || identityData.userId || identityData.id;
+          const rawImageValue =
+            studentData.PersonalPhoto ||
+            studentData.personalPhoto ||
+            studentData.personalPhotoUrl ||
+            studentData.image ||
+            studentData.profileImage;
+          let resolvedImage = await loadStudentProfileImage(studentId, rawImageValue);
+          const identityStudentId = identityData.userId || identityData.id;
+          if (!resolvedImage && identityStudentId && identityStudentId !== studentId) {
+            resolvedImage = await loadStudentProfileImage(identityStudentId, rawImageValue);
+          }
+          
+          return {
+            ...identityData,
+            id: identityData.userId || identityData.id,
+            role: userRole,
             fullName: studentData.Name || studentData.name || studentData.fullName || studentData.FullName,
             phoneNumber: studentData.PhoneNumber || studentData.phoneNumber,
             major: studentData.Major || studentData.major,
             university: studentData.University || studentData.university,
-            studentId: studentData.id || studentData.Id,
-            image: studentData.PersonalPhoto || studentData.image || studentData.profileImage
+            studentId,
+            ...normalizeStudent(studentData),
+            image: resolvedImage,
           };
         } catch (sErr) {
           console.warn("User is not a student or profile not found", sErr);
-          // Fallback to identity name if student profile fails
+          const identityStudentId = identityData.userId || identityData.id;
+          const resolvedImage = await loadStudentProfileImage(identityStudentId, null);
           return {
             ...identityData,
-            fullName: identityData.Name || identityData.name || identityData.userName
+            id: identityData.userId || identityData.id,
+            role: userRole,
+            fullName: identityData.Name || identityData.name || identityData.userName || "طالب",
+            studentId: identityStudentId,
+            status: "pending",
+            image: resolvedImage,
           };
         }
       }
@@ -55,14 +218,14 @@ export const AuthProvider = ({ children }) => {
       console.error("Failed to fetch profile", err);
       return null;
     }
-  };
+  }, [loadStudentProfileImage]);
 
   useEffect(() => {
     const initAuth = async () => {
       const tokens = tokenStore.get();
       if (tokens?.accessToken) {
         const fullUser = await fetchFullProfile();
-        if (fullUser) {
+        if (fullUser && !fullUser.awaitingApproval) {
           setUser(fullUser);
         } else {
           tokenStore.clear();
@@ -72,7 +235,28 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     };
     initAuth();
-  }, []);
+  }, [fetchFullProfile]);
+
+  const mockLogin = (role = "admin") => {
+    const mockUser = {
+      id: "mock-id",
+      userName: "Admin",
+      email: role === "admin" ? "admin@bookorbit.com" : "student@std.mans.edu.eg",
+      fullName: role === "admin" ? "حساب الأدمن" : "طالب تجريبي",
+      role: role,
+      state: "active",
+      isEmailConfirmed: true,
+    };
+    
+    tokenStore.set({
+      accessToken: `mock-access-token-${role}`,
+      refreshToken: "mock-refresh-token",
+      expiresOnUtc: new Date(Date.now() + 86400000).toISOString(),
+    }, true);
+    
+    setUser(mockUser);
+    return { success: true, user: mockUser };
+  };
 
   const login = async (email, password, rememberMe = true) => {
     try {
@@ -86,10 +270,20 @@ export const AuthProvider = ({ children }) => {
 
       const fullUser = await fetchFullProfile();
 
+      // Case 1: awaitingApproval returned (email confirmed but state=pending)
+      if (fullUser && fullUser.awaitingApproval) {
+        tokenStore.clear();
+        return {
+          success: false,
+          error: "حسابك بانتظار الموافقة من قبل الإدارة. يرجى مراجعة الموقع لاحقاً."
+        };
+      }
+
+      // Case 2: null returned (email not confirmed)
       if (!fullUser) {
         const identityData = await identityApi.getMe().catch(() => null);
-        if (identityData && !identityData.emailConfirmed) {
-          tokenStore.clear(); 
+        tokenStore.clear();
+        if (identityData && identityData.emailConfirmed === false) {
           return {
             success: true, 
             user: null,
@@ -97,7 +291,6 @@ export const AuthProvider = ({ children }) => {
             email: identityData.email
           };
         }
-        tokenStore.clear();
         return { success: false, error: "فشل في جلب بيانات الملف الشخصي" };
       }
 
@@ -143,6 +336,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    if (profileObjectUrl) {
+      URL.revokeObjectURL(profileObjectUrl);
+      profileObjectUrl = null;
+    }
     tokenStore.clear();
     setUser(null);
     setTimeout(() => {
@@ -167,6 +364,7 @@ export const AuthProvider = ({ children }) => {
       value={{
         user,
         login,
+        mockLogin,
         register,
         logout,
         isLoggedIn: !!user,
