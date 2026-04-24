@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Globe, Mail, MessageSquare, ArrowUp } from "lucide-react";
 
 const OrbitIcon = ({ className = "w-8 h-8" }) => (
@@ -27,6 +27,14 @@ const OrbitIcon = ({ className = "w-8 h-8" }) => (
 );
 
 const Footer = () => {
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setShowScrollTop(window.scrollY > 400);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -113,16 +121,20 @@ const Footer = () => {
       </div>
 
       {/* Scroll to Top */}
-      <motion.button
-        onClick={scrollToTop}
-        className="fixed bottom-6 left-6 w-11 h-11 rounded-full bg-library-primary dark:bg-library-accent text-white dark:text-library-primary flex items-center justify-center shadow-xl z-50 hover:scale-105 active:scale-95 transition-transform"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1 }}
-        aria-label="Scroll to top"
-      >
-        <ArrowUp size={18} />
-      </motion.button>
+      <AnimatePresence>
+        {showScrollTop && (
+          <motion.button
+            onClick={scrollToTop}
+            className="fixed bottom-6 left-6 w-12 h-12 rounded-2xl bg-library-primary dark:bg-white text-white dark:text-library-primary flex items-center justify-center shadow-2xl shadow-library-primary/20 dark:shadow-white/20 z-[90] hover:scale-105 active:scale-95 transition-all border border-white/10"
+            initial={{ opacity: 0, y: 20, scale: 0.8 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.8 }}
+            aria-label="Scroll to top"
+          >
+            <ArrowUp size={20} strokeWidth={2.5} />
+          </motion.button>
+        )}
+      </AnimatePresence>
     </footer>
   );
 };

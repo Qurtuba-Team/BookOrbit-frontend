@@ -24,7 +24,7 @@ import {
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
 import Navbar from "../components/common/Navbar";
-import { EditBookModal } from "../components/Admin/EditBookModal";
+import { EditBookModal } from "../components/admin/EditBookModal";
 import { 
   studentsApi, 
   booksApi, 
@@ -64,21 +64,21 @@ const StatCard = ({ title, value, change, icon: Icon, color, trend = "up", onCli
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
   if (totalPages <= 1) return null;
   return (
-    <div className="flex items-center justify-center gap-2 mt-8 py-4 border-t border-gray-100 dark:border-white/5">
+    <div className="flex items-center justify-center gap-2 mt-8 py-4 border-t border-gray-100 dark:border-white/5 flex-wrap">
       <button 
         disabled={currentPage === 1}
         onClick={() => onPageChange(currentPage - 1)}
-        className="px-4 py-2 rounded-xl bg-white dark:bg-white/5 border border-gray-100 dark:border-white/5 text-[10px] font-black text-gray-500 hover:text-library-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+        className="px-4 py-2 rounded-xl bg-white dark:bg-white/5 border border-gray-100 dark:border-white/5 text-xs font-black text-gray-500 hover:text-library-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all"
       >
         السابق
       </button>
-      <div className="px-4 py-2 rounded-xl bg-library-primary/5 text-library-primary text-[10px] font-black">
+      <div className="px-4 py-2 rounded-xl bg-library-primary/5 text-library-primary text-xs font-black">
         صفحة {currentPage} من {totalPages}
       </div>
       <button 
         disabled={currentPage === totalPages}
         onClick={() => onPageChange(currentPage + 1)}
-        className="px-4 py-2 rounded-xl bg-white dark:bg-white/5 border border-gray-100 dark:border-white/5 text-[10px] font-black text-gray-500 hover:text-library-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+        className="px-4 py-2 rounded-xl bg-white dark:bg-white/5 border border-gray-100 dark:border-white/5 text-xs font-black text-gray-500 hover:text-library-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all"
       >
         التالي
       </button>
@@ -446,10 +446,10 @@ const AdminDashboard = () => {
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             key={student.id} 
-            className="bg-white/80 dark:bg-[#121214]/80 backdrop-blur-xl rounded-xl p-3 border border-white dark:border-white/5 shadow-sm group hover:border-library-primary/30 transition-all flex flex-col md:flex-row items-center justify-between gap-4"
+            className="bg-white/80 dark:bg-[#121214]/80 backdrop-blur-xl rounded-xl p-4 border border-white dark:border-white/5 shadow-sm group hover:border-library-primary/30 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
           >
             <div 
-              className="flex items-center gap-4 cursor-pointer flex-grow"
+              className="flex items-center gap-3 cursor-pointer flex-grow w-full"
               onClick={() => {
                 setSelectedStudent(student);
                 setIsModalOpen(true);
@@ -473,13 +473,13 @@ const AdminDashboard = () => {
                 )}
               </div>
               <div>
-                <h3 className="text-sm font-black text-library-primary dark:text-white group-hover:text-library-accent transition-colors">{student.fullName}</h3>
+                <h3 className="text-base md:text-sm font-black text-library-primary dark:text-white group-hover:text-library-accent transition-colors">{student.fullName}</h3>
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-[10px] text-gray-400 font-bold">{student.universityMailAddress}</p>
+                  <p className="text-xs md:text-[10px] text-gray-400 font-bold break-all">{student.universityMailAddress}</p>
                   <span className="w-1 h-1 rounded-full bg-gray-300" />
-                  <p className="text-[10px] text-library-accent font-black">{student.major || "تخصص غير محدد"}</p>
+                  <p className="text-xs md:text-[10px] text-library-accent font-black">{student.major || "تخصص غير محدد"}</p>
                   <span className="w-1 h-1 rounded-full bg-gray-300" />
-                  <span className={`text-[8px] font-black px-2 py-0.5 rounded-full ${
+                  <span className={`text-[10px] md:text-[8px] font-black px-2 py-0.5 rounded-full ${
                     student.status === 'active' ? 'bg-emerald-500/10 text-emerald-600' :
                     student.status === 'approved' ? 'bg-blue-500/10 text-blue-600' :
                     student.status === 'pending' ? 'bg-amber-500/10 text-amber-600' :
@@ -491,18 +491,18 @@ const AdminDashboard = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 w-full md:w-auto">
+            <div className="flex items-center gap-2 w-full md:w-auto">
               {subTab === "pending" ? (
                 <>
                   <button 
                     onClick={() => handleStudentAction(student.id, "approve")}
-                    className="flex-grow md:flex-initial px-6 py-2 rounded-lg bg-emerald-500 text-white text-[9px] font-black hover:bg-emerald-600 transition-all shadow-md shadow-emerald-500/20"
+                    className="flex-grow md:flex-initial px-4 py-2.5 rounded-lg bg-emerald-500 text-white text-xs md:text-[9px] font-black hover:bg-emerald-600 transition-all shadow-md shadow-emerald-500/20"
                   >
                     توثيق
                   </button>
                   <button 
                     onClick={() => handleStudentAction(student.id, "reject")}
-                    className="px-4 py-2 rounded-lg bg-rose-500/10 text-rose-600 text-[9px] font-black hover:bg-rose-500 hover:text-white transition-all border border-rose-500/20"
+                    className="flex-grow md:flex-initial px-4 py-2.5 rounded-lg bg-rose-500/10 text-rose-600 text-xs md:text-[9px] font-black hover:bg-rose-500 hover:text-white transition-all border border-rose-500/20"
                   >
                     رفض التوثيق
                   </button>
@@ -510,14 +510,14 @@ const AdminDashboard = () => {
               ) : subTab === "banned" ? (
                 <button 
                   onClick={() => handleStudentAction(student.id, "unban")}
-                  className="flex-grow md:flex-initial px-6 py-2 rounded-lg bg-amber-500 text-white text-[9px] font-black hover:bg-amber-600 transition-all shadow-md shadow-amber-500/20"
+                  className="flex-grow md:flex-initial px-4 py-2.5 rounded-lg bg-amber-500 text-white text-xs md:text-[9px] font-black hover:bg-amber-600 transition-all shadow-md shadow-amber-500/20"
                 >
                   فك الحظر
                 </button>
               ) : (
                 <button 
                   onClick={() => handleStudentAction(student.id, "ban")}
-                  className="flex-grow md:flex-initial px-6 py-2 rounded-lg bg-rose-500/10 text-rose-600 text-[9px] font-black hover:bg-rose-500 hover:text-white transition-all border border-rose-500/20"
+                  className="flex-grow md:flex-initial px-4 py-2.5 rounded-lg bg-rose-500/10 text-rose-600 text-xs md:text-[9px] font-black hover:bg-rose-500 hover:text-white transition-all border border-rose-500/20"
                 >
                   حظر الطالب
                 </button>
@@ -726,10 +726,10 @@ const AdminDashboard = () => {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 key={book.id} 
-                className="bg-white/80 dark:bg-[#121214]/80 backdrop-blur-xl rounded-xl p-3 border border-white dark:border-white/5 shadow-sm group hover:border-emerald-500/30 transition-all flex flex-col md:flex-row items-center justify-between gap-4"
+                className="bg-white/80 dark:bg-[#121214]/80 backdrop-blur-xl rounded-xl p-4 border border-white dark:border-white/5 shadow-sm group hover:border-emerald-500/30 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
               >
                 <div 
-                  className="flex items-center gap-4 cursor-pointer flex-grow"
+                  className="flex items-center gap-3 cursor-pointer flex-grow w-full"
                   onClick={() => {
                     setSelectedBook(book);
                     setIsBookModalOpen(true);
@@ -755,20 +755,20 @@ const AdminDashboard = () => {
                     )}
                   </div>
                   <div className="flex-grow">
-                    <h4 className="text-[11px] font-black text-library-primary dark:text-white mb-1 group-hover:text-emerald-500 transition-colors">{book.title}</h4>
+                    <h4 className="text-sm md:text-[11px] font-black text-library-primary dark:text-white mb-1 group-hover:text-emerald-500 transition-colors">{book.title}</h4>
                     <div className="flex items-center gap-2">
-                      <p className="text-[9px] text-gray-500 font-bold">{book.authorName || book.author}</p>
+                      <p className="text-xs md:text-[9px] text-gray-500 font-bold">{book.authorName || book.author}</p>
                       <span className="w-1 h-1 rounded-full bg-gray-300" />
-                      <p className="text-[9px] text-library-accent font-black">{book.category || "عام"}</p>
+                      <p className="text-xs md:text-[9px] text-library-accent font-black">{book.category || "عام"}</p>
                       
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 w-full md:w-auto">
+                <div className="flex items-center justify-between gap-3 w-full md:w-auto">
                   <div className="flex items-center gap-1">
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    <span className="text-[10px] font-black text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">{book.copiesCount || 0} نسخة</span>
+                    <span className="text-xs md:text-[10px] font-black text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">{book.copiesCount || 0} نسخة</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <button 
@@ -914,22 +914,22 @@ const AdminDashboard = () => {
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             key={lend.id} 
-            className="bg-white/80 dark:bg-[#121214]/80 backdrop-blur-xl rounded-xl p-3 border border-white dark:border-white/5 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 group hover:border-amber-500/30 transition-all"
+            className="bg-white/80 dark:bg-[#121214]/80 backdrop-blur-xl rounded-xl p-4 border border-white dark:border-white/5 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4 group hover:border-amber-500/30 transition-all"
           >
             <div className="flex items-center gap-3 flex-grow">
               <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-600 font-black text-xs">
                 {(lend.studentName || lend.ownerName || "S").charAt(0)}
               </div>
               <div>
-                <h4 className="text-[11px] font-black text-library-primary dark:text-white">{lend.studentName || lend.ownerName || "طالب"}</h4>
+                <h4 className="text-sm md:text-[11px] font-black text-library-primary dark:text-white">{lend.studentName || lend.ownerName || "طالب"}</h4>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <BookMarked size={10} className="text-gray-400" />
-                  <p className="text-[9px] text-gray-500 font-bold">{lend.bookTitle || lend.title || "كتاب غير مسجل"}</p>
+                  <p className="text-xs md:text-[9px] text-gray-500 font-bold">{lend.bookTitle || lend.title || "كتاب غير مسجل"}</p>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-6">
+            <div className="flex items-center justify-between w-full md:w-auto gap-4">
               <div className="hidden sm:block text-right">
                 <p className="text-[7px] text-gray-400 font-black uppercase mb-0.5">
                   {subTab === "active" ? "تاريخ الإرجاع" : "تاريخ الطلب"}
@@ -939,13 +939,13 @@ const AdminDashboard = () => {
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <span className={`px-2 py-1 rounded-full text-[8px] font-black border ${subTab === "active" ? 'bg-emerald-500/5 text-emerald-600 border-emerald-500/10' : (subTab === "pending_owner" ? 'bg-amber-500/5 text-amber-600 border-amber-500/10' : 'bg-blue-500/5 text-blue-600 border-blue-500/10')}`}>
+                <span className={`px-2.5 py-1 rounded-full text-[10px] md:text-[8px] font-black border ${subTab === "active" ? 'bg-emerald-500/5 text-emerald-600 border-emerald-500/10' : (subTab === "pending_owner" ? 'bg-amber-500/5 text-amber-600 border-amber-500/10' : 'bg-blue-500/5 text-blue-600 border-blue-500/10')}`}>
                   {subTab === "active" ? 'نشطة' : (subTab === "pending_owner" ? 'بانتظار المالك' : 'بانتظار التسليم')}
                 </span>
                 
                 <button 
                   onClick={() => toast("سيتم عرض التفاصيل قريباً")}
-                  className="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-white/5 text-library-primary dark:text-white text-[9px] font-black hover:bg-gray-200 dark:hover:bg-white/10 transition-all"
+                  className="px-3 py-2 rounded-lg bg-gray-100 dark:bg-white/5 text-library-primary dark:text-white text-xs md:text-[9px] font-black hover:bg-gray-200 dark:hover:bg-white/10 transition-all"
                 >
                   عرض التفاصيل
                 </button>
@@ -1135,19 +1135,19 @@ const AdminDashboard = () => {
     if (!currentItem?.subTabs) return null;
 
     return (
-      <div className="flex items-center gap-1.5 mb-6 overflow-x-auto no-scrollbar pb-1">
+      <div className="flex items-center gap-2 mb-6 overflow-x-auto no-scrollbar pb-1">
         {currentItem.subTabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setSubTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black transition-all whitespace-nowrap border relative ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black transition-all whitespace-nowrap border relative ${
               subTab === tab.id
                 ? "bg-library-primary text-white border-library-primary shadow-md"
                 : "bg-white dark:bg-white/5 text-gray-500 border-gray-100 dark:border-white/5 hover:border-library-accent/30"
             }`}
           >
             <div className="relative">
-              <tab.icon size={12} />
+              <tab.icon size={14} />
               {activeTab === "students" && tab.id === "pending" && parseInt(statsData.requests.value) > 0 && (
                 <span className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-rose-500 rounded-full border border-white dark:border-[#121214] animate-pulse" />
               )}
@@ -1157,7 +1157,7 @@ const AdminDashboard = () => {
             </div>
             {tab.title}
             {activeTab === "students" && tab.id === "pending" && parseInt(statsData.requests.value) > 0 && (
-              <span className={`text-[7px] font-black px-1 rounded-sm ml-1 ${
+              <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-sm ml-1 ${
                 subTab === tab.id ? "bg-white/20 text-white" : "bg-rose-500/10 text-rose-500"
               }`}>
                 {statsData.requests.value}
@@ -1281,54 +1281,54 @@ const AdminDashboard = () => {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gray-50/50 dark:bg-[#08080a] pt-24 lg:pt-32 pb-12 flex flex-col lg:flex-row gap-0 overflow-hidden" style={{ direction: "rtl" }}>
+      <div className="h-screen bg-gray-50/50 dark:bg-[#08080a] pt-16 lg:pt-[68px] flex flex-col lg:flex-row gap-0 overflow-hidden" style={{ direction: "rtl" }}>
         
         {/* New Leaner Glass Sidebar - Hidden on mobile */}
-        <div className="hidden lg:block lg:w-[220px] lg:h-[calc(100vh-130px)] lg:sticky lg:top-32 pr-4 pl-0">
-          <div className="bg-white/80 dark:bg-[#121214]/80 backdrop-blur-2xl h-full rounded-2xl p-4 border border-white dark:border-white/5 shadow-sm flex flex-col relative overflow-hidden">
+        <div className="hidden lg:block lg:w-[272px] h-full pr-0 pl-3 pb-0">
+          <div className="bg-white/80 dark:bg-[#121214]/80 backdrop-blur-2xl h-full rounded-l-2xl rounded-r-none p-5 border border-white dark:border-white/5 shadow-sm flex flex-col relative overflow-hidden">
             <div className="absolute -left-20 -bottom-20 w-40 h-40 bg-library-accent/10 rounded-full blur-[80px]" />
             
-            <div className="mb-6 px-2 pt-1">
-              <div className="flex items-center gap-2.5 mb-1">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-library-primary to-indigo-600 flex items-center justify-center text-library-accent shadow-md">
-                  <Shield size={16} />
+            <div className="mb-6 px-1 pt-1">
+              <div className="flex items-center gap-3 mb-1">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-library-primary to-indigo-600 flex items-center justify-center text-library-accent shadow-md">
+                  <Shield size={18} />
                 </div>
                 <div>
-                  <h2 className="text-base font-black text-library-primary dark:text-white tracking-tight">BookOrbit</h2>
-                  <p className="text-[7px] text-library-accent font-black uppercase tracking-widest">الإدارة v2</p>
+                  <h2 className="text-lg font-black text-library-primary dark:text-white tracking-tight">BookOrbit</h2>
+                  <p className="text-[9px] text-library-accent font-black uppercase tracking-widest">Admin Panel</p>
                 </div>
               </div>
             </div>
 
-            <nav className="flex-grow space-y-0.5">
+            <nav className="flex-grow space-y-2">
               {menuItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg font-black text-[10px] transition-all relative group overflow-hidden ${
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-black text-xs transition-all relative group overflow-hidden border ${
                     activeTab === item.id 
-                      ? "bg-library-primary text-white shadow-sm" 
-                      : "text-gray-400 hover:text-library-primary dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5"
+                      ? "bg-library-primary text-white shadow-sm border-library-primary" 
+                      : "text-gray-500 border-transparent hover:text-library-primary dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5 hover:border-library-primary/10"
                   }`}
                 >
-                  <div className="flex items-center gap-2.5 relative z-10">
+                  <div className="flex items-center gap-3 relative z-10">
                     <div className="relative">
-                      <item.icon size={12} className={activeTab === item.id ? "text-library-accent" : "group-hover:scale-110 transition-transform"} />
+                      <item.icon size={16} className={activeTab === item.id ? "text-library-accent" : "group-hover:scale-110 transition-transform"} />
                       {(item.id === "students" && parseInt(statsData.requests.value) > 0) || 
                        (item.id === "books" && (statsData.pendingBooksCount || 0) > 0) ? (
-                        <span className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-rose-500 rounded-full border border-white dark:border-[#121214] animate-pulse" />
+                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-rose-500 rounded-full border border-white dark:border-[#121214] animate-pulse" />
                       ) : null}
                     </div>
                     <span className="tracking-tight">{item.title}</span>
                   </div>
                   {activeTab === item.id ? (
-                    <motion.div layoutId="nav-line" className="w-0.5 h-3 bg-library-accent rounded-full relative z-10" />
+                    <motion.div layoutId="nav-line" className="w-1 h-4 bg-library-accent rounded-full relative z-10" />
                   ) : (
                     <div className="flex items-center gap-1">
                       {(item.id === "students" || item.id === "requests") && parseInt(statsData.requests.value) > 0 && (
-                        <span className="text-[7px] font-black text-rose-500 bg-rose-500/10 px-1 rounded-sm">{statsData.requests.value}</span>
+                        <span className="text-[9px] font-black text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded-md">{statsData.requests.value}</span>
                       )}
-                      <ArrowUpRight size={12} className="opacity-0 group-hover:opacity-40 transition-all -translate-x-1 group-hover:translate-x-0" />
+                      <ArrowUpRight size={14} className="opacity-0 group-hover:opacity-40 transition-all -translate-x-1 group-hover:translate-x-0" />
                     </div>
                   )}
                 </button>
@@ -1336,8 +1336,8 @@ const AdminDashboard = () => {
             </nav>
 
             <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/5">
-              <div className="flex items-center gap-3 p-2.5 rounded-xl bg-gray-50 dark:bg-white/5 group cursor-pointer transition-all hover:bg-gray-100">
-                <div className="w-8 h-8 rounded-lg overflow-hidden bg-white dark:bg-dark-bg p-0.5 border border-gray-100 dark:border-white/10 shadow-sm relative">
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-l from-library-primary/5 to-transparent dark:from-white/10 dark:to-transparent group cursor-pointer transition-all hover:bg-gray-100 dark:hover:bg-white/10 border border-library-primary/10 dark:border-white/10">
+                <div className="w-10 h-10 rounded-lg overflow-hidden bg-white dark:bg-dark-bg p-0.5 border border-gray-100 dark:border-white/10 shadow-sm relative">
                   {user?.image ? (
                     <img src={user.image} alt="" className="w-full h-full object-cover rounded-md" />
                   ) : (
@@ -1347,12 +1347,12 @@ const AdminDashboard = () => {
                   )}
                 </div>
                 <div className="flex-grow">
-                  <p className="text-[9px] font-black text-library-primary dark:text-white truncate max-w-[80px]">
+                  <p className="text-[11px] font-black text-library-primary dark:text-white truncate max-w-[120px]">
               {user?.fullName || "مدير النظام"}
                   </p>
                   <div className="flex items-center gap-1 mt-0.5">
                     <span className="w-0.5 h-0.5 rounded-full bg-emerald-500" />
-                    <p className="text-[7px] text-emerald-600 font-black uppercase">متصل</p>
+                    <p className="text-[9px] text-emerald-600 font-black uppercase">Admin Online</p>
                   </div>
                 </div>
               </div>
@@ -1361,83 +1361,79 @@ const AdminDashboard = () => {
         </div>
 
         {/* Main Content with Custom Scroll */}
-        <div className="flex-grow px-4 lg:pr-1 lg:pl-6 h-[calc(100vh-130px)] overflow-y-auto custom-scrollbar pb-6">
-          <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-1.5 text-[8px] font-black text-gray-400 uppercase tracking-widest mb-2 bg-white/50 dark:bg-white/5 w-fit px-2.5 py-1 rounded-full border border-gray-100 dark:border-white/5">
-                <Link to="/admin" className="hover:text-library-accent transition-colors">لوحة الإدارة</Link>
-                <span className="opacity-20">/</span>
-                <span className="text-library-primary dark:text-white">{menuItems.find(i => i.id === activeTab)?.title}</span>
+        <div className="flex-grow px-3 lg:pr-1 lg:pl-6 h-full overflow-y-auto custom-scrollbar pb-6 pt-2">
+          {/* Desktop Structure */}
+          <div className="hidden lg:block">
+            <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-1.5 text-[8px] font-black text-gray-400 uppercase tracking-widest mb-2 bg-white/50 dark:bg-white/5 w-fit px-2.5 py-1 rounded-full border border-gray-100 dark:border-white/5">
+                  <Link to="/admin" className="hover:text-library-accent transition-colors">لوحة الإدارة</Link>
+                  <span className="opacity-20">/</span>
+                  <span className="text-library-primary dark:text-white">{menuItems.find(i => i.id === activeTab)?.title}</span>
+                </div>
+                <h1 className="text-2xl font-black text-library-primary dark:text-white tracking-tighter flex items-center gap-2.5">
+                  {menuItems.find(i => i.id === activeTab)?.title}
+                </h1>
               </div>
-              <h1 className="text-2xl font-black text-library-primary dark:text-white tracking-tighter flex items-center gap-2.5">
+            </header>
+
+            {activeTab === "overview" && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+                <StatCard title="الطلاب" value={statsData.students.value} change={statsData.students.change} icon={Users} color="indigo" onClick={() => { setActiveTab("students"); setSubTab("all"); }} />
+                <StatCard title="الكتب" value={statsData.books.value} change={statsData.books.change} icon={BookOpen} color="emerald" onClick={() => { setActiveTab("books"); setSubTab("all"); }} />
+                <StatCard title="الإعارات" value={statsData.lendings.value} change={statsData.lendings.change} icon={BookMarked} color="amber" onClick={() => { setActiveTab("lending"); setSubTab("active"); }} />
+                <StatCard title="طلبات توثيق" value={statsData.requests.value} change={statsData.requests.change} icon={UserPlus} color="rose" trend="down" onClick={() => { setActiveTab("students"); setSubTab("pending"); }} />
+              </div>
+            )}
+
+            {renderContent()}
+          </div>
+
+          {/* Mobile Structure */}
+          <div className="lg:hidden space-y-4">
+            <div className="bg-white/80 dark:bg-[#121214]/80 border border-white dark:border-white/5 rounded-2xl p-4 shadow-sm">
+              <p className="text-[10px] font-black text-gray-400 mb-1">لوحة الإدارة</p>
+              <h1 className="text-lg font-black text-library-primary dark:text-white">
                 {menuItems.find(i => i.id === activeTab)?.title}
               </h1>
             </div>
-          </header>
 
-          {/* Compact Stats Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-            <StatCard 
-              title="الطلاب" 
-              value={statsData.students.value} 
-              change={statsData.students.change} 
-              icon={Users} 
-              color="indigo" 
-              onClick={() => { setActiveTab("students"); setSubTab("all"); }}
-            />
-            <StatCard 
-              title="الكتب" 
-              value={statsData.books.value} 
-              change={statsData.books.change} 
-              icon={BookOpen} 
-              color="emerald" 
-              onClick={() => { setActiveTab("books"); setSubTab("all"); }}
-            />
-            <StatCard 
-              title="الإعارات" 
-              value={statsData.lendings.value} 
-              change={statsData.lendings.change} 
-              icon={BookMarked} 
-              color="amber" 
-              onClick={() => { setActiveTab("lending"); setSubTab("active"); }}
-            />
-            <StatCard 
-              title="طلبات توثيق" 
-              value={statsData.requests.value} 
-              change={statsData.requests.change} 
-              icon={UserPlus} 
-              color="rose" 
-              trend="down" 
-              onClick={() => { setActiveTab("students"); setSubTab("pending"); }}
-            />
-          </div>
-          
-          {/* Mobile Navigation Tabs */}
-          <div className="lg:hidden flex items-center gap-2 overflow-x-auto no-scrollbar pb-6 mb-2">
-            {menuItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`flex items-center gap-2.5 px-5 py-3 rounded-2xl font-black text-[10px] transition-all whitespace-nowrap border ${
-                  activeTab === item.id 
-                    ? "bg-library-primary text-white border-library-primary shadow-lg shadow-library-primary/20" 
-                    : "bg-white dark:bg-white/5 text-gray-400 border-gray-100 dark:border-white/5"
-                }`}
-              >
-                <div className="relative">
-                  <item.icon size={14} className={activeTab === item.id ? "text-library-accent" : ""} />
-                  {((item.id === "students" && parseInt(statsData.requests.value) > 0) || 
+            <div className="grid grid-cols-2 gap-2">
+              {menuItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`flex items-center justify-between gap-2 px-3 py-3 rounded-xl text-xs font-black border transition-all ${
+                    activeTab === item.id
+                      ? "bg-library-primary text-white border-library-primary shadow-md shadow-library-primary/20"
+                      : "bg-white dark:bg-white/5 text-gray-600 border-gray-100 dark:border-white/5"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <item.icon size={14} className={activeTab === item.id ? "text-library-accent" : ""} />
+                    <span>{item.title}</span>
+                  </div>
+                  {((item.id === "students" && parseInt(statsData.requests.value) > 0) ||
                     (item.id === "books" && (statsData.pendingBooksCount || 0) > 0)) && (
-                    <span className="absolute -top-1.5 -right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white dark:border-[#08080a]" />
+                    <span className="w-2 h-2 rounded-full bg-rose-500" />
                   )}
-                </div>
-                {item.title}
-              </button>
-            ))}
+                </button>
+              ))}
+            </div>
+
+            {activeTab === "overview" && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <StatCard title="الطلاب" value={statsData.students.value} change={statsData.students.change} icon={Users} color="indigo" onClick={() => { setActiveTab("students"); setSubTab("all"); }} />
+                <StatCard title="الكتب" value={statsData.books.value} change={statsData.books.change} icon={BookOpen} color="emerald" onClick={() => { setActiveTab("books"); setSubTab("all"); }} />
+                <StatCard title="الإعارات" value={statsData.lendings.value} change={statsData.lendings.change} icon={BookMarked} color="amber" onClick={() => { setActiveTab("lending"); setSubTab("active"); }} />
+                <StatCard title="طلبات توثيق" value={statsData.requests.value} change={statsData.requests.change} icon={UserPlus} color="rose" trend="down" onClick={() => { setActiveTab("students"); setSubTab("pending"); }} />
+              </div>
+            )}
+
+            <div className="bg-white/70 dark:bg-[#121214]/70 rounded-2xl p-3 border border-white dark:border-white/5">
+              {renderContent()}
+            </div>
           </div>
-
-          {renderContent()}
-
         </div>
       </div>
 

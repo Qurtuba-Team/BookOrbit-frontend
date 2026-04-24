@@ -10,7 +10,8 @@ import {
   ShieldAlert,
   Loader2,
   Lock,
-  ChevronLeft
+  ChevronLeft,
+  Sparkles
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
@@ -18,13 +19,13 @@ import { identityApi } from "../services/api";
 import Navbar from "../components/common/Navbar";
 
 const ProfileField = ({ icon: Icon, label, value, color = "indigo" }) => (
-  <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/5 group hover:border-indigo-500/30 transition-all">
-    <div className={`w-8 h-8 rounded-lg bg-${color}-500/10 flex items-center justify-center text-${color}-500`}>
+  <div className="flex items-center gap-3 p-4 rounded-xl bg-gray-50/80 dark:bg-white/[0.02] border border-gray-100 dark:border-white/5 group hover:border-indigo-500/30 transition-all">
+    <div className={`w-9 h-9 rounded-xl bg-${color}-500/10 flex items-center justify-center text-${color}-500`}>
       <Icon size={16} />
     </div>
     <div className="flex-grow min-w-0">
-      <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">{label}</p>
-      <p className="text-[11px] font-bold text-library-primary dark:text-gray-200 truncate">{value || "غير مسجل"}</p>
+      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">{label}</p>
+      <p className="text-sm font-bold text-library-primary dark:text-gray-200 truncate">{value || "غير مسجل"}</p>
     </div>
   </div>
 );
@@ -48,37 +49,41 @@ const StudentProfile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-library-paper dark:bg-[#08080a] pt-24 lg:pt-32 pb-12" dir="rtl">
+    <div className="min-h-screen bg-library-paper dark:bg-[#08080a] pt-20 lg:pt-24 pb-12" dir="rtl">
       <Navbar />
       
-      <div className="max-w-4xl mx-auto px-6 lg:px-8">
-        <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <header className="mb-8 rounded-2xl bg-white/70 dark:bg-[#121214]/70 border border-white dark:border-white/5 p-5 sm:p-6 shadow-sm">
           <div>
-            <h1 className="text-2xl font-black text-library-primary dark:text-white tracking-tighter flex items-center gap-2.5">
+            <p className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black bg-library-accent/10 text-library-accent border border-library-accent/20 mb-3">
+              <Sparkles size={12} />
+              الهوية الرقمية
+            </p>
+            <h1 className="text-2xl sm:text-3xl font-black text-library-primary dark:text-white tracking-tight flex items-center gap-2.5">
               الملف الشخصي
             </h1>
-            <p className="text-xs text-gray-400 font-bold mt-1">إدارة بياناتك الأكاديمية وإعدادات الأمان.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 font-bold mt-2">إدارة بياناتك الأكاديمية وإعدادات الأمان بطريقة احترافية.</p>
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex gap-2 mt-4">
             <button 
               onClick={() => setActiveSection("info")}
-              className={`px-4 py-2 rounded-xl text-[10px] font-black transition-all border ${activeSection === 'info' ? 'bg-library-primary text-white border-library-primary shadow-lg' : 'bg-white dark:bg-white/5 text-gray-500 border-gray-100 dark:border-white/5'}`}
+              className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all border ${activeSection === 'info' ? 'bg-library-primary text-white border-library-primary shadow-md' : 'bg-white dark:bg-white/5 text-gray-500 border-gray-100 dark:border-white/5'}`}
             >
               البيانات الشخصية
             </button>
             <button 
               onClick={() => setActiveSection("security")}
-              className={`px-4 py-2 rounded-xl text-[10px] font-black transition-all border ${activeSection === 'security' ? 'bg-library-primary text-white border-library-primary shadow-lg' : 'bg-white dark:bg-white/5 text-gray-500 border-gray-100 dark:border-white/5'}`}
+              className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all border ${activeSection === 'security' ? 'bg-library-primary text-white border-library-primary shadow-md' : 'bg-white dark:bg-white/5 text-gray-500 border-gray-100 dark:border-white/5'}`}
             >
               الأمان والخصوصية
             </button>
           </div>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Column - Identity Card */}
-          <div className="lg:col-span-4 space-y-6">
+          <div className="lg:col-span-5 space-y-5">
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -101,8 +106,13 @@ const StudentProfile = () => {
                 </button>
               </div>
 
-              <h2 className="text-base font-black text-library-primary dark:text-white mb-1">{user?.fullName}</h2>
-              <p className="text-[10px] font-bold text-library-accent uppercase tracking-widest mb-4">{user?.role || "طالب جامعي"}</p>
+              <h2 className="text-xl font-black text-library-primary dark:text-white mb-1">{user?.fullName}</h2>
+              <p className="text-[11px] font-bold text-library-accent uppercase tracking-widest mb-4">{user?.role || "طالب جامعي"}</p>
+
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black border bg-emerald-500/5 text-emerald-600 border-emerald-500/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                {user?.status === "active" ? "حساب موثق" : user?.status === "approved" ? "بانتظار التفعيل" : "بانتظار التوثيق"}
+              </div>
               
               {user?.role?.toLowerCase() !== 'admin' && (
                 <div className="flex items-center justify-center gap-4 py-3 border-t border-gray-50 dark:border-white/5 mt-4">
@@ -130,12 +140,12 @@ const StudentProfile = () => {
                   <ShieldAlert size={20} />
                 </div>
                 <div>
-                  <h4 className="text-[11px] font-black text-amber-600 mb-1">البريد غير مؤكد</h4>
-                  <p className="text-[9px] text-amber-600/70 font-bold mb-3 leading-relaxed">يرجى توثيق بريدك الجامعي لتتمكن من تفعيل حسابك.</p>
+                  <h4 className="text-xs font-black text-amber-600 mb-1">البريد غير مؤكد</h4>
+                  <p className="text-[10px] text-amber-600/70 font-bold mb-3 leading-relaxed">يرجى توثيق بريدك الجامعي لتتمكن من تفعيل حسابك.</p>
                   <button 
                     onClick={handleVerifyEmail}
                     disabled={loading}
-                    className="px-3 py-1.5 rounded-lg bg-amber-500 text-white text-[9px] font-black shadow-md shadow-amber-500/20 hover:bg-amber-600 transition-all flex items-center gap-1.5 disabled:opacity-50"
+                    className="px-3 py-2 rounded-lg bg-amber-500 text-white text-xs font-black shadow-md shadow-amber-500/20 hover:bg-amber-600 transition-all flex items-center gap-1.5 disabled:opacity-50"
                   >
                     {loading ? <Loader2 size={10} className="animate-spin" /> : <Mail size={10} />}
                     إرسال رابط التفعيل
@@ -154,15 +164,15 @@ const StudentProfile = () => {
                   <ShieldCheck size={20} />
                 </div>
                 <div>
-                  <h4 className="text-[11px] font-black text-indigo-600 mb-1">بانتظار مراجعة الإدارة</h4>
-                  <p className="text-[9px] text-indigo-600/70 font-bold leading-relaxed">لقد قمت بتأكيد بريدك الإلكتروني بنجاح. حسابك الآن قيد المراجعة من قبل إدارة المكتبة لتفعيل الصلاحيات الكاملة.</p>
+                  <h4 className="text-xs font-black text-indigo-600 mb-1">بانتظار مراجعة الإدارة</h4>
+                  <p className="text-[10px] text-indigo-600/70 font-bold leading-relaxed">لقد قمت بتأكيد بريدك الإلكتروني بنجاح. حسابك الآن قيد المراجعة من قبل إدارة المكتبة لتفعيل الصلاحيات الكاملة.</p>
                 </div>
               </motion.div>
             )}
           </div>
 
           {/* Right Column - Content */}
-          <div className="lg:col-span-8">
+          <div className="lg:col-span-7">
             <AnimatePresence mode="wait">
               {activeSection === "info" ? (
                 <motion.div 
@@ -173,7 +183,7 @@ const StudentProfile = () => {
                   className="space-y-6"
                 >
                   <div className="bg-white/60 dark:bg-[#121214]/60 backdrop-blur-xl rounded-2xl p-6 border border-white dark:border-white/5 shadow-sm">
-                    <h3 className="text-sm font-black text-library-primary dark:text-white mb-5 flex items-center gap-2">
+                    <h3 className="text-base font-black text-library-primary dark:text-white mb-5 flex items-center gap-2">
                       <ShieldCheck className="text-indigo-500" size={16} />
                       معلومات الحساب
                     </h3>
@@ -195,9 +205,9 @@ const StudentProfile = () => {
                   </div>
 
                   <div className="bg-white/60 dark:bg-[#121214]/60 backdrop-blur-xl rounded-2xl p-6 border border-white dark:border-white/5 shadow-sm">
-                    <h3 className="text-sm font-black text-library-primary dark:text-white mb-5">النشاط الأخير</h3>
+                    <h3 className="text-base font-black text-library-primary dark:text-white mb-5">النشاط الأخير</h3>
                     <div className="text-center py-8">
-                      <p className="text-[10px] text-gray-400 font-bold italic">لا يوجد نشاط مسجل مؤخراً.</p>
+                      <p className="text-sm text-gray-400 font-bold italic">لا يوجد نشاط مسجل مؤخراً.</p>
                     </div>
                   </div>
                 </motion.div>
@@ -210,16 +220,16 @@ const StudentProfile = () => {
                   className="space-y-6"
                 >
                   <div className="bg-white/60 dark:bg-[#121214]/60 backdrop-blur-xl rounded-2xl p-6 border border-white dark:border-white/5 shadow-sm">
-                    <h3 className="text-sm font-black text-library-primary dark:text-white mb-5 flex items-center gap-2">
+                    <h3 className="text-base font-black text-library-primary dark:text-white mb-5 flex items-center gap-2">
                       <Lock className="text-rose-500" size={16} />
                       كلمة المرور
                     </h3>
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-xl bg-rose-500/5 border border-rose-500/10">
                       <div>
-                        <p className="text-[11px] font-black text-rose-600 mb-1">تحديث كلمة المرور</p>
-                        <p className="text-[9px] text-rose-600/60 font-bold">ننصح بتغيير كلمة المرور بشكل دوري لضمان أمان حسابك.</p>
+                        <p className="text-sm font-black text-rose-600 mb-1">تحديث كلمة المرور</p>
+                        <p className="text-[10px] text-rose-600/60 font-bold">ننصح بتغيير كلمة المرور بشكل دوري لضمان أمان حسابك.</p>
                       </div>
-                      <button className="px-5 py-2 rounded-xl bg-rose-500 text-white text-[10px] font-black shadow-lg shadow-rose-500/20 hover:bg-rose-600 transition-all">
+                      <button className="px-5 py-2.5 rounded-xl bg-rose-500 text-white text-xs font-black shadow-lg shadow-rose-500/20 hover:bg-rose-600 transition-all">
                         تغيير الآن
                       </button>
                     </div>
@@ -229,7 +239,7 @@ const StudentProfile = () => {
                     <h3 className="text-sm font-black text-rose-500 mb-5">منطقة الخطر</h3>
                     <button 
                       onClick={logout}
-                      className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-rose-500/20 text-rose-500 text-[11px] font-black hover:bg-rose-500 hover:text-white transition-all group"
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-rose-500/20 text-rose-500 text-sm font-black hover:bg-rose-500 hover:text-white transition-all group"
                     >
                       تسجيل الخروج من الحساب
                       <ChevronLeft size={14} className="group-hover:-translate-x-1 transition-transform" />

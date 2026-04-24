@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { OrbitIcon } from "../common/OrbitIcon";
 
 const Preloader = ({ onComplete }) => {
   const [count, setCount] = useState(0);
@@ -45,27 +46,13 @@ const Preloader = ({ onComplete }) => {
         transition={{ duration: 0.5 }}
         className="pl-content"
       >
-        <svg className="w-20 h-20 mb-4" viewBox="0 0 100 100" fill="none">
-          <motion.circle
-            cx="50"
-            cy="50"
-            r="40"
-            stroke="var(--color-accent)"
-            strokeWidth="2"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ duration: 2, ease: "easeInOut" }}
-          />
-          <motion.path
-            d="M30 40 L50 30 L70 40 L70 70 L50 60 L30 70 Z"
-            stroke="white"
-            strokeWidth="2"
-            strokeLinejoin="round"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ duration: 1.5, delay: 0.3, ease: "easeInOut" }}
-          />
-        </svg>
+        <motion.div
+          animate={{ scale: [1, 1.05, 1] }}
+          transition={{ duration: 2, ease: "easeInOut", repeat: Infinity }}
+          className="mb-8 drop-shadow-2xl flex justify-center items-center"
+        >
+          <OrbitIcon className="w-28 h-28" />
+        </motion.div>
         <div className="pl-counter">{count.toString().padStart(3, "0")}</div>
       </motion.div>
     </div>
