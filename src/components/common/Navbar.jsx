@@ -10,10 +10,10 @@ import {
   User, 
   Search, 
   Bell,
-  LayoutDashboard,
   Shield,
   BookOpen,
-  UserCircle
+  UserCircle,
+  House
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
@@ -31,6 +31,7 @@ const Navbar = () => {
   const displayName = user?.fullName || user?.Name || user?.name || user?.userName || user?.email?.split('@')[0] || "المستخدم";
   // Try to find the best major/role display
   const displayRole = user?.major || (user?.role?.toLowerCase() === 'admin' ? 'إدارة النظام' : 'طالب جامعي');
+  const homePath = isLoggedIn ? (user?.role?.toLowerCase() === "admin" ? "/admin" : "/app") : "/";
 
   const isDashboard = location.pathname.startsWith('/app') || 
                       location.pathname.startsWith('/dashboard') || 
@@ -98,32 +99,41 @@ const Navbar = () => {
             </div>
 
             <div className="flex items-center gap-2.5 lg:gap-4">
-              
-              <motion.button
-                whileHover={{ scale: 1.1, rotate: 15 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={toggleDarkMode}
-                className="hidden lg:flex w-9 h-9 rounded-lg items-center justify-center bg-white/60 dark:bg-white/5 text-library-primary/70 dark:text-library-paper/60 hover:text-library-accent transition-all border border-library-primary/10 dark:border-white/10"
-              >
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={isDarkMode ? "sun" : "moon"}
-                    initial={{ scale: 0.5, opacity: 0, rotate: -90 }}
-                    animate={{ scale: 1, opacity: 1, rotate: 0 }}
-                    exit={{ scale: 0.5, opacity: 0, rotate: 90 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    {isDarkMode ? <Sun size={17} /> : <Moon size={17} />}
-                  </motion.div>
-                </AnimatePresence>
-              </motion.button>
-
               {isLoggedIn ? (
                 <div className="flex items-center gap-2.5 lg:gap-4">
-                  {isDashboard && user?.role?.toLowerCase() !== 'admin' && (
+                  <Link
+                    to={homePath}
+                    className="hidden lg:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/70 dark:bg-white/5 border border-library-primary/10 dark:border-white/10 text-[11px] font-black text-library-primary dark:text-white hover:border-library-accent/35 hover:text-library-accent transition-all"
+                    title="الصفحة الرئيسية"
+                  >
+                    <House size={14} />
+                    الرئيسية
+                  </Link>
+
+                  <motion.button
+                    whileHover={{ scale: 1.1, rotate: 15 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={toggleDarkMode}
+                    className="hidden lg:flex w-9 h-9 rounded-lg items-center justify-center bg-white/60 dark:bg-white/5 text-library-primary/70 dark:text-library-paper/60 hover:text-library-accent transition-all border border-library-primary/10 dark:border-white/10"
+                  >
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={isDarkMode ? "sun" : "moon"}
+                        initial={{ scale: 0.5, opacity: 0, rotate: -90 }}
+                        animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                        exit={{ scale: 0.5, opacity: 0, rotate: 90 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        {isDarkMode ? <Sun size={17} /> : <Moon size={17} />}
+                      </motion.div>
+                    </AnimatePresence>
+                  </motion.button>
+
+                  {user?.role?.toLowerCase() !== 'admin' && (
                     <motion.button 
                       whileHover={{ scale: 1.1 }}
-                      className="relative w-9 h-9 rounded-lg flex items-center justify-center bg-white/60 dark:bg-white/5 text-library-primary/70 dark:text-gray-400 hover:text-library-accent transition-all border border-library-primary/10 dark:border-white/10"
+                      className="hidden lg:flex relative w-9 h-9 rounded-lg items-center justify-center bg-white/60 dark:bg-white/5 text-library-primary/70 dark:text-gray-400 hover:text-library-accent transition-all border border-library-primary/10 dark:border-white/10"
+                      title="الإشعارات"
                     >
                       <Bell size={17} />
                       <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-dark-bg animate-pulse"></span>
@@ -185,6 +195,14 @@ const Navbar = () => {
                 </div>
               ) : (
                 <div className="hidden sm:flex items-center gap-6">
+                  <Link
+                    to={homePath}
+                    className="hidden lg:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/70 dark:bg-white/5 border border-library-primary/10 dark:border-white/10 text-[11px] font-black text-library-primary dark:text-white hover:border-library-accent/35 hover:text-library-accent transition-all"
+                    title="الصفحة الرئيسية"
+                  >
+                    <House size={14} />
+                    الرئيسية
+                  </Link>
                   <Link
                     to="/login"
                     className="text-sm font-black text-library-primary/60 dark:text-library-paper/60 hover:text-library-accent transition-colors"
@@ -269,12 +287,12 @@ const Navbar = () => {
 
                   <div className="flex flex-col gap-2 mt-2">
                     <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] mb-2 px-4">القائمة الرئيسية</p>
-                    <Link to="/app" onClick={() => setMobileMenuOpen(false)} className="group text-[14px] font-black text-library-primary dark:text-gray-200 flex items-center justify-between p-4 rounded-3xl hover:bg-gray-50 dark:hover:bg-white/5 border border-transparent hover:border-gray-100 dark:hover:border-white/5 active:scale-[0.98] transition-all">
+                    <Link to={homePath} onClick={() => setMobileMenuOpen(false)} className="group text-[14px] font-black text-library-primary dark:text-gray-200 flex items-center justify-between p-4 rounded-3xl hover:bg-gray-50 dark:hover:bg-white/5 border border-transparent hover:border-gray-100 dark:hover:border-white/5 active:scale-[0.98] transition-all">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-library-accent/20 to-library-accent/5 text-library-accent flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
-                          <LayoutDashboard size={20} />
+                          <House size={20} />
                         </div>
-                        لوحة التحكم
+                        الصفحة الرئيسية
                       </div>
                     </Link>
                     

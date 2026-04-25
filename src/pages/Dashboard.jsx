@@ -17,6 +17,7 @@ import Navbar from '../components/common/Navbar';
 import { useAuth } from '../context/AuthContext';
 import { borrowingApi, lendingApi } from '../services/api';
 import { getBookImageUrl } from '../utils/constants';
+import { mockAvailableLendingBooks } from '../utils/mockData';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -177,10 +178,11 @@ const Dashboard = () => {
         States: [0], // Available only
       });
       const rows = (res.items ?? res.data ?? []).map(normalizeLendingRow);
-      setBooksData(rows.filter((b) => b.stateKey === 'Available'));
+      const available = rows.filter((b) => b.stateKey === 'Available');
+      setBooksData(available.length ? available : mockAvailableLendingBooks);
     } catch (e) {
       toast.error(e?.message || 'تعذر تحميل الكتب المتاحة للإعارة');
-      setBooksData([]);
+      setBooksData(mockAvailableLendingBooks);
     } finally {
       setLoading(false);
     }

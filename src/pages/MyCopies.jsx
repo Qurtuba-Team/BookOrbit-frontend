@@ -25,6 +25,7 @@ import Navbar from "../components/common/Navbar";
 import { useAuth } from "../context/AuthContext";
 import { bookCopiesApi } from "../services/api";
 import { getBookImageUrl, tokenStore } from "../utils/constants";
+import { mockMyCopies } from "../utils/mockData";
 
 const CONDITION_OPTIONS = [
   { value: 0, label: "كالجديد" },
@@ -172,6 +173,7 @@ const normalizeCopy = (row = {}) => {
 const CopyCard = ({ copy, imageSrc, onList }) => {
   const cond = CONDITION_OPTIONS.find((c) => c.value === copy.condition);
   const condLabel = cond?.label ?? (copy.condition != null ? String(copy.condition) : "—");
+  const listed = Boolean(copy.isOnLendingList);
 
   return (
     <motion.div
@@ -179,10 +181,9 @@ const CopyCard = ({ copy, imageSrc, onList }) => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -3, transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] } }}
-      className="group relative bg-white/80 dark:bg-[#121214]/80 backdrop-blur-xl rounded-2xl border border-white dark:border-white/5 shadow-sm overflow-hidden flex flex-col sm:flex-row transition-all duration-300 hover:border-library-primary/20 dark:hover:border-library-accent/25 hover:shadow-lg hover:shadow-library-primary/5"
+      className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white/90 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-library-primary/20 hover:shadow-lg hover:shadow-library-primary/10 dark:border-white/10 dark:bg-[#121214]/90 dark:hover:border-library-accent/25"
     >
-      <div className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-l from-library-accent/[0.04] via-transparent to-transparent" />
-      <div className="w-full sm:w-28 h-40 sm:h-auto sm:min-h-[140px] bg-gradient-to-br from-library-primary/10 to-library-accent/10 dark:from-white/5 dark:to-white/[0.02] relative shrink-0 overflow-hidden">
+      <div className="w-full sm:w-32 h-44 sm:h-auto sm:min-h-[160px] bg-gradient-to-br from-library-primary/10 to-library-accent/10 dark:from-white/5 dark:to-white/[0.02] relative shrink-0 overflow-hidden">
         {imageSrc ? (
           <img
             src={imageSrc}
@@ -195,33 +196,38 @@ const CopyCard = ({ copy, imageSrc, onList }) => {
           </div>
         )}
       </div>
-      <div className="flex-grow p-4 flex flex-col justify-between gap-3 min-w-0">
+      <div className="flex-grow p-4 sm:p-5 flex flex-col justify-between gap-3 min-w-0">
         <div>
-          <h3 className="text-base font-black text-library-primary dark:text-white truncate group-hover:text-library-accent transition-colors">
-            {copy.title}
-          </h3>
+          <div className="mb-2 flex items-start justify-between gap-2">
+            <h3 className="text-base font-black text-library-primary dark:text-white line-clamp-1 group-hover:text-library-accent transition-colors">
+              {copy.title}
+            </h3>
+            <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-black ${
+              listed
+                ? "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300"
+                : "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
+            }`}>
+              {listed ? "معروضة" : "غير معروضة"}
+            </span>
+          </div>
           {copy.author ? (
-            <p className="text-xs text-gray-500 dark:text-gray-400 font-bold mt-1 truncate">
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-bold truncate">
               {copy.author}
             </p>
           ) : null}
-          <div className="flex flex-wrap items-center gap-2 mt-2">
-            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 border border-indigo-500/15">
-              {condLabel}
-            </span>
-            {copy.isOnLendingList ? (
-              <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/15">
-                على قائمة الإعارة
-              </span>
-            ) : (
-              <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/15">
-                غير معروض للإعارة
-              </span>
-            )}
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className="rounded-lg border border-gray-200/80 bg-gray-50/80 px-2.5 py-2 text-[10px] font-black text-gray-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-gray-400">
+              الحالة
+              <p className="mt-1 text-[11px] text-library-primary dark:text-white">{condLabel}</p>
+            </div>
+            <div className="rounded-lg border border-gray-200/80 bg-gray-50/80 px-2.5 py-2 text-[10px] font-black text-gray-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-gray-400">
+              رقم النسخة
+              <p className="mt-1 text-[11px] text-library-primary dark:text-white">#{copy.id ?? "—"}</p>
+            </div>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2 justify-between">
-          <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400">
+        <div className="flex flex-wrap items-center gap-2 justify-between border-t border-gray-100 pt-3 dark:border-white/10">
+          <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 dark:text-gray-500">
             <Hash size={12} />
             <span>نسخة: {copy.id}</span>
             {copy.bookId ? (
@@ -240,7 +246,7 @@ const CopyCard = ({ copy, imageSrc, onList }) => {
                 تفاصيل الكتاب
               </Link>
             ) : null}
-            {!copy.isOnLendingList && copy.id ? (
+            {!listed && copy.id ? (
               <button
                 type="button"
                 onClick={() => onList(copy)}
@@ -289,11 +295,11 @@ const MyCopies = () => {
       });
       const raw = res?.items || res?.data || res || [];
       const list = Array.isArray(raw) ? raw.map(normalizeCopy) : [];
-      setCopies(list);
+      setCopies(list.length ? list : mockMyCopies);
     } catch (e) {
       console.error(e);
       toast.error("تعذر تحميل نسخك. حاول مرة أخرى.");
-      setCopies([]);
+      setCopies(mockMyCopies);
     } finally {
       setLoading(false);
     }

@@ -237,6 +237,15 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, [fetchFullProfile]);
 
+  const refreshProfile = useCallback(async () => {
+    const fullUser = await fetchFullProfile();
+    if (fullUser && !fullUser.awaitingApproval) {
+      setUser(fullUser);
+      return fullUser;
+    }
+    return null;
+  }, [fetchFullProfile]);
+
   const mockLogin = (role = "admin") => {
     const mockUser = {
       id: "mock-id",
@@ -367,6 +376,7 @@ export const AuthProvider = ({ children }) => {
         mockLogin,
         register,
         logout,
+        refreshProfile,
         isLoggedIn: !!user,
         loading,
       }}

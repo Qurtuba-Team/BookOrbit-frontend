@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard';
 import AddBook from './pages/AddBook';
 import StudentDashboard from './pages/StudentDashboard';
 import StudentProfile from './pages/StudentProfile';
+import ChangePassword from './pages/ChangePassword';
 import BookDetail from './pages/BookDetail';
 import MyCopies from './pages/MyCopies';
 import LendingList from './pages/LendingList';
@@ -100,6 +101,7 @@ function AppRoutes() {
               {/* ── Student Protected Routes (محمية) ── */}
               <Route path="/app" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><StudentProfile /></ProtectedRoute>} />
+              <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />
               <Route path="/catalog/:bookId" element={<ProtectedRoute><BookDetail /></ProtectedRoute>} />
               <Route path="/my-copies" element={<ProtectedRoute><MyCopies /></ProtectedRoute>} />
               <Route path="/lending" element={<ProtectedRoute><LendingList /></ProtectedRoute>} />
