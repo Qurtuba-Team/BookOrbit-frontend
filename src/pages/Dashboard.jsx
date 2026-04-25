@@ -1,18 +1,22 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
 import {
   BookMarked,
-  Filter,
   ArrowUpLeft,
   User,
   ShieldCheck,
   Sparkles,
   Star,
   LayoutGrid,
+  Loader2,
+  Search,
 } from 'lucide-react';
 import Navbar from '../components/common/Navbar';
 import { useAuth } from '../context/AuthContext';
+import { borrowingApi, lendingApi } from '../services/api';
+import { getBookImageUrl } from '../utils/constants';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -35,9 +39,30 @@ const bookCardItem = {
   },
 };
 
-const CATEGORY_TABS = ['الكل', 'مقررات هندسة', 'مقررات طب', 'علوم أساسية'];
+const LENDING_STATE_KEYS = ['Available', 'Reserved', 'Borrowed', 'Expired', 'Closed'];
 
-const BookCard3D = ({ book }) => {
+const lendingStateToIndex = (raw) => {
+  if (typeof raw === 'number' && raw >= 0 && raw < LENDING_STATE_KEYS.length) return raw;
+  const s = String(raw ?? '').replace(/\s/g, '').toLowerCase();
+  const i = LENDING_STATE_KEYS.findIndex((k) => k.toLowerCase() === s);
+  return i >= 0 ? i : 0;
+};
+
+const normalizeLendingRow = (row = {}) => {
+  const idx = lendingStateToIndex(row.state ?? row.State);
+  const stateKey = LENDING_STATE_KEYS[idx];
+  return {
+    id: row.id ?? row.Id,
+    bookId: row.bookId ?? row.BookId,
+    title: row.bookTitle ?? row.title ?? row.Title ?? 'كتاب',
+    author: row.bookAuthor ?? row.author ?? row.Author ?? '—',
+    owner: row.studentName ?? row.ownerName ?? row.OwnerName ?? '—',
+    status: stateKey === 'Available' ? 'متاح' : 'غير متاح',
+    stateKey,
+  };
+};
+
+const BookCard3D = ({ book, onBorrow, submitting }) => {
   const available = book.status === 'متاح';
   return (
     <motion.div
@@ -62,10 +87,10 @@ const BookCard3D = ({ book }) => {
           </div>
           <div className={`absolute inset-y-0 right-0 w-[24px] ${book.color || 'bg-library-primary'} [transform:translateX(12px)_rotateY(90deg)] rounded-r-sm overflow-hidden shadow-[inset_2px_0_5px_rgba(0,0,0,0.3)]`}></div>
           <div className="absolute inset-0 bg-white rounded-r-md rounded-l-sm overflow-hidden [transform:translateZ(12px)] shadow-[-5px_5px_15px_rgba(0,0,0,0.2)] border-l-2 border-black/10">
-            {book.image && !book.image.startsWith('bg-') ? (
-               <img src={book.image} alt={book.title} className="w-full h-full object-cover" />
+            {book.bookId ? (
+               <img src={getBookImageUrl(book.bookId)} alt={book.title} className="w-full h-full object-cover" />
             ) : (
-               <div className={`w-full h-full ${book.color || book.image || 'bg-library-primary'} flex flex-col items-center justify-center p-3 text-center`}>
+               <div className="w-full h-full bg-library-primary flex flex-col items-center justify-center p-3 text-center">
                  <h3 className="text-white font-bold text-sm mb-1 leading-tight">{book.title}</h3>
                  <p className="text-white/80 text-[10px]">{book.author}</p>
                </div>
@@ -107,13 +132,14 @@ const BookCard3D = ({ book }) => {
           <button
             type="button"
             disabled={!available}
+            onClick={() => available && onBorrow(book.id)}
             className={`w-full py-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 ${
               available
                 ? 'bg-library-primary text-white border border-library-primary shadow-md hover:bg-library-accent hover:border-library-accent hover:shadow-lg dark:bg-white dark:text-library-primary dark:border-white dark:hover:bg-library-accent dark:hover:text-white dark:hover:border-library-accent'
                 : 'bg-gray-100/80 text-gray-400 border border-gray-200/80 dark:bg-white/[0.04] dark:text-gray-500 dark:border-white/10 cursor-not-allowed'
             }`}
           >
-            {available ? 'اطلب الإعارة' : 'غير متاح حالياً'}
+            {submitting ? 'جاري الإرسال...' : available ? 'اطلب الإعارة' : 'غير متاح حالياً'}
             {available && <ArrowUpLeft size={15} strokeWidth={2.5} />}
           </button>
         </div>
@@ -124,20 +150,62 @@ const BookCard3D = ({ book }) => {
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('الكل');
+  const [booksData, setBooksData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [requestingId, setRequestingId] = useState(null);
 
   // Prioritize fullName from the student profile
   const rawName = user?.fullName || user?.Name || user?.name || user?.userName || user?.email?.split('@')[0] || "يا بطل";
   const firstName = rawName.split(' ')[0];
 
-  const booksData = [
-    { title: 'الفيزياء الجامعية', author: 'سيرواي', owner: 'محمد علي', status: 'متاح', color: 'bg-blue-800', image: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=400&q=80' },
-    { title: 'الاقتصاد الجزئي', author: 'مانكيو', owner: 'سارة خالد', status: 'متاح', color: 'bg-green-800', image: 'https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?w=400&q=80' },
-    { title: 'هياكل البيانات', author: 'سيدجويك', owner: 'أحمد سامي', status: 'مستعار', color: 'bg-gray-800', image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&q=80' },
-    { title: 'علم الأدوية', author: 'ليبينكوت', owner: 'منى حسين', status: 'متاح', color: 'bg-red-800', image: 'https://images.unsplash.com/photo-1576086213369-97a306d36557?w=400&q=80' },
-    { title: 'التفاضل والتكامل', author: 'ستيوارت', owner: 'عمر طارق', status: 'متاح', color: 'bg-purple-800', image: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=400&q=80' },
-    { title: 'الذكاء الاصطناعي', author: 'راسل ونورفيج', owner: 'يوسف أحمد', status: 'متاح', color: 'bg-teal-800', image: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=400&q=80' }
-  ];
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search.trim()), 350);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const fetchAvailable = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await lendingApi.getAll({
+        Page: 1,
+        PageSize: 30,
+        SortColumn: 'createdat',
+        SortDirection: 'desc',
+        SearchTerm: debouncedSearch || undefined,
+        States: [0], // Available only
+      });
+      const rows = (res.items ?? res.data ?? []).map(normalizeLendingRow);
+      setBooksData(rows.filter((b) => b.stateKey === 'Available'));
+    } catch (e) {
+      toast.error(e?.message || 'تعذر تحميل الكتب المتاحة للإعارة');
+      setBooksData([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [debouncedSearch]);
+
+  useEffect(() => {
+    fetchAvailable();
+  }, [fetchAvailable]);
+
+  const handleBorrow = async (lendingRecordId) => {
+    if (!lendingRecordId || requestingId) return;
+    setRequestingId(lendingRecordId);
+    const t = toast.loading('جاري إرسال طلب الاستعارة…');
+    try {
+      await borrowingApi.create(lendingRecordId);
+      toast.success('تم إرسال طلب الاستعارة', { id: t });
+      await fetchAvailable();
+    } catch (e) {
+      toast.error(e?.message || 'تعذر إرسال الطلب', { id: t });
+    } finally {
+      setRequestingId(null);
+    }
+  };
+
+  const availableCount = useMemo(() => booksData.length, [booksData]);
 
   return (
     <div className="min-h-screen relative bg-library-paper dark:bg-dark-bg text-library-primary dark:text-library-paper transition-colors duration-300 overflow-x-hidden">
@@ -185,20 +253,20 @@ const Dashboard = () => {
             <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-dark-border dark:bg-dark-surface">
               <h3 className="mb-1 flex items-center gap-2.5 text-base font-black text-library-primary dark:text-white">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-library-accent/25 bg-library-accent/10 text-library-accent">
-                  <Filter size={18} strokeWidth={2} />
+                  <Search size={18} strokeWidth={2} />
                 </span>
-                تصفية النتائج
+                بحث في الكتب المتاحة
               </h3>
-              <p className="text-xs text-library-primary/50 dark:text-gray-500 font-bold mb-5">حدّد الكلية لتضييق قائمة الكتب.</p>
+              <p className="text-xs text-library-primary/50 dark:text-gray-500 font-bold mb-5">تعرض هذه الصفحة الكتب المتاحة للإعارة فقط.</p>
               <div className="space-y-4">
                 <div>
-                  <h4 className="text-xs font-black text-library-primary/60 dark:text-gray-400 mb-2 uppercase tracking-wide">الكلية</h4>
-                  <select className="w-full bg-library-paper/80 dark:bg-dark-bg/80 border border-library-primary/12 dark:border-white/10 rounded-xl px-3 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-library-accent/30 focus:border-library-accent/50 dark:text-white transition-all">
-                    <option>كل الكليات</option>
-                    <option>هندسة</option>
-                    <option>طب</option>
-                    <option>حاسبات ومعلومات</option>
-                  </select>
+                  <h4 className="text-xs font-black text-library-primary/60 dark:text-gray-400 mb-2 uppercase tracking-wide">ابحث بالعنوان / المالك</h4>
+                  <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="مثال: فيزياء، أحمد..."
+                    className="w-full bg-library-paper/80 dark:bg-dark-bg/80 border border-library-primary/12 dark:border-white/10 rounded-xl px-3 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-library-accent/30 focus:border-library-accent/50 dark:text-white transition-all"
+                  />
                 </div>
               </div>
             </div>
@@ -208,14 +276,14 @@ const Dashboard = () => {
               <div className="absolute -right-10 -top-10 w-36 h-36 bg-library-accent/25 blur-3xl rounded-full group-hover:bg-library-accent/35 transition-all duration-500" />
               <div className="absolute -left-8 bottom-0 w-24 h-24 bg-white/5 blur-2xl rounded-full" />
               <ShieldCheck size={30} className="text-library-accent mb-3 relative z-10 mt-2" strokeWidth={1.75} />
-              <h3 className="font-black text-lg mb-2 relative z-10">عمليات معلقة</h3>
-              <p className="text-white/75 text-sm mb-5 relative z-10 leading-relaxed">لديك كتاب واحد جاهز للتسليم؛ يرجى توليد كود الـ OTP عند المقابلة.</p>
-              <button
-                type="button"
-                className="w-full bg-library-accent text-library-primary font-black py-3 rounded-xl text-sm hover:bg-white transition-all relative z-10 shadow-md"
+              <h3 className="font-black text-lg mb-2 relative z-10">مؤشر سريع</h3>
+              <p className="text-white/75 text-sm mb-5 relative z-10 leading-relaxed">يوجد الآن {availableCount} كتاباً متاحاً للاستعارة في الأرشيف.</p>
+              <Link
+                to="/lending"
+                className="inline-flex w-full items-center justify-center bg-library-accent text-library-primary font-black py-3 rounded-xl text-sm hover:bg-white transition-all relative z-10 shadow-md"
               >
-                عرض التفاصيل
-              </button>
+                متابعة طلباتك
+              </Link>
             </div>
           </motion.div>
 
@@ -226,42 +294,11 @@ const Dashboard = () => {
                   <LayoutGrid size={20} strokeWidth={2} />
                 </span>
                 <div className="min-w-0">
-                  <h2 className="text-base font-black text-library-primary dark:text-white sm:text-lg">كتب الأرشيف</h2>
+                  <h2 className="text-base font-black text-library-primary dark:text-white sm:text-lg">الكتب المتاحة للإعارة</h2>
                   <p className="mt-0.5 text-xs font-bold text-library-primary/55 dark:text-gray-500">
-                    <span className="text-library-accent">{booksData.length}</span> مرجعاً في العرض · التصنيف:{' '}
-                    <span className="text-library-primary dark:text-gray-300">{activeTab}</span>
+                    <span className="text-library-accent">{availableCount}</span> كتاباً متاحاً حالياً
                   </p>
                 </div>
-              </div>
-            </div>
-
-            <div className="-mx-1 overflow-x-auto px-1 pb-1 no-scrollbar mask-fade-edges">
-              <div className="flex w-max min-w-full items-center gap-1 rounded-2xl border border-gray-200 bg-gray-50 p-1.5 dark:border-dark-border dark:bg-dark-bg sm:w-auto sm:min-w-0">
-                {CATEGORY_TABS.map((tab) => (
-                  <button
-                    key={tab}
-                    type="button"
-                    onClick={() => setActiveTab(tab)}
-                    className="relative shrink-0 rounded-xl px-4 py-2.5 text-xs font-black transition-colors sm:px-5"
-                  >
-                    {activeTab === tab && (
-                      <motion.span
-                        layoutId="archive-tab-pill"
-                        className="absolute inset-0 rounded-xl bg-library-primary shadow-md dark:bg-white"
-                        transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-                      />
-                    )}
-                    <span
-                      className={`relative z-10 block whitespace-nowrap ${
-                        activeTab === tab
-                          ? 'text-white dark:text-library-primary'
-                          : 'text-library-primary/65 hover:text-library-primary dark:text-gray-400 dark:hover:text-gray-200'
-                      }`}
-                    >
-                      {tab}
-                    </span>
-                  </button>
-                ))}
               </div>
             </div>
 
@@ -271,9 +308,25 @@ const Dashboard = () => {
               initial="hidden"
               animate="visible"
             >
-              {booksData.map((book, idx) => (
-                <BookCard3D key={idx} book={book} />
-              ))}
+              {loading ? (
+                <div className="col-span-full flex items-center justify-center py-16">
+                  <Loader2 className="h-8 w-8 animate-spin text-library-accent" />
+                </div>
+              ) : booksData.length === 0 ? (
+                <div className="col-span-full rounded-2xl border border-dashed border-gray-200 p-10 text-center dark:border-white/10">
+                  <p className="text-sm font-black text-library-primary dark:text-white">لا توجد كتب متاحة حالياً</p>
+                  <p className="mt-1 text-xs font-bold text-gray-500 dark:text-gray-400">جرّب تعديل البحث أو عد لاحقاً.</p>
+                </div>
+              ) : (
+                booksData.map((book) => (
+                  <BookCard3D
+                    key={book.id}
+                    book={book}
+                    onBorrow={handleBorrow}
+                    submitting={requestingId === book.id}
+                  />
+                ))
+              )}
             </motion.div>
           </motion.div>
         </div>
