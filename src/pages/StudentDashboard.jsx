@@ -187,15 +187,19 @@ const StudentDashboard = () => {
             <div className="rounded-2xl border border-library-primary/10 dark:border-white/10 bg-white/80 dark:bg-white/[0.03] p-5">
               <h3 className="text-sm font-black text-library-primary dark:text-white mb-4">خطوات مقترحة اليوم</h3>
               <div className="space-y-2.5">
-                <Link to="/profile" className="flex items-center justify-between rounded-xl px-3 py-2.5 bg-gray-50 dark:bg-white/5 hover:bg-library-accent/5 transition-all">
+                <Link to="/profile" className="flex items-center justify-between rounded-xl px-3 py-2.5 bg-gray-50 dark:bg-white/5 hover:bg-library-accent/5 transition-all border border-transparent hover:border-library-accent/20">
                   <span className="text-xs font-black text-library-primary dark:text-white">مراجعة بيانات الحساب</span>
                   <ArrowUpRight size={14} className="text-library-accent" />
                 </Link>
-                <Link to="/my-copies" className="flex items-center justify-between rounded-xl px-3 py-2.5 bg-gray-50 dark:bg-white/5 hover:bg-library-accent/5 transition-all">
+                <Link to="/lending/incoming" className="flex items-center justify-between rounded-xl px-3 py-2.5 bg-gray-50 dark:bg-white/5 hover:bg-library-accent/5 transition-all border border-transparent hover:border-library-accent/20">
+                  <span className="text-xs font-black text-library-primary dark:text-white">مراجعة الطلبات الواردة (جديد)</span>
+                  <ArrowUpRight size={14} className="text-library-accent" />
+                </Link>
+                <Link to="/my-copies" className="flex items-center justify-between rounded-xl px-3 py-2.5 bg-gray-50 dark:bg-white/5 hover:bg-library-accent/5 transition-all border border-transparent hover:border-library-accent/20">
                   <span className="text-xs font-black text-library-primary dark:text-white">إضافة كتاب جديد</span>
                   <ArrowUpRight size={14} className="text-library-accent" />
                 </Link>
-                <Link to="/lending" className="flex items-center justify-between rounded-xl px-3 py-2.5 bg-gray-50 dark:bg-white/5 hover:bg-library-accent/5 transition-all">
+                <Link to="/lending" className="flex items-center justify-between rounded-xl px-3 py-2.5 bg-gray-50 dark:bg-white/5 hover:bg-library-accent/5 transition-all border border-transparent hover:border-library-accent/20">
                   <span className="text-xs font-black text-library-primary dark:text-white">متابعة الإعارات النشطة</span>
                   <ArrowUpRight size={14} className="text-library-accent" />
                 </Link>

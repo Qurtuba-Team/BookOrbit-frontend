@@ -13,7 +13,8 @@ import {
   Shield,
   BookOpen,
   UserCircle,
-  House
+  House,
+  Inbox
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
@@ -322,6 +323,14 @@ const Navbar = () => {
                           <BookOpen size={20} />
                         </div>
                         كتبي
+                      </div>
+                    </Link>
+                    <Link to="/lending/incoming" onClick={() => setMobileMenuOpen(false)} className="group text-[14px] font-black text-library-primary dark:text-gray-200 flex items-center justify-between p-4 rounded-3xl hover:bg-gray-50 dark:hover:bg-white/5 border border-transparent hover:border-gray-100 dark:hover:border-white/5 active:scale-[0.98] transition-all">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-500/5 text-amber-500 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
+                          <Inbox size={20} />
+                        </div>
+                        الطلبات الواردة
                       </div>
                     </Link>
                   </div>

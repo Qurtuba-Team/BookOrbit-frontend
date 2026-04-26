@@ -20,6 +20,7 @@ import {
   X,
   ChevronDown,
   Check,
+  Inbox,
 } from "lucide-react";
 import Navbar from "../components/common/Navbar";
 import { useAuth } from "../context/AuthContext";
@@ -438,13 +439,22 @@ const MyCopies = () => {
                 واحد.
               </p>
             </div>
-            <Link
-              to="/addbook"
-              className="group inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-library-primary text-white text-sm font-black shadow-md shadow-library-primary/20 transition-all duration-200 shrink-0 hover:shadow-lg hover:shadow-library-primary/30 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99]"
-            >
-              <Plus size={18} className="transition-transform duration-300 group-hover:rotate-90" />
-              إضافة كتاب للكتالوج
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link
+                to="/lending/incoming"
+                className="group inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-white/50 dark:bg-white/5 text-library-primary dark:text-white text-sm font-black shadow-sm border border-library-primary/10 dark:border-white/10 transition-all duration-200 shrink-0 hover:bg-library-accent/10 hover:border-library-accent/30 hover:text-library-accent hover:-translate-y-0.5"
+              >
+                <Inbox size={18} className="transition-transform duration-300 group-hover:scale-110 group-hover:text-library-accent" />
+                الطلبات الواردة
+              </Link>
+              <Link
+                to="/addbook"
+                className="group inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-library-primary text-white text-sm font-black shadow-md shadow-library-primary/20 transition-all duration-200 shrink-0 hover:shadow-lg hover:shadow-library-primary/30 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99]"
+              >
+                <Plus size={18} className="transition-transform duration-300 group-hover:rotate-90" />
+                إضافة كتاب للكتالوج
+              </Link>
+            </div>
           </div>
         </header>
 
