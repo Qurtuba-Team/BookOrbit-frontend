@@ -29,26 +29,26 @@ const PAGE_SIZE = 10;
 
 const BORROWING_AR = {
   Pending: "بانتظار الموافقة",
-  Approved: "موافق عليه",
+  Accepted: "مقبول",
   Rejected: "مرفوض",
+  Cancelled: "ملغي",
   Expired: "منتهي",
-  Completed: "مكتمل",
 };
 
 const borrowingNumToKey = {
   0: "Pending",
-  1: "Approved",
+  1: "Accepted",
   2: "Rejected",
-  3: "Expired",
-  4: "Completed",
+  3: "Cancelled",
+  4: "Expired",
 };
 
 const statusTone = {
   Pending: "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200",
-  Approved: "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300",
+  Accepted: "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300",
   Rejected: "border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300",
+  Cancelled: "border-orange-300 bg-orange-50 text-orange-700 dark:border-orange-500/30 dark:bg-orange-500/10 dark:text-orange-300",
   Expired: "border-gray-300 bg-gray-50 text-gray-700 dark:border-white/20 dark:bg-white/[0.04] dark:text-gray-300",
-  Completed: "border-indigo-300 bg-indigo-50 text-indigo-700 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-300",
 };
 
 const formatDate = (v) => {
@@ -124,18 +124,18 @@ const LendingList = () => {
     setLoading(true);
     try {
       const params = {
-        Page: page,
-        PageSize: PAGE_SIZE,
-        SortColumn: "createdat",
-        SortDirection: "desc",
+        page,
+        pageSize: PAGE_SIZE,
+        sortColumn: "createdAt",
+        sortDirection: "desc",
       };
-      if (debouncedSearch) params.SearchTerm = debouncedSearch;
+      if (debouncedSearch) params.searchTerm = debouncedSearch;
       if (statusFilter !== "all") {
         const num = Object.keys(borrowingNumToKey).find((k) => borrowingNumToKey[k] === statusFilter);
-        if (num != null) params.States = [Number(num)];
+        if (num != null) params.states = [Number(num)];
       }
 
-      const res = await borrowingApi.getAll(params);
+      const res = await borrowingApi.getMineOutgoing(params);
       const raw = res.items ?? res.data ?? [];
       setItems(raw.length ? raw : mockBorrowingRequests);
       const total = res.totalCount ?? res.TotalCount ?? raw.length;
@@ -291,10 +291,10 @@ const LendingList = () => {
                       <div className="flex items-center gap-2 sm:flex-col sm:items-end">
                         {rid ? <span className="text-[10px] font-mono font-bold text-gray-400">طلب #{rid}</span> : null}
                         <div className="inline-flex items-center gap-1 text-[10px] font-black text-gray-400 dark:text-gray-500">
-                          {statusKey === "Approved" ? <CircleCheck size={12} /> : null}
+                          {statusKey === "Accepted" ? <CircleCheck size={12} /> : null}
                           {statusKey === "Rejected" ? <CircleX size={12} /> : null}
                           {statusKey === "Pending" ? <Hourglass size={12} /> : null}
-                          {statusKey === "Completed" ? <CheckCircle2 size={12} /> : null}
+                          {statusKey === "Cancelled" ? <CheckCircle2 size={12} /> : null}
                           {statusAr}
                         </div>
                       </div>

@@ -3,30 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, BookOpen, User, Building, Hash, Loader2 } from 'lucide-react';
 import { booksApi } from '../../services/api';
 import toast from 'react-hot-toast';
-
-// Simplified category options for edit (should match the constants in AddBook)
-const BOOK_CATEGORY_LABELS = {
-  ComputerScience: "علوم الحاسب التقنية",
-  Mathematics: "الرياضيات التطبيقية",
-  Physics: "الفيزياء الكلاسيكية",
-  Chemistry: "الكيمياء العضوية",
-  Biology: "الأحياء الدقيقة",
-  Engineering: "الهندسة الميكانيكية",
-  Medicine: "الطب البشري",
-  Literature: "الأدب العربي",
-  History: "التاريخ الإسلامي",
-  Philosophy: "الفلسفة والمنطق",
-  Art: "الفنون التشكيلية",
-  Music: "الموسيقى الكلاسيكية",
-  Law: "القانون الدولي",
-  Economics: "الاقتصاد الجزئي",
-  Sociology: "علم الاجتماع",
-  Psychology: "علم النفس",
-  PoliticalScience: "العلوم السياسية",
-  Geography: "الجغرافيا الطبيعية",
-  Education: "التربية والتعليم",
-  Other: "تخصصات أخرى"
-};
+import { BOOK_CATEGORY_LABELS } from '../../utils/constants';
 
 export const EditBookModal = ({ isOpen, onClose, book, onBookUpdated }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -69,33 +46,9 @@ export const EditBookModal = ({ isOpen, onClose, book, onBookUpdated }) => {
     const loadingToast = toast.loading('جاري تحديث بيانات الكتاب...');
     
     try {
-      // Find category index if valid category string
-      let categoryValue = undefined;
-      if (formData.category) {
-        const categoryIndex = Object.keys(BOOK_CATEGORY_LABELS).indexOf(formData.category);
-        if (categoryIndex !== -1) {
-          categoryValue = Number(categoryIndex);
-        } else {
-            // Find key by value
-            const key = Object.keys(BOOK_CATEGORY_LABELS).find(k => BOOK_CATEGORY_LABELS[k] === formData.category);
-            if(key) categoryValue = Object.keys(BOOK_CATEGORY_LABELS).indexOf(key);
-        }
-      }
-
-      // Payload for update (matching UpdateBookRequest schema as best as possible)
-      // Note: If backend expects more fields, they will be sent here.
-      const payload = {
-        bookId: book.id,
-        title: formData.title.trim(),
-        author: formData.author.trim(),
-        isbn: formData.isbn.trim(),
-        publisher: formData.publisher.trim()
-      };
-
-      if (categoryValue !== undefined) {
-        payload.category = categoryValue;
-      }
-
+      // Backend update endpoint currently supports title (+ optional cover image) via multipart/form-data.
+      const payload = new FormData();
+      payload.append("title", formData.title.trim());
       await booksApi.update(book.id, payload);
       toast.success('تم تحديث بيانات الكتاب بنجاح!', { id: loadingToast });
       onBookUpdated();

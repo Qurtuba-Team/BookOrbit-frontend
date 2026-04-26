@@ -28,14 +28,13 @@ import { getBookImageUrl, tokenStore } from "../utils/constants";
 import { mockMyCopies } from "../utils/mockData";
 
 const CONDITION_OPTIONS = [
-  { value: 0, label: "كالجديد" },
-  { value: 1, label: "جيد جدًا" },
-  { value: 2, label: "جيد" },
-  { value: 3, label: "مقبول" },
-  { value: 4, label: "ضعيف" },
+  { value: 0, label: "جديد" },
+  { value: 1, label: "كالجديد" },
+  { value: 2, label: "مقبول" },
+  { value: 3, label: "ضعيف" },
 ];
 
-const LENDING_DAYS_PRESETS = [7, 14, 30, 60];
+const LENDING_DAYS_PRESETS = [7, 14, 21, 30];
 
 /** Custom condition picker — native `<select>` cannot style the open menu. */
 const ConditionDropdown = ({ value, onChange, disabled }) => {
@@ -613,11 +612,11 @@ const MyCopies = () => {
               </div>
               <input
                 type="number"
-                min={1}
-                max={365}
+                min={7}
+                max={30}
                 value={lendingDays}
                 onChange={(e) =>
-                  setLendingDays(Math.max(1, parseInt(e.target.value, 10) || 1))
+                  setLendingDays(Math.max(7, Math.min(30, parseInt(e.target.value, 10) || 7)))
                 }
                 className="w-full mb-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-bold transition-all duration-200 hover:border-library-primary/30 focus:outline-none focus:ring-2 focus:ring-library-primary/20"
               />

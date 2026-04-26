@@ -170,12 +170,12 @@ const Dashboard = () => {
     setLoading(true);
     try {
       const res = await lendingApi.getAll({
-        Page: 1,
-        PageSize: 30,
-        SortColumn: 'createdat',
-        SortDirection: 'desc',
-        SearchTerm: debouncedSearch || undefined,
-        States: [0], // Available only
+        page: 1,
+        pageSize: 30,
+        sortColumn: 'createdAt',
+        sortDirection: 'desc',
+        searchTerm: debouncedSearch || undefined,
+        states: [0], // Available only
       });
       const rows = (res.items ?? res.data ?? []).map(normalizeLendingRow);
       const available = rows.filter((b) => b.stateKey === 'Available');

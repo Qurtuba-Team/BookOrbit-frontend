@@ -17,10 +17,10 @@ const studentStateMap = {
 
 const borrowingStateMap = {
   0: "Pending",
-  1: "Approved",
+  1: "Accepted",
   2: "Rejected",
-  3: "Expired",
-  4: "Completed",
+  3: "Cancelled",
+  4: "Expired",
 };
 
 export const normalizeStudent = (student = {}) => {
@@ -496,11 +496,11 @@ export const booksApi = {
     return normalizeBook(res);
   },
 
-  /** PATCH /books/{bookId} — Update book (JSON) */
-  update: (bookId, data) =>
+  /** PATCH /books/{bookId} — Update book (multipart/form-data) */
+  update: (bookId, formData) =>
     apiRequest(`/books/${bookId}`, {
       method: "PATCH",
-      body: JSON.stringify(data),
+      body: formData,
     }),
 
   /** DELETE /books/{bookId} — Delete book */
@@ -509,9 +509,9 @@ export const booksApi = {
       method: "DELETE"
     }),
 
-  /** PATCH /books/{bookId}/approve — Approve book (Admin only) */
+  /** PATCH /books/{bookId}/available — Approve book (Admin only) */
   approve: (bookId) =>
-    apiRequest(`/books/${bookId}/approve`, { method: "PATCH" }),
+    apiRequest(`/books/${bookId}/available`, { method: "PATCH" }),
 
   /** PATCH /books/{bookId}/reject — Reject book (Admin only) */
   reject: (bookId, rejectionReason) =>
@@ -564,6 +564,14 @@ export const bookCopiesApi = {
       `/students/me/books/copies/${bookCopyId}/list?borrowingDurationInDays=${borrowingDurationInDays}`,
       { method: "POST" }
     ),
+
+  /** PATCH /books/copies/{bookCopyId}/available */
+  markAvailable: (bookCopyId) =>
+    apiRequest(`/books/copies/${bookCopyId}/available`, { method: "PATCH" }),
+
+  /** PATCH /books/copies/{bookCopyId}/unavailable */
+  markUnavailable: (bookCopyId) =>
+    apiRequest(`/books/copies/${bookCopyId}/unavailable`, { method: "PATCH" }),
 };
 
 // ─── 5. LENDING LIST ─────────────────────────────────────────────────────────
@@ -606,6 +614,22 @@ export const borrowingApi = {
     };
   },
 
+  /** GET /borrowingrequests/me/in — Incoming requests for current student */
+  getMineIncoming: async (params = {}) => {
+    const query = buildQuery(params);
+    const res = await apiRequest(`/borrowingrequests/me/in?${query}`);
+    const items = Array.isArray(res?.items) ? res.items.map(normalizeBorrowingRequest) : [];
+    return { ...res, items, data: items };
+  },
+
+  /** GET /borrowingrequests/me/out — Outgoing requests from current student */
+  getMineOutgoing: async (params = {}) => {
+    const query = buildQuery(params);
+    const res = await apiRequest(`/borrowingrequests/me/out?${query}`);
+    const items = Array.isArray(res?.items) ? res.items.map(normalizeBorrowingRequest) : [];
+    return { ...res, items, data: items };
+  },
+
   /** GET /borrowingrequests/{borrowingRequestId} — Request by ID */
   getById: async (borrowingRequestId) => {
     const res = await apiRequest(`/borrowingrequests/${borrowingRequestId}`);
@@ -618,14 +642,40 @@ export const borrowingApi = {
       method: "POST",
     }),
 
-  /** PATCH /borrowingrequests/{id}/approve */
-  approve: (id) => apiRequest(`/borrowingrequests/${id}/approve`, { method: "PATCH" }),
+  /** PATCH /borrowingrequests/{id}/accept */
+  accept: (id) => apiRequest(`/borrowingrequests/${id}/accept`, { method: "PATCH" }),
 
   /** PATCH /borrowingrequests/{id}/reject */
   reject: (id) => apiRequest(`/borrowingrequests/${id}/reject`, { method: "PATCH" }),
+
+  /** PATCH /borrowingrequests/{id}/cancel */
+  cancel: (id) => apiRequest(`/borrowingrequests/${id}/cancel`, { method: "PATCH" }),
+
+  /** POST /borrowingrequests/{id}/deliver */
+  deliver: (id) => apiRequest(`/borrowingrequests/${id}/deliver`, { method: "POST" }),
 };
 
-// ─── 7. IMAGES ───────────────────────────────────────────────────────────────
+// ─── 7. BORROWING TRANSACTIONS ───────────────────────────────────────────────
+export const borrowingTransactionsApi = {
+  /** GET /borrowingtransactions — Admin list */
+  getAll: (params = {}) => {
+    const query = buildQuery(params);
+    return apiRequest(`/borrowingtransactions?${query}`);
+  },
+
+  /** GET /borrowingtransactions/{id} */
+  getById: (id) => apiRequest(`/borrowingtransactions/${id}`),
+
+  /** PATCH /borrowingtransactions/{id}/return */
+  markReturned: (id) =>
+    apiRequest(`/borrowingtransactions/${id}/return`, { method: "PATCH" }),
+
+  /** PATCH /borrowingtransactions/{id}/lost */
+  markLost: (id) =>
+    apiRequest(`/borrowingtransactions/${id}/lost`, { method: "PATCH" }),
+};
+
+// ─── 8. IMAGES ───────────────────────────────────────────────────────────────
 export const imagesApi = {
   /** GET /images/students/{studentId} — Student profile image */
   getStudentImage: (studentId) =>
