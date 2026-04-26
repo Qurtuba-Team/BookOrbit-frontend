@@ -43,6 +43,8 @@ export const normalizeStudent = (student = {}) => {
     name: student.name || student.Name || student.fullName,
     universityMailAddress: student.universityMailAddress || student.UniversityMailAddress || "",
     phoneNumber: student.phoneNumber || student.PhoneNumber || "",
+    telegramUserId: student.telegramUserId || student.TelegramUserId || "",
+    points: student.points ?? student.Points ?? 0,
     status: status,
     state: stateValue ?? status,
     creationDate: student.creationDate || student.joinDate || student.JoinDate,
@@ -53,7 +55,7 @@ export const normalizeStudent = (student = {}) => {
 
 const normalizeBook = (book = {}) => {
   try {
-    const stateValue = book.state ?? book.State;
+    const stateValue = book.status ?? book.state ?? book.Status ?? book.State;
     // Robust check for approval: state 1, or explicit true, or status strings
     const isApproved = 
       stateValue === 1 || 
@@ -509,16 +511,17 @@ export const booksApi = {
       method: "DELETE"
     }),
 
-  /** PATCH /books/{bookId}/approve — Approve book (Admin only) */
+  /** PATCH /books/{bookId}/available — Make book available (Admin only) */
+  makeAvailable: (bookId) =>
+    apiRequest(`/books/${bookId}/available`, { method: "PATCH" }),
+
+  /** PATCH /books/{bookId}/approve — Approve book (Admin only) [alias for backward compat] */
   approve: (bookId) =>
-    apiRequest(`/books/${bookId}/approve`, { method: "PATCH" }),
+    apiRequest(`/books/${bookId}/available`, { method: "PATCH" }),
 
   /** PATCH /books/{bookId}/reject — Reject book (Admin only) */
-  reject: (bookId, rejectionReason) =>
-    apiRequest(`/books/${bookId}/reject`, {
-      method: "PATCH",
-      body: JSON.stringify({ reason: rejectionReason }),
-    }),
+  reject: (bookId) =>
+    apiRequest(`/books/${bookId}/reject`, { method: "PATCH" }),
 };
 
 // ─── 4. BOOK COPIES ──────────────────────────────────────────────────────────
@@ -618,11 +621,17 @@ export const borrowingApi = {
       method: "POST",
     }),
 
-  /** PATCH /borrowingrequests/{id}/approve */
-  approve: (id) => apiRequest(`/borrowingrequests/${id}/approve`, { method: "PATCH" }),
+  /** PATCH /borrowingrequests/{id}/accept */
+  accept: (id) => apiRequest(`/borrowingrequests/${id}/accept`, { method: "PATCH" }),
+
+  /** PATCH /borrowingrequests/{id}/approve [alias for backward compat] */
+  approve: (id) => apiRequest(`/borrowingrequests/${id}/accept`, { method: "PATCH" }),
 
   /** PATCH /borrowingrequests/{id}/reject */
   reject: (id) => apiRequest(`/borrowingrequests/${id}/reject`, { method: "PATCH" }),
+
+  /** PATCH /borrowingrequests/{id}/cancel */
+  cancel: (id) => apiRequest(`/borrowingrequests/${id}/cancel`, { method: "PATCH" }),
 };
 
 // ─── 7. IMAGES ───────────────────────────────────────────────────────────────

@@ -11,15 +11,18 @@ import {
   TrendingUp,
   BookMarked,
   CheckCircle2,
-  AlertCircle,
   Shield,
   Search,
-  Menu,
   Loader2,
   X,
   UserX,
   UserPlus,
-  Mail
+  Mail,
+  Trash2,
+  Ban,
+  Check,
+  XCircle,
+  MessageCircle
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
@@ -157,26 +160,66 @@ const AdminDashboard = () => {
   React.useEffect(() => { setCurrentLendingPage(1); }, [subTab]);
 
   const handleBookAction = async (bookId, action) => {
-    toast.error("هذا الإجراء غير متوفر حالياً في النظام");
+    try {
+      const loadingToast = toast.loading("جاري تنفيذ الإجراء...");
+      if (action === "makeAvailable") await booksApi.makeAvailable(bookId);
+      else if (action === "approve") await booksApi.approve(bookId);
+      else if (action === "reject") await booksApi.reject(bookId);
+      else if (action === "delete") await booksApi.delete(bookId);
+      
+      toast.dismiss(loadingToast);
+      toast.success(
+        action === "makeAvailable" || action === "approve" ? "تم إتاحة الكتاب بنجاح ✅" :
+        action === "reject" ? "تم رفض الكتاب" :
+        action === "delete" ? "تم حذف الكتاب نهائياً" : "تم تنفيذ الإجراء"
+      );
+      setIsBookModalOpen(false);
+      setSelectedBook(null);
+      fetchBooks();
+    } catch (error) {
+      toast.dismiss();
+      toast.error(error.message || "فشل تنفيذ الإجراء على الكتاب");
+    }
+  };
+
+  const handleBorrowingAction = async (requestId, action) => {
+    try {
+      const loadingToast = toast.loading("جاري تنفيذ الإجراء...");
+      if (action === "accept") await borrowingApi.accept(requestId);
+      else if (action === "reject") await borrowingApi.reject(requestId);
+      else if (action === "cancel") await borrowingApi.cancel(requestId);
+      
+      toast.dismiss(loadingToast);
+      toast.success(
+        action === "accept" ? "تم قبول طلب الاستعارة ✅" :
+        action === "reject" ? "تم رفض طلب الاستعارة" :
+        action === "cancel" ? "تم إلغاء طلب الاستعارة" : "تم تنفيذ الإجراء"
+      );
+      fetchLendings();
+    } catch (error) {
+      toast.dismiss();
+      toast.error(error.message || "فشل تنفيذ الإجراء على طلب الاستعارة");
+    }
   };
 
   const fetchBooks = React.useCallback(async () => {
     setLoadingBooks(true);
     try {
-      let params = { pageSize: 20, Page: currentBookPage }; // Fetch slightly more to allow for filtering if API is missing States param
+      let params = { PageSize: 15, Page: currentBookPage };
       if (bookSearchQuery) params.SearchTerm = bookSearchQuery;
       
-      // Use client-side filtering since the backend doesn't support State filtering yet in apis.json
-      const res = await booksApi.getAll(params);
-      let items = res.items || res.data || [];
-      
-      // Client-side filtering as a fallback and to ensure correctness
+      // Use backend Statuses filter from the updated API
       if (subTab === "pending") {
-        items = items.filter(b => b.state === 0 || !b.isApproved || b.status === "pending");
+        params.Statuses = [0]; // Pending review
+      } else if (subTab === "rejected") {
+        params.Statuses = [2]; // Rejected
       } else {
-        // Only show approved books in the main list
-        items = items.filter(b => b.state === 1 || b.isApproved || b.status === "active");
+        // "all" tab shows approved/available books
+        params.Statuses = [1]; // Available/Approved
       }
+
+      const res = await booksApi.getAll(params);
+      const items = res.items || res.data || [];
 
       setBooks(items);
       setTotalBookPages(res.totalPages || 1);
@@ -193,13 +236,15 @@ const AdminDashboard = () => {
       let list = [];
       let total = 1;
       if (subTab === "active") {
-        const res = await lendingApi.getAll({ pageSize: 10, Page: currentLendingPage });
+        const res = await lendingApi.getAll({ PageSize: 10, Page: currentLendingPage });
         list = res.items || res.data || [];
         total = res.totalPages || 1;
       } else {
-        let params = { pageSize: 10, Page: currentLendingPage };
+        let params = { PageSize: 10, Page: currentLendingPage };
         if (subTab === "pending_owner") params.States = [0]; // Pending
-        else if (subTab === "pending_handover") params.States = [1]; // Approved
+        else if (subTab === "pending_handover") params.States = [1]; // Accepted
+        else if (subTab === "rejected") params.States = [2]; // Rejected
+        else if (subTab === "completed") params.States = [4]; // Completed
         const res = await borrowingApi.getAll(params);
         list = res.items || res.data || [];
         total = res.totalPages || 1;
@@ -598,8 +643,18 @@ const AdminDashboard = () => {
                   <p className="text-[11px] font-bold text-library-primary dark:text-gray-200">{selectedStudent.phoneNumber || "—"}</p>
                 </div>
                 <div>
-                  <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">الجامعة</p>
-                  <p className="text-[11px] font-bold text-library-primary dark:text-gray-200">{selectedStudent.university || "جامعة المنصورة"}</p>
+                  <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">تيليجرام</p>
+                  <p className="text-[11px] font-bold text-library-primary dark:text-gray-200 flex items-center gap-1.5">
+                    {selectedStudent.telegramUserId ? (
+                      <><MessageCircle size={11} className="text-blue-500" />{selectedStudent.telegramUserId}</>
+                    ) : "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">النقاط</p>
+                  <p className="text-[11px] font-bold text-library-primary dark:text-gray-200">
+                    <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 font-black text-[10px]">⭐ {selectedStudent.points ?? 0}</span>
+                  </p>
                 </div>
               </div>
               <div className="space-y-4">
@@ -770,17 +825,41 @@ const AdminDashboard = () => {
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                     <span className="text-xs md:text-[10px] font-black text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">{book.copiesCount || 0} نسخة</span>
                   </div>
-                  <div className="flex items-center gap-1">
+                  {subTab === "pending" && (
+                    <div className="flex items-center gap-1.5">
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleBookAction(book.id, "makeAvailable"); }}
+                        className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500 hover:text-white transition-all"
+                        title="إتاحة الكتاب"
+                      >
+                        <Check size={13} />
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleBookAction(book.id, "reject"); }}
+                        className="p-1.5 rounded-lg bg-rose-500/10 text-rose-600 hover:bg-rose-500 hover:text-white transition-all"
+                        title="رفض الكتاب"
+                      >
+                        <XCircle size={13} />
+                      </button>
+                    </div>
+                  )}
+                  {subTab === "rejected" && (
                     <button 
-                      onClick={() => {
-                        setSelectedBook(book);
-                        setIsBookModalOpen(true);
-                      }}
-                      className="p-1.5 rounded-lg bg-gray-50 dark:bg-white/5 text-gray-400 hover:text-emerald-500 hover:bg-emerald-500/10 transition-all"
+                      onClick={(e) => { e.stopPropagation(); handleBookAction(book.id, "makeAvailable"); }}
+                      className="px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 text-[9px] font-black hover:bg-emerald-500 hover:text-white transition-all"
                     >
-                      <ArrowUpRight size={14} />
+                      إعادة إتاحة
                     </button>
-                  </div>
+                  )}
+                  <button 
+                    onClick={() => {
+                      setSelectedBook(book);
+                      setIsBookModalOpen(true);
+                    }}
+                    className="p-1.5 rounded-lg bg-gray-50 dark:bg-white/5 text-gray-400 hover:text-emerald-500 hover:bg-emerald-500/10 transition-all"
+                  >
+                    <ArrowUpRight size={14} />
+                  </button>
                 </div>
               </motion.div>
             ))}
@@ -876,7 +955,46 @@ const AdminDashboard = () => {
               </div>
             </div>
 
-            <div className="mt-8">
+            <div className="mt-8 space-y-3">
+              {/* Action buttons based on book status */}
+              {(selectedBook.status === 0 || selectedBook.state === 0 || !selectedBook.isApproved) && selectedBook.status !== 1 && (
+                <div className="flex gap-3">
+                  <button 
+                    onClick={() => handleBookAction(selectedBook.id, "makeAvailable")}
+                    className="flex-grow py-3 rounded-xl bg-emerald-500 text-white text-[11px] font-black shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Check size={14} />
+                    إتاحة الكتاب
+                  </button>
+                  <button 
+                    onClick={() => handleBookAction(selectedBook.id, "reject")}
+                    className="flex-grow py-3 rounded-xl bg-rose-500/10 text-rose-600 text-[11px] font-black hover:bg-rose-500 hover:text-white transition-all border border-rose-500/20 flex items-center justify-center gap-2"
+                  >
+                    <XCircle size={14} />
+                    رفض
+                  </button>
+                </div>
+              )}
+              {(selectedBook.status === 2 || selectedBook.state === 2) && (
+                <button 
+                  onClick={() => handleBookAction(selectedBook.id, "makeAvailable")}
+                  className="w-full py-3 rounded-xl bg-emerald-500 text-white text-[11px] font-black shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition-all flex items-center justify-center gap-2"
+                >
+                  <Check size={14} />
+                  إعادة إتاحة الكتاب
+                </button>
+              )}
+              <button 
+                onClick={() => {
+                  if (window.confirm("هل أنت متأكد من حذف هذا الكتاب نهائياً؟")) {
+                    handleBookAction(selectedBook.id, "delete");
+                  }
+                }}
+                className="w-full py-3 rounded-xl bg-rose-500/5 text-rose-500 text-[11px] font-black hover:bg-rose-500 hover:text-white transition-all border border-rose-500/10 flex items-center justify-center gap-2"
+              >
+                <Trash2 size={14} />
+                حذف الكتاب نهائياً
+              </button>
               <button 
                 onClick={() => setIsBookModalOpen(false)}
                 className="w-full py-3 rounded-xl bg-gray-100 dark:bg-white/5 text-library-primary dark:text-white text-[11px] font-black hover:bg-gray-200 dark:hover:bg-white/10 transition-all"
@@ -1101,9 +1219,9 @@ const AdminDashboard = () => {
       subTabs: [
         { id: "verified", title: "الموثقون", icon: CheckCircle2 },
         { id: "all", title: "كل الطلاب", icon: Users },
-        { id: "pending_approval", title: "في انتظار الموافقة", icon: Clock },
-        { id: "pending_verification", title: "في انتظار التوثيق", icon: UserPlus },
-        { id: "unconfirmed", title: "حسابات غير مؤكدة", icon: Mail },
+        { id: "pending_approval", title: "انتظار الموافقة", icon: Clock },
+        { id: "pending_verification", title: "انتظار التوثيق", icon: UserPlus },
+        { id: "unconfirmed", title: "غير مؤكدة", icon: Mail },
         { id: "banned", title: "المحظورون", icon: UserX }
       ]
     },
@@ -1113,19 +1231,22 @@ const AdminDashboard = () => {
       icon: BookOpen, 
       color: "emerald",
       subTabs: [
-        { id: "all", title: "الكل", icon: BookOpen },
-        { id: "pending", title: "قيد المراجعة", icon: Clock }
+        { id: "all", title: "المتاحة", icon: BookOpen },
+        { id: "pending", title: "قيد المراجعة", icon: Clock },
+        { id: "rejected", title: "المرفوضة", icon: XCircle }
       ]
     },
     { 
       id: "lending", 
       title: "الإعارات", 
-      icon: Clock, 
+      icon: BookMarked, 
       color: "amber",
       subTabs: [
         { id: "active", title: "نشطة", icon: CheckCircle2 },
-        { id: "pending_owner", title: "بانتظار موافقة المالك", icon: Clock },
-        { id: "pending_handover", title: "بانتظار التسليم", icon: AlertCircle }
+        { id: "pending_owner", title: "بانتظار القبول", icon: Clock },
+        { id: "pending_handover", title: "تم القبول", icon: Check },
+        { id: "rejected", title: "مرفوضة", icon: XCircle },
+        { id: "completed", title: "مكتملة", icon: CheckCircle2 }
       ]
     }
   ];
