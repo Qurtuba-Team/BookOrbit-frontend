@@ -176,11 +176,13 @@ const StudentDashboard = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <DashboardCard title="الأرشيف الرقمي" desc="تصفح جميع المراجع والكتب المتاحة للاستعارة من زملائك في مختلف الكليات." icon={BookOpen} to="/dashboard" delay={0.1} badge="جديد" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <DashboardCard title="الأرشيف الرقمي" desc="تصفح جميع المراجع والكتب المتاحة للاستعارة من زملائك في مختلف الكليات." icon={BookOpen} to="/dashboard" delay={0.1} />
             <DashboardCard title="الملف الشخصي" desc="قم بإدارة بياناتك الشخصية، تعديل صورتك، وتحديث معلومات التواصل." icon={User} to="/profile" delay={0.2} />
             <DashboardCard title="نسخي الخاصة" desc="أضف كتبك الخاصة للمنصة، تحكم بحالتها، واجعلها متاحة لإفادة غيرك." icon={Layers} to="/my-copies" delay={0.3} />
-            <DashboardCard title="قائمة الإعارات" desc="تابع طلبات الاستعارة، المواعيد النهائية للإرجاع، والكتب التي بحوزتك." icon={Repeat} to="/lending" delay={0.4} badge="سريع" />
+            <DashboardCard title="الطلبات الواردة" desc="وافق أو ارفض طلبات الاستعارة المقدمة لك من زملائك على كتبك الخاصة." icon={Repeat} to="/lending/incoming" delay={0.4} badge="جديد" />
+            <DashboardCard title="طلباتي الصادرة" desc="تابع حالة الكتب التي طلبت استعارتها من الآخرين وتاريخ استحقاقها." icon={Repeat} to="/lending/outgoing" delay={0.5} />
+            <DashboardCard title="معاملات الاستعارة" desc="أكّد إرجاعك للكتب التي استعرتها أو بلّغ عن فقدانها باستخدام رقم المعاملة." icon={Repeat} to="/lending/transactions" delay={0.6} />
           </div>
 
           <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -195,8 +197,12 @@ const StudentDashboard = () => {
                   <span className="text-xs font-black text-library-primary dark:text-white">مراجعة الطلبات الواردة (جديد)</span>
                   <ArrowUpRight size={14} className="text-library-accent" />
                 </Link>
-                <Link to="/my-copies" className="flex items-center justify-between rounded-xl px-3 py-2.5 bg-gray-50 dark:bg-white/5 hover:bg-library-accent/5 transition-all border border-transparent hover:border-library-accent/20">
-                  <span className="text-xs font-black text-library-primary dark:text-white">إضافة كتاب جديد</span>
+                <Link to="/lending/outgoing" className="flex items-center justify-between rounded-xl px-3 py-2.5 bg-gray-50 dark:bg-white/5 hover:bg-library-accent/5 transition-all border border-transparent hover:border-library-accent/20">
+                  <span className="text-xs font-black text-library-primary dark:text-white">متابعة طلباتي الصادرة</span>
+                  <ArrowUpRight size={14} className="text-library-accent" />
+                </Link>
+                <Link to="/lending/transactions" className="flex items-center justify-between rounded-xl px-3 py-2.5 bg-gray-50 dark:bg-white/5 hover:bg-library-accent/5 transition-all border border-transparent hover:border-library-accent/20">
+                  <span className="text-xs font-black text-library-primary dark:text-white">تأكيد الإرجاع (بواسطة المعاملة)</span>
                   <ArrowUpRight size={14} className="text-library-accent" />
                 </Link>
                 <Link to="/lending" className="flex items-center justify-between rounded-xl px-3 py-2.5 bg-gray-50 dark:bg-white/5 hover:bg-library-accent/5 transition-all border border-transparent hover:border-library-accent/20">

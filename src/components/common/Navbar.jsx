@@ -14,7 +14,9 @@ import {
   BookOpen,
   UserCircle,
   House,
-  Inbox
+  Inbox,
+  Send,
+  RefreshCcw
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
@@ -331,6 +333,22 @@ const Navbar = () => {
                           <Inbox size={20} />
                         </div>
                         الطلبات الواردة
+                      </div>
+                    </Link>
+                    <Link to="/lending/outgoing" onClick={() => setMobileMenuOpen(false)} className="group text-[14px] font-black text-library-primary dark:text-gray-200 flex items-center justify-between p-4 rounded-3xl hover:bg-gray-50 dark:hover:bg-white/5 border border-transparent hover:border-gray-100 dark:hover:border-white/5 active:scale-[0.98] transition-all">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-indigo-500/5 text-indigo-500 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
+                          <Send size={20} />
+                        </div>
+                        طلباتي الصادرة
+                      </div>
+                    </Link>
+                    <Link to="/lending/transactions" onClick={() => setMobileMenuOpen(false)} className="group text-[14px] font-black text-library-primary dark:text-gray-200 flex items-center justify-between p-4 rounded-3xl hover:bg-gray-50 dark:hover:bg-white/5 border border-transparent hover:border-gray-100 dark:hover:border-white/5 active:scale-[0.98] transition-all">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500/20 to-blue-500/5 text-blue-500 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
+                          <RefreshCcw size={20} />
+                        </div>
+                        معاملاتي
                       </div>
                     </Link>
                   </div>

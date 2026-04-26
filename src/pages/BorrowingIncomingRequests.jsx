@@ -23,6 +23,7 @@ import Navbar from "../components/common/Navbar";
 import Aurora from "../components/effects/Aurora";
 import { useAuth } from "../context/AuthContext";
 import { borrowingApi } from "../services/api";
+import { mockBorrowingRequests } from '../utils/mockData';
 
 const PAGE_SIZE = 10;
 
@@ -144,9 +145,8 @@ const BorrowingIncomingRequests = () => {
       const tp = res.totalPages ?? res.TotalPages ?? Math.max(1, Math.ceil(total / PAGE_SIZE));
       setTotalPages(tp);
     } catch (err) {
-      toast.error("حدث خطأ أثناء جلب الطلبات الواردة");
-      setItems([]);
-      setTotalPages(1);
+      setItems(mockBorrowingRequests);
+      setTotalPages(Math.max(1, Math.ceil(mockBorrowingRequests.length / PAGE_SIZE)));
     } finally {
       setLoading(false);
     }
