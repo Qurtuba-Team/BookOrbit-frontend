@@ -76,7 +76,7 @@ const ConditionDropdown = ({ value, onChange, disabled }) => {
         aria-expanded={open}
         aria-controls="condition-dropdown-list"
         onClick={() => !disabled && setOpen((v) => !v)}
-        className="w-full min-h-[46px] flex items-center justify-between gap-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0a0a0c] py-3 ps-4 pe-3 text-sm font-black text-library-primary dark:text-white shadow-sm transition-all duration-200 hover:border-library-primary/35 hover:shadow-md dark:hover:border-library-accent/30 focus:outline-none focus:ring-2 focus:ring-library-primary/25 focus:border-library-primary/40 disabled:opacity-50 disabled:pointer-events-none"
+        className="w-full min-h-[46px] flex items-center justify-between gap-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-dark-bg py-3 ps-4 pe-3 text-sm font-black text-library-primary dark:text-white shadow-sm transition-all duration-200 hover:border-library-primary/35 hover:shadow-md dark:hover:border-library-accent/30 focus:outline-none focus:ring-2 focus:ring-library-primary/25 focus:border-library-primary/40 disabled:opacity-50 disabled:pointer-events-none"
       >
         <span className="truncate text-start">{selectedLabel}</span>
         <ChevronDown
@@ -96,7 +96,7 @@ const ConditionDropdown = ({ value, onChange, disabled }) => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.98 }}
             transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute z-50 mt-1.5 w-full overflow-hidden rounded-xl border border-gray-100 dark:border-white/10 bg-white/95 dark:bg-[#121214]/98 backdrop-blur-xl py-1 shadow-xl shadow-black/10 dark:shadow-black/40 ring-1 ring-library-primary/5 dark:ring-white/5"
+            className="absolute z-50 mt-1.5 w-full overflow-hidden rounded-xl border border-gray-100 dark:border-white/10 bg-white/95 dark:bg-dark-surface/98 backdrop-blur-xl py-1 shadow-xl shadow-black/10 dark:shadow-black/40 ring-1 ring-library-primary/5 dark:ring-white/5"
           >
             {CONDITION_OPTIONS.map((o) => {
               const isSelected = value === o.value;
@@ -181,7 +181,7 @@ const CopyCard = ({ copy, imageSrc, onList }) => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -3, transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] } }}
-      className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white/90 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-library-primary/20 hover:shadow-lg hover:shadow-library-primary/10 dark:border-white/10 dark:bg-[#121214]/90 dark:hover:border-library-accent/25"
+      className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white/90 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-library-primary/20 hover:shadow-lg hover:shadow-library-primary/10 dark:border-white/10 dark:bg-dark-surface/90 dark:hover:border-library-accent/25"
     >
       <div className="w-full sm:w-32 h-44 sm:h-auto sm:min-h-[160px] bg-gradient-to-br from-library-primary/10 to-library-accent/10 dark:from-white/5 dark:to-white/[0.02] relative shrink-0 overflow-hidden">
         {imageSrc ? (
@@ -389,7 +389,7 @@ const MyCopies = () => {
   if (isAdmin) {
     return (
       <div
-        className="min-h-screen bg-library-paper dark:bg-[#08080a] pt-20 lg:pt-24 pb-12"
+        className="min-h-screen bg-library-paper dark:bg-dark-bg pt-20 lg:pt-24 pb-12"
         dir="rtl"
       >
         <Navbar />
@@ -410,7 +410,7 @@ const MyCopies = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-library-paper dark:bg-[#08080a]">
+      <div className="min-h-screen flex items-center justify-center bg-library-paper dark:bg-dark-bg">
         <Loader2 className="w-8 h-8 animate-spin text-library-accent" />
       </div>
     );
@@ -418,13 +418,13 @@ const MyCopies = () => {
 
   return (
     <div
-      className="min-h-screen bg-library-paper dark:bg-[#08080a] pt-20 lg:pt-24 pb-12"
+      className="min-h-screen bg-library-paper dark:bg-dark-bg pt-20 lg:pt-24 pb-12"
       dir="rtl"
     >
       <Navbar />
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <header className="mb-8 rounded-3xl bg-white/75 dark:bg-[#121214]/75 border border-white dark:border-white/5 p-5 sm:p-7 shadow-sm transition-shadow duration-300 hover:shadow-md hover:border-library-primary/10 dark:hover:border-white/10">
+        <header className="mb-8 rounded-3xl bg-white/75 dark:bg-dark-surface/75 border border-white dark:border-white/5 p-5 sm:p-7 shadow-sm transition-shadow duration-300 hover:shadow-md hover:border-library-primary/10 dark:hover:border-white/10">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div>
               <p className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black bg-library-accent/10 text-library-accent border border-library-accent/20 mb-3 transition-colors duration-200 hover:bg-library-accent/15">
@@ -451,7 +451,7 @@ const MyCopies = () => {
 
         {/* Add copy */}
         <section className="mb-8">
-          <div className="bg-white/80 dark:bg-[#121214]/80 backdrop-blur-xl rounded-2xl border border-white dark:border-white/5 p-5 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:border-library-primary/15 dark:hover:border-library-accent/20">
+          <div className="bg-white/80 dark:bg-dark-surface/80 backdrop-blur-xl rounded-2xl border border-white dark:border-white/5 p-5 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:border-library-primary/15 dark:hover:border-library-accent/20">
             <h2 className="text-sm font-black text-library-primary dark:text-white mb-4 flex items-center gap-2">
               <span className="inline-flex p-1.5 rounded-lg bg-library-accent/10 text-library-accent">
                 <Sparkles size={16} />
@@ -472,7 +472,7 @@ const MyCopies = () => {
                   value={newBookId}
                   onChange={(e) => setNewBookId(e.target.value)}
                   placeholder="مثال: 12"
-                  className="w-full bg-white dark:bg-[#0a0a0c] border border-gray-100 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-library-primary dark:text-white transition-all duration-200 hover:border-library-primary/25 dark:hover:border-white/20 focus:outline-none focus:ring-2 focus:ring-library-primary/25"
+                  className="w-full bg-white dark:bg-dark-bg border border-gray-100 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-library-primary dark:text-white transition-all duration-200 hover:border-library-primary/25 dark:hover:border-white/20 focus:outline-none focus:ring-2 focus:ring-library-primary/25"
                 />
               </div>
               <div className="w-full sm:w-52 min-w-0">
@@ -575,7 +575,7 @@ const MyCopies = () => {
               initial={{ scale: 0.95, y: 10 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 10 }}
-              className="relative w-full max-w-md rounded-2xl bg-white dark:bg-[#121214] border border-gray-100 dark:border-white/10 shadow-2xl shadow-library-primary/5 p-6"
+              className="relative w-full max-w-md rounded-2xl bg-white dark:bg-dark-surface border border-gray-100 dark:border-white/10 shadow-2xl shadow-library-primary/5 p-6"
             >
               <button
                 type="button"

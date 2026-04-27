@@ -66,7 +66,7 @@ export const BOOK_COPY_STATE_LABELS = {
   Reserved:   "محجوز",
   Lost:       "مفقود",
   Damaged:    "تالف",
-  UnAvilable: "غير متاح",
+  UnAvailable: "غير متاح",
 };
 
 export const LENDING_STATE_LABELS = {

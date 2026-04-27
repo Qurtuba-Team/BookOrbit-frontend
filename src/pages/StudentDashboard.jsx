@@ -83,6 +83,7 @@ const DashboardCard = ({ icon: Icon, title, desc, to, delay = 0, badge }) => (
   </motion.div>
 );
 
+// eslint-disable-next-line no-unused-vars
 const MiniMetric = ({ label, value, tone = "indigo" }) => (
   <div className={`rounded-xl border px-3 py-2.5 bg-${tone}-500/5 border-${tone}-500/15`}>
     <p className={`text-[10px] font-black mb-1 text-${tone}-600`}>{label}</p>
@@ -98,7 +99,7 @@ const StudentDashboard = () => {
   const firstName = rawName.split(' ')[0];
 
   return (
-    <div className="min-h-screen bg-library-paper dark:bg-dark-bg text-library-primary dark:text-library-paper transition-colors duration-500 overflow-hidden" dir="rtl">
+    <div className="min-h-screen bg-library-paper dark:bg-dark-bg text-library-primary dark:text-library-paper transition-colors duration-300 overflow-hidden" dir="rtl">
       <Navbar />
 
       <main className="relative z-10">
@@ -110,7 +111,7 @@ const StudentDashboard = () => {
           </div>
           
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div className="rounded-3xl bg-white/70 dark:bg-[#121214]/70 border border-library-primary/10 dark:border-white/10 p-5 md:p-8 flex flex-col-reverse lg:flex-row items-center justify-between gap-8 lg:gap-12 shadow-sm">
+            <div className="rounded-3xl bg-white/70 dark:bg-dark-surface/70 border border-library-primary/10 dark:border-white/10 p-5 md:p-8 flex flex-col-reverse lg:flex-row items-center justify-between gap-8 lg:gap-12 shadow-sm">
               
               {/* Text Content */}
               <div className="flex-1 text-center lg:text-right">

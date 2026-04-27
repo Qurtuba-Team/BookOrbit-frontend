@@ -240,7 +240,7 @@ async function apiRequest(path, options = {}) {
     }
 
     // ─── Token Refresh Interceptor ───────────────────────────────────────────
-    if (response.status === 401 && !options.skipAuth && storedRefreshToken && !accessToken?.startsWith("mock-access-token")) {
+    if (response.status === 401 && !options.skipAuth && storedRefreshToken) {
       if (!isRefreshing) {
         isRefreshing = true;
         try {
@@ -262,6 +262,8 @@ async function apiRequest(path, options = {}) {
             const rememberMe = localStorage.getItem("refreshToken") !== null;
             tokenStore.set(newTokens, rememberMe);
             processQueue(null, newTokens.accessToken);
+            // Retry the original request that triggered the refresh
+            return apiRequest(path, options);
           } else {
             throw new Error("Session expired");
           }
@@ -284,11 +286,7 @@ async function apiRequest(path, options = {}) {
 
     // لو مفيش Refresh Token أو الـ Refresh نفسه فشل
     if (response.status === 401 && !options.skipAuth) {
-      const { accessToken } = tokenStore.get();
-      // لا تقم بتسجيل الخروج تلقائياً إذا كنا نستخدم توكن تجريبي (Mock)
-      if (!accessToken?.startsWith("mock-access-token")) {
-        window.dispatchEvent(new CustomEvent("auth:logout"));
-      }
+      window.dispatchEvent(new CustomEvent("auth:logout"));
     }
 
     const errorMessage = errorData.detail || errorData.message || errorData.title || `HTTP ${response.status}`;

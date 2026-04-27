@@ -14,13 +14,16 @@ module.exports = {
           ink: '#1C1C1C', // Almost black text
         },
         dark: {
-          bg: '#0D1117', // Rich dark background
-          surface: '#161B22',
-          border: '#30363D'
+          bg: '#0D1117',      // Rich dark background (pages)
+          surface: '#161B22', // Cards, panels, elevated surfaces
+          border: '#30363D',  // Borders
         }
       },
       fontFamily: {
         sans: ['Alexandria', 'sans-serif'],
+      },
+      transitionDuration: {
+        DEFAULT: '200ms',  // micro-interactions (hover, color changes)
       },
       animation: {
         'marquee': 'marquee 30s linear infinite',

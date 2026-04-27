@@ -19,15 +19,17 @@ import {
   UserPlus,
   Mail,
   Trash2,
-  Ban,
   Check,
   XCircle,
-  MessageCircle
+  MessageCircle,
+  Eye,
+  ArrowLeftRight,
+  CalendarDays
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
 import Navbar from "../components/common/Navbar";
-import { EditBookModal } from "../components/admin/EditBookModal";
+
 import { 
   studentsApi, 
   booksApi, 
@@ -126,6 +128,9 @@ const AdminDashboard = () => {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [selectedBook, setSelectedBook] = React.useState(null);
   const [isBookModalOpen, setIsBookModalOpen] = React.useState(false);
+  const [selectedLending, setSelectedLending] = React.useState(null);
+  const [isLendingModalOpen, setIsLendingModalOpen] = React.useState(false);
+  const [loadingLendingDetail, setLoadingLendingDetail] = React.useState(false);
   
   const imageObjectUrlsRef = React.useRef(new Set());
 
@@ -182,6 +187,7 @@ const AdminDashboard = () => {
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
   const handleBorrowingAction = async (requestId, action) => {
     try {
       const loadingToast = toast.loading("جاري تنفيذ الإجراء...");
@@ -401,9 +407,9 @@ const AdminDashboard = () => {
         setBookImageMap((prev) => ({ ...prev, ...nextMap }));
       }
     };
-
     preloadBookImages();
-  }, [books, fetchProtectedImageSrc, bookImageMap]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [books, fetchProtectedImageSrc]);
 
   React.useEffect(() => {
     const objectUrls = imageObjectUrlsRef.current;
@@ -432,8 +438,8 @@ const AdminDashboard = () => {
       toast.success("تم تنفيذ الإجراء بنجاح");
       fetchStudents();
     } catch (error) {
-      toast.error("فشل تنفيذ الإجراء");
       toast.dismiss();
+      toast.error("فشل تنفيذ الإجراء");
     }
   };
 
@@ -455,7 +461,7 @@ const AdminDashboard = () => {
     return (
       <div className="space-y-6">
         {/* Search Bar for Students */}
-        <div className="bg-white/60 dark:bg-[#121214]/60 backdrop-blur-xl rounded-2xl p-4 border border-white dark:border-white/5 shadow-sm">
+        <div className="bg-white/60 dark:bg-dark-surface/60 backdrop-blur-xl rounded-2xl p-4 border border-white dark:border-white/5 shadow-sm">
           <div className="relative">
             <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
             <input 
@@ -468,7 +474,7 @@ const AdminDashboard = () => {
                   setStudentSearchQuery(studentSearchInput);
                 }
               }}
-              className="w-full bg-white dark:bg-[#08080a] border border-gray-100 dark:border-white/5 rounded-xl pr-12 pl-4 py-3 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-library-primary/20 focus:border-library-primary transition-all text-library-primary dark:text-white"
+              className="w-full bg-white dark:bg-dark-bg border border-gray-100 dark:border-white/5 rounded-xl pr-12 pl-4 py-3 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-library-primary/20 focus:border-library-primary transition-all text-library-primary dark:text-white"
             />
             {(studentSearchInput || studentSearchQuery) && (
               <button 
@@ -491,7 +497,7 @@ const AdminDashboard = () => {
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             key={student.id} 
-            className="bg-white/80 dark:bg-[#121214]/80 backdrop-blur-xl rounded-xl p-4 border border-white dark:border-white/5 shadow-sm group hover:border-library-primary/30 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+            className="bg-white/80 dark:bg-dark-surface/80 backdrop-blur-xl rounded-xl p-4 border border-white dark:border-white/5 shadow-sm group hover:border-library-primary/30 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
           >
             <div 
               className="flex items-center gap-3 cursor-pointer flex-grow w-full"
@@ -593,7 +599,7 @@ const AdminDashboard = () => {
         <motion.div 
           initial={{ scale: 0.9, y: 20 }}
           animate={{ scale: 1, y: 0 }}
-          className="bg-white dark:bg-[#0c0c0e] w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl relative z-10 border border-white/10"
+          className="bg-white dark:bg-dark-surface w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl relative z-10 border border-white/10"
           dir="rtl"
         >
           <div className="h-24 bg-gradient-to-r from-library-primary to-indigo-600 relative">
@@ -607,7 +613,7 @@ const AdminDashboard = () => {
           
           <div className="px-8 pb-8">
             <div className="relative -mt-12 mb-6">
-              <div className="w-24 h-24 rounded-3xl bg-white dark:bg-[#121214] p-1.5 shadow-xl mx-auto">
+              <div className="w-24 h-24 rounded-3xl bg-white dark:bg-dark-surface p-1.5 shadow-xl mx-auto">
                 <div className="w-full h-full rounded-2xl overflow-hidden bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 shadow-inner">
                   {selectedStudent.id ? (
                     <img 
@@ -732,7 +738,7 @@ const AdminDashboard = () => {
     return (
       <div className="space-y-6">
         {/* Search Bar for Books */}
-        <div className="bg-white/60 dark:bg-[#121214]/60 backdrop-blur-xl rounded-2xl p-4 border border-white dark:border-white/5 shadow-sm">
+        <div className="bg-white/60 dark:bg-dark-surface/60 backdrop-blur-xl rounded-2xl p-4 border border-white dark:border-white/5 shadow-sm">
           <div className="relative">
             <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
             <input 
@@ -745,7 +751,7 @@ const AdminDashboard = () => {
                   setBookSearchQuery(bookSearchInput);
                 }
               }}
-              className="w-full bg-white dark:bg-[#08080a] border border-gray-100 dark:border-white/5 rounded-xl pr-12 pl-4 py-3 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-library-primary dark:text-white"
+              className="w-full bg-white dark:bg-dark-bg border border-gray-100 dark:border-white/5 rounded-xl pr-12 pl-4 py-3 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-library-primary dark:text-white"
             />
             {(bookSearchInput || bookSearchQuery) && (
               <button 
@@ -781,7 +787,7 @@ const AdminDashboard = () => {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 key={book.id} 
-                className="bg-white/80 dark:bg-[#121214]/80 backdrop-blur-xl rounded-xl p-4 border border-white dark:border-white/5 shadow-sm group hover:border-emerald-500/30 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+                className="bg-white/80 dark:bg-dark-surface/80 backdrop-blur-xl rounded-xl p-4 border border-white dark:border-white/5 shadow-sm group hover:border-emerald-500/30 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
               >
                 <div 
                   className="flex items-center gap-3 cursor-pointer flex-grow w-full"
@@ -887,7 +893,7 @@ const AdminDashboard = () => {
         <motion.div 
           initial={{ scale: 0.9, y: 20 }}
           animate={{ scale: 1, y: 0 }}
-          className="bg-white dark:bg-[#0c0c0e] w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl relative z-10 border border-white/10"
+          className="bg-white dark:bg-dark-surface w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl relative z-10 border border-white/10"
           dir="rtl"
         >
           <div className="h-24 bg-gradient-to-r from-emerald-600 to-teal-600 relative">
@@ -901,7 +907,7 @@ const AdminDashboard = () => {
           
           <div className="px-8 pb-8">
             <div className="relative -mt-12 mb-6">
-              <div className="w-24 h-32 rounded-2xl bg-white dark:bg-[#121214] p-1.5 shadow-xl mx-auto">
+              <div className="w-24 h-32 rounded-2xl bg-white dark:bg-dark-surface p-1.5 shadow-xl mx-auto">
                 <div className="w-full h-full rounded-xl overflow-hidden bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 shadow-inner">
                   <img 
                     src={selectedBook.bookCoverImageUrl || bookImageMap[selectedBook.id] || ""} 
@@ -1009,6 +1015,263 @@ const AdminDashboard = () => {
   };
 
 
+  const handleViewLendingDetail = async (lend) => {
+    setSelectedLending(lend);
+    setIsLendingModalOpen(true);
+    setLoadingLendingDetail(true);
+    
+    try {
+      // Try to get full details from borrowing API first, then lending API
+      let detail;
+      if (subTab !== "active" && lend.id) {
+        detail = await borrowingApi.getById(lend.id);
+      } else if (lend.id) {
+        detail = await lendingApi.getById(lend.id);
+      }
+      
+      if (detail) {
+        setSelectedLending(prev => ({ ...prev, ...detail }));
+      }
+
+      // Try to load images
+      const ownerStudentId = detail?.ownerStudentId || detail?.ownerId || lend.ownerStudentId || lend.ownerId;
+      const borrowerStudentId = detail?.borrowingStudentId || detail?.studentId || lend.borrowingStudentId || lend.studentId;
+      const bookId = detail?.bookId || lend.bookId;
+
+      const imgPromises = [];
+      if (ownerStudentId && !studentImageMap[ownerStudentId]) {
+        imgPromises.push(
+          fetchProtectedImageSrc(getStudentImageUrl(ownerStudentId))
+            .then(src => src && setStudentImageMap(prev => ({ ...prev, [ownerStudentId]: src })))
+            .catch(() => {})
+        );
+      }
+      if (borrowerStudentId && !studentImageMap[borrowerStudentId]) {
+        imgPromises.push(
+          fetchProtectedImageSrc(getStudentImageUrl(borrowerStudentId))
+            .then(src => src && setStudentImageMap(prev => ({ ...prev, [borrowerStudentId]: src })))
+            .catch(() => {})
+        );
+      }
+      if (bookId && !bookImageMap[bookId]) {
+        imgPromises.push(
+          fetchProtectedImageSrc(getBookImageUrl(bookId))
+            .then(src => src && setBookImageMap(prev => ({ ...prev, [bookId]: src })))
+            .catch(() => {})
+        );
+      }
+      await Promise.allSettled(imgPromises);
+    } catch (err) {
+      console.error("Failed to load lending details:", err);
+    } finally {
+      setLoadingLendingDetail(false);
+    }
+  };
+
+  const renderLendingDetailModal = () => {
+    if (!isLendingModalOpen || !selectedLending) return null;
+
+    const lend = selectedLending;
+    const ownerStudentId = lend.ownerStudentId || lend.ownerId;
+    const borrowerStudentId = lend.borrowingStudentId || lend.studentId;
+    const bookId = lend.bookId;
+    
+    const ownerName = lend.ownerName || lend.ownerStudentName || "صاحب النسخة";
+    const borrowerName = lend.borrowingStudentName || lend.studentName || "الطالب المستعير";
+    const bookTitle = lend.bookTitle || lend.title || "كتاب";
+    const bookAuthor = lend.bookAuthor || lend.author || "";
+    const bookIsbn = lend.isbn || lend.bookIsbn || "";
+    
+    const requestDate = lend.requestDate || lend.createdAtUtc || lend.createdAt;
+    const returnDate = lend.expectedReturnDate || lend.expirationDateUtc || lend.expirationDate || lend.returnDate;
+    const borrowingDuration = lend.borrowingDurationInDays || lend.durationInDays;
+    
+    const stateValue = lend.state ?? lend.status;
+    const stateLabel = 
+      stateValue === 0 || stateValue === "Pending" ? "بانتظار الموافقة" :
+      stateValue === 1 || stateValue === "Approved" ? "تمت الموافقة" :
+      stateValue === 2 || stateValue === "Rejected" ? "مرفوض" :
+      stateValue === 3 || stateValue === "Expired" ? "منتهي" :
+      stateValue === 4 || stateValue === "Completed" ? "مكتمل" : 
+      subTab === "active" ? "نشطة" : "غير معروف";
+    const stateColor = 
+      stateValue === 0 || stateValue === "Pending" ? "amber" :
+      stateValue === 1 || stateValue === "Approved" ? "blue" :
+      stateValue === 2 || stateValue === "Rejected" ? "rose" :
+      stateValue === 4 || stateValue === "Completed" ? "emerald" : 
+      subTab === "active" ? "emerald" : "gray";
+
+    const formatDate = (d) => {
+      if (!d) return "—";
+      return new Date(d).toLocaleDateString('ar-EG', { 
+        year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit'
+      });
+    };
+
+    return (
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6"
+      >
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsLendingModalOpen(false)} />
+        <motion.div 
+          initial={{ scale: 0.9, y: 20 }}
+          animate={{ scale: 1, y: 0 }}
+          className="bg-white dark:bg-dark-surface w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl relative z-10 border border-white/10 flex flex-col max-h-[90vh]"
+          dir="rtl"
+        >
+          {/* Header */}
+          <div className="h-24 shrink-0 bg-gradient-to-r from-library-primary to-indigo-600 relative">
+            <button 
+              onClick={() => setIsLendingModalOpen(false)}
+              className="absolute top-4 left-4 w-8 h-8 rounded-full bg-white/10 backdrop-blur-md text-white flex items-center justify-center hover:bg-white/20 transition-all z-10"
+            >
+              <X size={16} />
+            </button>
+            <div className="absolute bottom-4 right-6 flex items-center gap-2">
+              <ArrowLeftRight className="text-white/90" size={20} />
+              <h3 className="text-white font-black text-base drop-shadow-sm">تفاصيل عملية الإعارة</h3>
+            </div>
+            <span className={`absolute bottom-4 left-6 px-3 py-1 rounded-full text-[10px] font-black border bg-${stateColor}-500/20 text-white border-white/30 backdrop-blur-sm`}>
+              {stateLabel}
+            </span>
+          </div>
+
+          {loadingLendingDetail ? (
+            <div className="flex flex-col items-center justify-center py-20 flex-grow">
+              <Loader2 className="animate-spin text-amber-500 mb-3" size={32} />
+              <p className="text-xs font-black text-gray-400">جاري تحميل التفاصيل...</p>
+            </div>
+          ) : (
+            <div className="px-6 py-6 space-y-6 overflow-y-auto flex-grow scrollbar-thin">
+              
+              {/* Book Section */}
+              <div className="flex items-start gap-4 p-4 rounded-2xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5">
+                <div className="w-14 h-20 rounded-xl bg-gray-100 dark:bg-white/5 overflow-hidden border border-gray-100 dark:border-white/10 shadow-inner shrink-0">
+                  {(lend.bookCoverImageUrl || bookImageMap[bookId]) ? (
+                    <img src={lend.bookCoverImageUrl || bookImageMap[bookId]} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-white/20">
+                      <BookOpen size={20} />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-grow min-w-0">
+                  <p className="text-[9px] text-amber-500 font-black mb-1 uppercase tracking-widest">الكتاب</p>
+                  <h4 className="text-sm font-black text-library-primary dark:text-white leading-snug truncate">{bookTitle}</h4>
+                  {bookAuthor && <p className="text-[11px] text-gray-500 dark:text-gray-400 font-bold mt-0.5">{bookAuthor}</p>}
+                  {bookIsbn && <p className="text-[9px] text-gray-400 mt-1 font-mono">ISBN: {bookIsbn}</p>}
+                  {bookId && <p className="text-[9px] text-gray-400 mt-0.5">معرف الكتاب: #{bookId}</p>}
+                </div>
+              </div>
+
+              {/* Owner & Borrower — Side by Side */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* Owner */}
+                <div className="p-4 rounded-2xl bg-emerald-500/[0.04] dark:bg-emerald-500/[0.06] border border-emerald-500/10">
+                  <p className="text-[9px] text-emerald-600 dark:text-emerald-400 font-black mb-3 uppercase tracking-widest flex items-center gap-1.5">
+                    <Shield size={10} /> صاحب النسخة
+                  </p>
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-white dark:bg-white/10 overflow-hidden border border-emerald-500/15 shadow-sm shrink-0">
+                      {(ownerStudentId && studentImageMap[ownerStudentId]) ? (
+                        <img src={studentImageMap[ownerStudentId]} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-emerald-500/40">
+                          <Users size={14} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-black text-library-primary dark:text-white truncate">{ownerName}</p>
+                      {ownerStudentId && <p className="text-[8px] text-gray-400 mt-0.5">#{ownerStudentId}</p>}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Borrower */}
+                <div className="p-4 rounded-2xl bg-indigo-500/[0.04] dark:bg-indigo-500/[0.06] border border-indigo-500/10">
+                  <p className="text-[9px] text-indigo-600 dark:text-indigo-400 font-black mb-3 uppercase tracking-widest flex items-center gap-1.5">
+                    <Users size={10} /> المستعير
+                  </p>
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-white dark:bg-white/10 overflow-hidden border border-indigo-500/15 shadow-sm shrink-0">
+                      {(borrowerStudentId && studentImageMap[borrowerStudentId]) ? (
+                        <img src={studentImageMap[borrowerStudentId]} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-indigo-500/40">
+                          <Users size={14} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-black text-library-primary dark:text-white truncate">{borrowerName}</p>
+                      {borrowerStudentId && <p className="text-[8px] text-gray-400 mt-0.5">#{borrowerStudentId}</p>}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Timeline / Dates */}
+              <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5 space-y-3">
+                <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest flex items-center gap-1.5">
+                  <CalendarDays size={10} /> التواريخ والمدة
+                </p>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-[8px] text-gray-400 font-black mb-0.5">تاريخ الطلب</p>
+                    <p className="text-[11px] font-black text-library-primary dark:text-white">{formatDate(requestDate)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[8px] text-gray-400 font-black mb-0.5">تاريخ الإرجاع المتوقع</p>
+                    <p className={`text-[11px] font-black ${lend.isOverdue ? 'text-rose-500' : 'text-library-primary dark:text-white'}`}>{formatDate(returnDate)}</p>
+                  </div>
+                </div>
+
+                {borrowingDuration && (
+                  <div className="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-white/5">
+                    <Clock size={12} className="text-gray-400" />
+                    <p className="text-[10px] font-black text-gray-500">مدة الإعارة: <span className="text-library-primary dark:text-white">{borrowingDuration} يوم</span></p>
+                  </div>
+                )}
+
+                {lend.isOverdue && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-rose-500/5 border border-rose-500/10">
+                    <ShieldAlert size={12} className="text-rose-500" />
+                    <p className="text-[10px] font-black text-rose-500">تأخر في الإرجاع!</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Additional Details (if any IDs available) */}
+              {(lend.bookCopyId || lend.lendingRecordId || lend.id) && (
+                <div className="flex items-center gap-3 flex-wrap text-[8px] font-mono text-gray-400 px-1">
+                  {lend.id && <span>طلب: #{lend.id}</span>}
+                  {lend.lendingRecordId && <span>• سجل: #{lend.lendingRecordId}</span>}
+                  {lend.bookCopyId && <span>• نسخة: #{lend.bookCopyId}</span>}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Footer */}
+          <div className="px-6 pb-5">
+            <button 
+              onClick={() => setIsLendingModalOpen(false)}
+              className="w-full py-3 rounded-xl bg-gray-100 dark:bg-white/5 text-library-primary dark:text-white text-[11px] font-black hover:bg-gray-200 dark:hover:bg-white/10 transition-all"
+            >
+              إغلاق النافذة
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    );
+  };
+
+
   const renderLendingList = () => {
     if (loadingLendings) return (
       <div className="flex flex-col items-center justify-center py-20">
@@ -1032,7 +1295,7 @@ const AdminDashboard = () => {
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             key={lend.id} 
-            className="bg-white/80 dark:bg-[#121214]/80 backdrop-blur-xl rounded-xl p-4 border border-white dark:border-white/5 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4 group hover:border-amber-500/30 transition-all"
+            className="bg-white/80 dark:bg-dark-surface/80 backdrop-blur-xl rounded-xl p-4 border border-white dark:border-white/5 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4 group hover:border-amber-500/30 transition-all"
           >
             <div className="flex items-center gap-3 flex-grow">
               <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-600 font-black text-xs">
@@ -1062,10 +1325,11 @@ const AdminDashboard = () => {
                 </span>
                 
                 <button 
-                  onClick={() => toast("سيتم عرض التفاصيل قريباً")}
-                  className="px-3 py-2 rounded-lg bg-gray-100 dark:bg-white/5 text-library-primary dark:text-white text-xs md:text-[9px] font-black hover:bg-gray-200 dark:hover:bg-white/10 transition-all"
+                  onClick={() => handleViewLendingDetail(lend)}
+                  className="px-3 py-2 rounded-lg bg-gray-100 dark:bg-white/5 text-library-primary dark:text-white text-xs md:text-[9px] font-black hover:bg-gray-200 dark:hover:bg-white/10 transition-all flex items-center gap-1.5"
                 >
-                  عرض التفاصيل
+                  <Eye size={12} />
+                  التفاصيل
                 </button>
               </div>
             </div>
@@ -1102,7 +1366,7 @@ const AdminDashboard = () => {
       <div className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Lending Efficiency Chart */}
-          <div className="bg-white/60 dark:bg-[#121214]/60 backdrop-blur-xl rounded-2xl p-6 border border-white dark:border-white/5 shadow-sm">
+          <div className="bg-white/60 dark:bg-dark-surface/60 backdrop-blur-xl rounded-2xl p-6 border border-white dark:border-white/5 shadow-sm">
             <h3 className="text-sm font-black text-library-primary dark:text-white mb-6 flex items-center gap-2">
               <BookOpen className="text-emerald-500" size={16} />
               معدل تداول الكتب الفعلي
@@ -1135,7 +1399,7 @@ const AdminDashboard = () => {
           </div>
 
           {/* Student Engagement */}
-          <div className="bg-white/60 dark:bg-[#121214]/60 backdrop-blur-xl rounded-2xl p-6 border border-white dark:border-white/5 shadow-sm">
+          <div className="bg-white/60 dark:bg-dark-surface/60 backdrop-blur-xl rounded-2xl p-6 border border-white dark:border-white/5 shadow-sm">
             <h3 className="text-sm font-black text-library-primary dark:text-white mb-6 flex items-center gap-2">
               <Users className="text-indigo-500" size={16} />
               تحليل تفاعل المستخدمين
@@ -1334,7 +1598,7 @@ const AdminDashboard = () => {
             {/* Actionable Tasks Summary (Simplified) */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {recentRequests.length > 0 && (
-                <div className="bg-white/60 dark:bg-[#121214]/60 backdrop-blur-xl rounded-2xl p-5 border border-white dark:border-white/5 shadow-sm">
+                <div className="bg-white/60 dark:bg-dark-surface/60 backdrop-blur-xl rounded-2xl p-5 border border-white dark:border-white/5 shadow-sm">
                   <h3 className="text-sm font-black text-library-primary dark:text-white mb-4 flex items-center gap-2">
                     <Clock className="text-amber-500" size={16} />
                     طلبات استعارة عاجلة
@@ -1350,7 +1614,7 @@ const AdminDashboard = () => {
                 </div>
               )}
               {recentStudents.length > 0 && (
-                <div className="bg-white/60 dark:bg-[#121214]/60 backdrop-blur-xl rounded-2xl p-5 border border-white dark:border-white/5 shadow-sm">
+                <div className="bg-white/60 dark:bg-dark-surface/60 backdrop-blur-xl rounded-2xl p-5 border border-white dark:border-white/5 shadow-sm">
                   <h3 className="text-sm font-black text-library-primary dark:text-white mb-4 flex items-center gap-2">
                     <ShieldAlert className="text-rose-500" size={16} />
                     طلاب بانتظار التوثيق
@@ -1374,7 +1638,7 @@ const AdminDashboard = () => {
           <motion.div 
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white/60 dark:bg-[#121214]/60 backdrop-blur-xl rounded-2xl p-12 flex flex-col items-center justify-center border border-white dark:border-white/5 min-h-[400px] text-center"
+            className="bg-white/60 dark:bg-dark-surface/60 backdrop-blur-xl rounded-2xl p-12 flex flex-col items-center justify-center border border-white dark:border-white/5 min-h-[400px] text-center"
           >
             <div className="w-20 h-20 rounded-full bg-gray-50 dark:bg-white/5 flex items-center justify-center mb-6 relative">
               <div className="absolute inset-0 bg-library-accent/20 blur-xl rounded-full animate-pulse" />
@@ -1402,11 +1666,11 @@ const AdminDashboard = () => {
   return (
     <>
       <Navbar />
-      <div className="h-screen bg-gray-50/50 dark:bg-[#08080a] pt-16 lg:pt-[68px] flex flex-col lg:flex-row gap-0 overflow-hidden" style={{ direction: "rtl" }}>
+      <div className="h-screen bg-gray-50/50 dark:bg-dark-bg pt-16 lg:pt-[68px] flex flex-col lg:flex-row gap-0 overflow-hidden" style={{ direction: "rtl" }}>
         
         {/* New Leaner Glass Sidebar - Hidden on mobile */}
         <div className="hidden lg:block lg:w-[272px] h-full pr-0 pl-3 pb-0">
-          <div className="bg-white/80 dark:bg-[#121214]/80 backdrop-blur-2xl h-full rounded-l-2xl rounded-r-none p-5 border border-white dark:border-white/5 shadow-sm flex flex-col relative overflow-hidden">
+          <div className="bg-white/80 dark:bg-dark-surface/80 backdrop-blur-2xl h-full rounded-l-2xl rounded-r-none p-5 border border-white dark:border-white/5 shadow-sm flex flex-col relative overflow-hidden">
             <div className="absolute -left-20 -bottom-20 w-40 h-40 bg-library-accent/10 rounded-full blur-[80px]" />
             
             <div className="mb-6 px-1 pt-1">
@@ -1503,7 +1767,7 @@ const AdminDashboard = () => {
                 <StatCard title="الطلاب" value={statsData.students.value} change={statsData.students.change} icon={Users} color="indigo" onClick={() => { setActiveTab("students"); setSubTab("all"); }} />
                 <StatCard title="الكتب" value={statsData.books.value} change={statsData.books.change} icon={BookOpen} color="emerald" onClick={() => { setActiveTab("books"); setSubTab("all"); }} />
                 <StatCard title="الإعارات" value={statsData.lendings.value} change={statsData.lendings.change} icon={BookMarked} color="amber" onClick={() => { setActiveTab("lending"); setSubTab("active"); }} />
-                <StatCard title="طلبات توثيق" value={statsData.requests.value} change={statsData.requests.change} icon={UserPlus} color="rose" trend="down" onClick={() => { setActiveTab("students"); setSubTab("pending"); }} />
+                <StatCard title="طلبات توثيق" value={statsData.requests.value} change={statsData.requests.change} icon={UserPlus} color="rose" trend="down" onClick={() => { setActiveTab("students"); setSubTab("pending_approval"); }} />
               </div>
             )}
 
@@ -1512,7 +1776,7 @@ const AdminDashboard = () => {
 
           {/* Mobile Structure */}
           <div className="lg:hidden space-y-4">
-            <div className="bg-white/80 dark:bg-[#121214]/80 border border-white dark:border-white/5 rounded-2xl p-4 shadow-sm">
+            <div className="bg-white/80 dark:bg-dark-surface/80 border border-white dark:border-white/5 rounded-2xl p-4 shadow-sm">
               <p className="text-[10px] font-black text-gray-400 mb-1">لوحة الإدارة</p>
               <h1 className="text-lg font-black text-library-primary dark:text-white">
                 {menuItems.find(i => i.id === activeTab)?.title}
@@ -1547,11 +1811,11 @@ const AdminDashboard = () => {
                 <StatCard title="الطلاب" value={statsData.students.value} change={statsData.students.change} icon={Users} color="indigo" onClick={() => { setActiveTab("students"); setSubTab("all"); }} />
                 <StatCard title="الكتب" value={statsData.books.value} change={statsData.books.change} icon={BookOpen} color="emerald" onClick={() => { setActiveTab("books"); setSubTab("all"); }} />
                 <StatCard title="الإعارات" value={statsData.lendings.value} change={statsData.lendings.change} icon={BookMarked} color="amber" onClick={() => { setActiveTab("lending"); setSubTab("active"); }} />
-                <StatCard title="طلبات توثيق" value={statsData.requests.value} change={statsData.requests.change} icon={UserPlus} color="rose" trend="down" onClick={() => { setActiveTab("students"); setSubTab("pending"); }} />
+                <StatCard title="طلبات توثيق" value={statsData.requests.value} change={statsData.requests.change} icon={UserPlus} color="rose" trend="down" onClick={() => { setActiveTab("students"); setSubTab("pending_approval"); }} />
               </div>
             )}
 
-            <div className="bg-white/70 dark:bg-[#121214]/70 rounded-2xl p-3 border border-white dark:border-white/5">
+            <div className="bg-white/70 dark:bg-dark-surface/70 rounded-2xl p-3 border border-white dark:border-white/5">
               {renderContent()}
             </div>
           </div>
@@ -1561,6 +1825,7 @@ const AdminDashboard = () => {
       <AnimatePresence>
         {isModalOpen && renderStudentModal()}
         {isBookModalOpen && renderBookModal()}
+        {isLendingModalOpen && renderLendingDetailModal()}
       </AnimatePresence>
     </>
   );

@@ -155,7 +155,7 @@ const LendingList = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-library-paper dark:bg-[#08080a]" dir="rtl">
+      <div className="min-h-screen bg-library-paper dark:bg-dark-bg" dir="rtl">
         <Navbar />
         <div className="flex items-center justify-center pt-32">
           <Loader2 className="h-9 w-9 animate-spin text-library-accent" />
@@ -166,7 +166,7 @@ const LendingList = () => {
 
   if (isAdmin) {
     return (
-      <div className="min-h-screen bg-library-paper pb-12 pt-20 dark:bg-[#08080a] lg:pt-24" dir="rtl">
+      <div className="min-h-screen bg-library-paper pb-12 pt-20 dark:bg-dark-bg lg:pt-24" dir="rtl">
         <Navbar />
         <div className="mx-auto max-w-2xl px-4 text-center">
           <p className="mb-2 text-lg font-black text-library-primary dark:text-white">إدارة الإعارات من لوحة الإدارة.</p>
@@ -182,11 +182,11 @@ const LendingList = () => {
   }
 
   return (
-    <div className="min-h-screen bg-library-paper pb-12 pt-20 dark:bg-[#08080a] lg:pt-24" dir="rtl">
+    <div className="min-h-screen bg-library-paper pb-12 pt-20 dark:bg-dark-bg lg:pt-24" dir="rtl">
       <Navbar />
 
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-        <header className="mb-8 rounded-3xl border border-gray-200 bg-white/80 p-5 shadow-sm dark:border-white/5 dark:bg-[#121214]/80 sm:p-7">
+        <header className="mb-8 rounded-3xl border border-gray-200 bg-white/80 p-5 shadow-sm dark:border-white/5 dark:bg-dark-surface/80 sm:p-7">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-library-accent/20 bg-library-accent/10 px-3 py-1 text-[10px] font-black text-library-accent">
@@ -237,7 +237,7 @@ const LendingList = () => {
           ))}
         </div>
 
-        <section className="rounded-2xl border border-gray-200 bg-white/90 p-4 shadow-sm dark:border-white/5 dark:bg-[#121214]/90 sm:p-6">
+        <section className="rounded-2xl border border-gray-200 bg-white/90 p-4 shadow-sm dark:border-white/5 dark:bg-dark-surface/90 sm:p-6">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20">
               <Loader2 className="mb-3 h-9 w-9 animate-spin text-library-accent" />

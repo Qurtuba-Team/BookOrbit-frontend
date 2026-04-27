@@ -11,6 +11,7 @@ const EmailVerified = () => {
   const [countdown, setCountdown] = useState(5);
 
   const verifiedRef = React.useRef(false);
+  const timerRef = React.useRef(null);
 
   useEffect(() => {
     if (verifiedRef.current) return;
@@ -26,15 +27,15 @@ const EmailVerified = () => {
 
     const verify = async () => {
       verifiedRef.current = true;
-      let timer;
       try {
         await identityApi.confirmEmail(email, token);
         setStatus("success");
         // Start countdown for auto-redirect
-        timer = setInterval(() => {
+        timerRef.current = setInterval(() => {
           setCountdown((prev) => {
             if (prev <= 1) {
-              clearInterval(timer);
+              clearInterval(timerRef.current);
+              timerRef.current = null;
               // Signal other tabs that verification was successful
               localStorage.setItem("email_verified_signal", Date.now().toString());
               navigate("/login", { replace: true });
@@ -51,19 +52,20 @@ const EmailVerified = () => {
         });
         setStatus("error");
       }
-      return () => {
-        if (timer) clearInterval(timer);
-      };
     };
 
-    const cleanup = verify();
+    verify();
+
     return () => {
-      if (typeof cleanup === "function") cleanup();
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
     };
   }, [params, navigate]);
 
   return (
-    <div className="min-h-screen bg-library-paper dark:bg-[#060a12] flex items-center justify-center p-6 relative overflow-hidden" dir="rtl">
+    <div className="min-h-screen bg-library-paper dark:bg-dark-bg flex items-center justify-center p-6 relative overflow-hidden" dir="rtl">
       {/* Background Elements */}
       <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-library-accent/10 rounded-full blur-[120px] animate-pulse" />
       <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-library-primary/10 rounded-full blur-[120px] animate-pulse" />
@@ -71,7 +73,7 @@ const EmailVerified = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-md w-full bg-white dark:bg-[#0c1425]/80 backdrop-blur-xl border border-library-primary/10 dark:border-white/5 rounded-2xl p-8 shadow-2xl relative z-10 text-center"
+        className="max-w-md w-full bg-white dark:bg-dark-surface/80 backdrop-blur-xl border border-library-primary/10 dark:border-white/5 rounded-2xl p-8 shadow-2xl relative z-10 text-center"
       >
         <AnimatePresence mode="wait">
           {status === "loading" && (

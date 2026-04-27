@@ -75,7 +75,7 @@ const BookDetail = () => {
         <motion.div 
           initial={{ scale: 0.9, y: 20 }}
           animate={{ scale: 1, y: 0 }}
-          className="bg-white dark:bg-[#0c0c0e] w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl relative z-10 border border-white/10 p-6"
+          className="bg-white dark:bg-dark-surface w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl relative z-10 border border-white/10 p-6"
           dir="rtl"
         >
           <div className="flex items-center gap-3 mb-4">

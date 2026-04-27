@@ -106,33 +106,10 @@ export const AuthProvider = ({ children }) => {
     }
   }, [buildAbsoluteUrl, fetchProtectedImageAsSrc]);
 
-  // Dark Mode Logic
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const isDark = localStorage.getItem("isDark") === "true";
-      if (isDark) {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
-    }
-  }, []);
+
 
   // Helper to fetch full user profile (Identity + Student info)
   const fetchFullProfile = useCallback(async () => {
-    const tokens = tokenStore.get();
-    if (tokens?.accessToken?.startsWith("mock-access-token")) {
-      const role = tokens.accessToken.split("-").pop();
-      return {
-        id: "mock-id",
-        userName: role === "admin" ? "Admin" : "Student",
-        email: role === "admin" ? "admin@bookorbit.com" : "student@std.mans.edu.eg",
-        fullName: role === "admin" ? "حساب الأدمن" : "طالب تجريبي",
-        role: role,
-        state: "active",
-        isEmailConfirmed: true,
-      };
-    }
 
     try {
       const identityData = await identityApi.getMe();
@@ -246,26 +223,7 @@ export const AuthProvider = ({ children }) => {
     return null;
   }, [fetchFullProfile]);
 
-  const mockLogin = (role = "admin") => {
-    const mockUser = {
-      id: "mock-id",
-      userName: "Admin",
-      email: role === "admin" ? "admin@bookorbit.com" : "student@std.mans.edu.eg",
-      fullName: role === "admin" ? "حساب الأدمن" : "طالب تجريبي",
-      role: role,
-      state: "active",
-      isEmailConfirmed: true,
-    };
-    
-    tokenStore.set({
-      accessToken: `mock-access-token-${role}`,
-      refreshToken: "mock-refresh-token",
-      expiresOnUtc: new Date(Date.now() + 86400000).toISOString(),
-    }, true);
-    
-    setUser(mockUser);
-    return { success: true, user: mockUser };
-  };
+
 
   const login = async (email, password, rememberMe = true) => {
     try {
@@ -373,7 +331,6 @@ export const AuthProvider = ({ children }) => {
       value={{
         user,
         login,
-        mockLogin,
         register,
         logout,
         refreshProfile,
