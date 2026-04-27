@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, User, Building, Hash, CopyPlus, ArrowRight, Loader2, AlertCircle } from "lucide-react";
-import { booksApi, bookCopiesApi } from "../services/api";
+import { BookOpen, User, Building, Hash, CopyPlus, ArrowRight, Loader2, AlertCircle, CalendarDays, Coins, Repeat } from "lucide-react";
+import { booksApi, bookCopiesApi, lendingApi, borrowingApi } from "../services/api";
+import { mockLendingRecords, mockAvailableLendingBooks } from "../utils/mockData";
 import Navbar from "../components/common/Navbar";
 import toast from "react-hot-toast";
 
@@ -13,6 +14,50 @@ const BOOK_COPY_CONDITIONS = {
   3: "قديم/مهترئ (Worn)"
 };
 
+const LendingRecordCard = ({ record, isProcessing, onBorrow }) => {
+  const conditionLabel = BOOK_COPY_CONDITIONS[record.condition] || "غير محدد";
+  
+  return (
+    <div className="bg-white/60 dark:bg-white/[0.02] border border-gray-100 dark:border-white/10 rounded-2xl p-5 hover:border-library-accent/30 transition-all flex flex-col justify-between shadow-sm">
+      <div>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-full bg-library-primary/5 dark:bg-white/5 flex items-center justify-center">
+            <User size={18} className="text-library-accent" />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">صاحب النسخة</p>
+            <p className="text-sm font-black text-library-primary dark:text-white">{record.studentName || record.ownerName || "زميل"}</p>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-3 mb-5">
+          <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-2.5 border border-gray-100 dark:border-white/5">
+            <p className="text-[10px] font-bold text-gray-500 mb-1 flex items-center gap-1"><BookOpen size={10}/> حالة النسخة</p>
+            <p className="text-xs font-black text-library-primary dark:text-gray-200">{conditionLabel}</p>
+          </div>
+          <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-2.5 border border-gray-100 dark:border-white/5">
+            <p className="text-[10px] font-bold text-gray-500 mb-1 flex items-center gap-1"><CalendarDays size={10}/> مدة الاستعارة</p>
+            <p className="text-xs font-black text-library-primary dark:text-gray-200">{record.borrowingDurationInDays} يوم</p>
+          </div>
+          <div className="col-span-2 bg-indigo-50 dark:bg-indigo-500/5 rounded-xl p-2.5 border border-indigo-100 dark:border-indigo-500/10 flex justify-between items-center">
+            <p className="text-[10px] font-bold text-indigo-600/70 dark:text-indigo-400/70 flex items-center gap-1"><Coins size={12}/> التكلفة المطلوبة</p>
+            <p className="text-sm font-black text-indigo-600 dark:text-indigo-400">{record.cost} نقاط</p>
+          </div>
+        </div>
+      </div>
+      
+      <button 
+        onClick={() => onBorrow(record.id)}
+        disabled={isProcessing}
+        className="w-full py-3 rounded-xl bg-library-primary text-white font-black text-xs hover:bg-library-accent transition-all flex items-center justify-center gap-2 shadow-md hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50"
+      >
+        {isProcessing ? <Loader2 size={16} className="animate-spin" /> : <Repeat size={16} />}
+        طلب استعارة هذه النسخة
+      </button>
+    </div>
+  );
+};
+
 const BookDetail = () => {
   const { bookId } = useParams();
   const navigate = useNavigate();
@@ -21,23 +66,49 @@ const BookDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
+  const [lendingRecords, setLendingRecords] = useState([]);
+  const [loadingLending, setLoadingLending] = useState(true);
+  const [processingRecordId, setProcessingRecordId] = useState(null);
+
   const [isAddCopyModalOpen, setIsAddCopyModalOpen] = useState(false);
   const [selectedCondition, setSelectedCondition] = useState("");
   const [isAddingCopy, setIsAddingCopy] = useState(false);
 
   useEffect(() => {
-    const fetchBook = async () => {
+    const fetchBookAndLending = async () => {
       try {
-        const data = await booksApi.getById(bookId);
-        setBook(data);
+        const bookData = await booksApi.getById(bookId);
+        setBook(bookData);
       } catch (err) {
-        setError("تعذر تحميل تفاصيل الكتاب. قد يكون الكتاب غير موجود.");
-        toast.error("فشل تحميل بيانات الكتاب");
+        const mockBook = mockAvailableLendingBooks.find(b => String(b.id) === String(bookId));
+        if (mockBook) {
+          setBook(mockBook);
+        } else {
+          setError("تعذر تحميل تفاصيل الكتاب. قد يكون الكتاب غير موجود.");
+          toast.error("فشل تحميل بيانات الكتاب");
+        }
       } finally {
         setLoading(false);
       }
+
+      try {
+        setLoadingLending(true);
+        // Fetch all lending opportunities for this specific book
+        // Passing states: 0 assumes 0 is "available" for LendingListRecord
+        const lendingData = await lendingApi.getAll({ bookId, states: 0 });
+        const items = lendingData.items || [];
+        // Double check filtering to only show available
+        const availableRecords = items.filter(r => r.state === 0 || r.state === 'available' || r.state === 'Available');
+        setLendingRecords(availableRecords);
+      } catch (err) {
+        console.error("Failed to fetch lending records", err);
+        setLendingRecords(mockLendingRecords.filter(r => String(r.bookId) === String(bookId)));
+      } finally {
+        setLoadingLending(false);
+      }
     };
-    fetchBook();
+    
+    fetchBookAndLending();
   }, [bookId]);
 
   const handleAddCopySubmit = async () => {
@@ -52,13 +123,26 @@ const BookDetail = () => {
       await bookCopiesApi.create(bookId, Number(selectedCondition));
       toast.success("تم تسجيل نسختك بنجاح! يمكن للطلاب الآخرين استعارتها الآن.", { id: toastId });
       setIsAddCopyModalOpen(false);
-      // Optionally reload book data if it includes a copy count
       const updatedData = await booksApi.getById(bookId);
       setBook(updatedData);
     } catch (err) {
       toast.error("فشل إضافة النسخة. تأكد من أنك لم تضف نسخة مسبقاً، أو حاول لاحقاً.", { id: toastId });
     } finally {
       setIsAddingCopy(false);
+    }
+  };
+
+  const handleBorrowRequest = async (recordId) => {
+    setProcessingRecordId(recordId);
+    const toastId = toast.loading("جاري إرسال طلب الاستعارة...");
+    try {
+      await borrowingApi.create(recordId);
+      toast.success("تم إرسال طلب الاستعارة بنجاح!", { id: toastId });
+      navigate('/lending/outgoing');
+    } catch (err) {
+      toast.error(err?.message || "فشل إرسال الطلب. تأكد من امتلاكك لنقاط كافية، وأنك لم تطلب هذه النسخة مسبقاً.", { id: toastId });
+    } finally {
+      setProcessingRecordId(null);
     }
   };
 
@@ -153,7 +237,6 @@ const BookDetail = () => {
       <Navbar />
       
       <div className="max-w-4xl mx-auto">
-        {/* Back Button */}
         <button 
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-gray-500 hover:text-library-primary dark:hover:text-white mb-8 font-bold text-sm transition-colors"
@@ -161,7 +244,7 @@ const BookDetail = () => {
           <ArrowRight size={16} /> العودة للخلف
         </button>
 
-        <div className="bg-white/80 dark:bg-white/5 backdrop-blur-xl rounded-3xl overflow-hidden border border-gray-100 dark:border-white/10 shadow-xl flex flex-col md:flex-row">
+        <div className="bg-white/80 dark:bg-white/5 backdrop-blur-xl rounded-3xl overflow-hidden border border-gray-100 dark:border-white/10 shadow-xl flex flex-col md:flex-row mb-8">
           
           {/* Cover Side */}
           <div className="w-full md:w-1/3 bg-gray-50 dark:bg-black/20 p-8 flex items-center justify-center relative">
@@ -185,7 +268,7 @@ const BookDetail = () => {
                   {book.title}
                 </h1>
                 <span className="shrink-0 bg-emerald-500/10 text-emerald-600 px-3 py-1 rounded-full text-[10px] font-black border border-emerald-500/20">
-                  {book.copiesCount || 0} نسخة متاحة
+                  {book.copiesCount || 0} نسخة في النظام
                 </span>
               </div>
               
@@ -223,13 +306,50 @@ const BookDetail = () => {
               
               <button 
                 onClick={() => setIsAddCopyModalOpen(true)}
-                className="bg-library-primary text-white hover:bg-library-primary/90 px-6 py-3 rounded-xl font-black text-sm flex items-center gap-2 transition-all shadow-lg hover:-translate-y-1"
+                className="bg-white dark:bg-[#1a1a1f] text-library-primary dark:text-white border border-gray-200 dark:border-white/10 hover:border-library-accent/40 hover:bg-gray-50 px-6 py-3 rounded-xl font-black text-sm flex items-center gap-2 transition-all shadow-sm"
               >
-                <CopyPlus size={18} />
+                <CopyPlus size={18} className="text-library-accent" />
                 أضف نسختك من هذا الكتاب
               </button>
             </div>
           </div>
+        </div>
+
+        {/* ─── LENDING MARKETPLACE SECTION ─── */}
+        <div className="bg-white/80 dark:bg-white/5 backdrop-blur-xl rounded-3xl overflow-hidden border border-gray-100 dark:border-white/10 shadow-xl p-8 lg:p-12 mb-8">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-blue-500/10 flex items-center justify-center text-indigo-500">
+              <BookOpen size={20} />
+            </div>
+            <h2 className="text-xl font-black text-library-primary dark:text-white">النسخ المتاحة للاستعارة من الزملاء</h2>
+          </div>
+          <p className="text-xs font-bold text-gray-500 mb-8 max-w-xl">
+            هذه القائمة تعرض النسخ المعروضة حالياً من قبل الزملاء في كليتك والجاهزة للاستعارة. قم باختيار النسخة التي تناسبك واضغط على طلب الاستعارة.
+          </p>
+
+          {loadingLending ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <Loader2 className="animate-spin text-library-accent mb-3" size={30} />
+              <p className="text-xs font-black text-gray-400">جاري البحث عن النسخ المتاحة...</p>
+            </div>
+          ) : lendingRecords.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.02] p-12 text-center">
+              <Repeat className="mx-auto mb-3 h-12 w-12 text-gray-300 dark:text-gray-600" />
+              <p className="text-base font-black text-library-primary dark:text-white mb-1">عذراً، لا توجد نسخ متاحة حالياً</p>
+              <p className="text-xs font-bold text-gray-500">لم يقم أي طالب بعرض نسخة من هذا الكتاب للاستعارة في الوقت الحالي. عُد لاحقاً!</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {lendingRecords.map((record) => (
+                <LendingRecordCard 
+                  key={record.id} 
+                  record={record} 
+                  isProcessing={processingRecordId === record.id}
+                  onBorrow={handleBorrowRequest} 
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

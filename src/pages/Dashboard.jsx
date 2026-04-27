@@ -15,9 +15,10 @@ import {
 } from 'lucide-react';
 import Navbar from '../components/common/Navbar';
 import { useAuth } from '../context/AuthContext';
-import { borrowingApi, lendingApi } from '../services/api';
+import { booksApi } from '../services/api';
 import { getBookImageUrl } from '../utils/constants';
 import { mockAvailableLendingBooks } from '../utils/mockData';
+import { useNavigate } from 'react-router-dom';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -63,8 +64,9 @@ const normalizeLendingRow = (row = {}) => {
   };
 };
 
-const BookCard3D = ({ book, onBorrow, submitting }) => {
-  const available = book.status === 'متاح';
+const BookCard3D = ({ book }) => {
+  const available = book.copiesCount > 0;
+  const navigate = useNavigate();
   return (
     <motion.div
       variants={bookCardItem}
@@ -88,8 +90,8 @@ const BookCard3D = ({ book, onBorrow, submitting }) => {
           </div>
           <div className={`absolute inset-y-0 right-0 w-[24px] ${book.color || 'bg-library-primary'} [transform:translateX(12px)_rotateY(90deg)] rounded-r-sm overflow-hidden shadow-[inset_2px_0_5px_rgba(0,0,0,0.3)]`}></div>
           <div className="absolute inset-0 bg-white rounded-r-md rounded-l-sm overflow-hidden [transform:translateZ(12px)] shadow-[-5px_5px_15px_rgba(0,0,0,0.2)] border-l-2 border-black/10">
-            {book.bookId ? (
-               <img src={getBookImageUrl(book.bookId)} alt={book.title} className="w-full h-full object-cover" />
+             {book.id ? (
+               <img src={getBookImageUrl(book.id)} alt={book.title} className="w-full h-full object-cover" />
             ) : (
                <div className="w-full h-full bg-library-primary flex flex-col items-center justify-center p-3 text-center">
                  <h3 className="text-white font-bold text-sm mb-1 leading-tight">{book.title}</h3>
@@ -104,7 +106,7 @@ const BookCard3D = ({ book, onBorrow, submitting }) => {
                     : 'bg-rose-500/95 text-white border-rose-400/30'
                 }`}
               >
-                {book.status}
+                {available ? 'متاح للاستعارة' : 'غير متاح'}
               </span>
             </div>
           </div>
@@ -121,9 +123,9 @@ const BookCard3D = ({ book, onBorrow, submitting }) => {
           <div className="flex justify-between items-center w-full mb-4 gap-2">
             <div className="flex items-center gap-1.5 text-[11px] font-bold text-library-primary/65 dark:text-gray-400 min-w-0">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-library-primary/[0.06] dark:bg-white/[0.06]">
-                <User size={13} className="text-library-accent" strokeWidth={2} />
+                <BookMarked size={13} className="text-library-accent" strokeWidth={2} />
               </span>
-              <span className="truncate">{book.owner}</span>
+              <span className="truncate">{book.category || 'عام'}</span>
             </div>
             <div className="flex items-center gap-1 shrink-0 rounded-lg bg-amber-500/10 px-2 py-1 border border-amber-500/15">
               <Star size={12} className="fill-amber-400 text-amber-600" strokeWidth={1.5} />
@@ -132,16 +134,11 @@ const BookCard3D = ({ book, onBorrow, submitting }) => {
           </div>
           <button
             type="button"
-            disabled={!available}
-            onClick={() => available && onBorrow(book.id)}
-            className={`w-full py-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 ${
-              available
-                ? 'bg-library-primary text-white border border-library-primary shadow-md hover:bg-library-accent hover:border-library-accent hover:shadow-lg dark:bg-white dark:text-library-primary dark:border-white dark:hover:bg-library-accent dark:hover:text-white dark:hover:border-library-accent'
-                : 'bg-gray-100/80 text-gray-400 border border-gray-200/80 dark:bg-white/[0.04] dark:text-gray-500 dark:border-white/10 cursor-not-allowed'
-            }`}
+            onClick={() => navigate(`/catalog/${book.id}`)}
+            className={`w-full py-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 bg-library-primary text-white border border-library-primary shadow-md hover:bg-library-accent hover:border-library-accent hover:shadow-lg dark:bg-white dark:text-library-primary dark:border-white dark:hover:bg-library-accent dark:hover:text-white dark:hover:border-library-accent`}
           >
-            {submitting ? 'جاري الإرسال...' : available ? 'اطلب الإعارة' : 'غير متاح حالياً'}
-            {available && <ArrowUpLeft size={15} strokeWidth={2.5} />}
+            عرض التفاصيل
+            <ArrowUpLeft size={15} strokeWidth={2.5} />
           </button>
         </div>
       </div>
@@ -169,17 +166,15 @@ const Dashboard = () => {
   const fetchAvailable = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await lendingApi.getAll({
-        Page: 1,
-        PageSize: 30,
-        SortColumn: 'createdat',
-        SortDirection: 'desc',
-        SearchTerm: debouncedSearch || undefined,
-        States: [0], // Available only
+      const res = await booksApi.getAll({
+        page: 1,
+        pageSize: 30,
+        sortColumn: 'createdAt',
+        sortDirection: 'desc',
+        searchTerm: debouncedSearch || undefined,
       });
-      const rows = (res.items ?? res.data ?? []).map(normalizeLendingRow);
-      const available = rows.filter((b) => b.stateKey === 'Available');
-      setBooksData(available.length ? available : mockAvailableLendingBooks);
+      const rows = res.items ?? res.data ?? [];
+      setBooksData(rows.length ? rows : mockAvailableLendingBooks);
     } catch (e) {
       toast.error(e?.message || 'تعذر تحميل الكتب المتاحة للإعارة');
       setBooksData(mockAvailableLendingBooks);
@@ -192,20 +187,7 @@ const Dashboard = () => {
     fetchAvailable();
   }, [fetchAvailable]);
 
-  const handleBorrow = async (lendingRecordId) => {
-    if (!lendingRecordId || requestingId) return;
-    setRequestingId(lendingRecordId);
-    const t = toast.loading('جاري إرسال طلب الاستعارة…');
-    try {
-      await borrowingApi.create(lendingRecordId);
-      toast.success('تم إرسال طلب الاستعارة', { id: t });
-      await fetchAvailable();
-    } catch (e) {
-      toast.error(e?.message || 'تعذر إرسال الطلب', { id: t });
-    } finally {
-      setRequestingId(null);
-    }
-  };
+
 
   const availableCount = useMemo(() => booksData.length, [booksData]);
 
@@ -324,8 +306,6 @@ const Dashboard = () => {
                   <BookCard3D
                     key={book.id}
                     book={book}
-                    onBorrow={handleBorrow}
-                    submitting={requestingId === book.id}
                   />
                 ))
               )}

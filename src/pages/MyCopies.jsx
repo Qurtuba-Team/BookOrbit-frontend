@@ -20,6 +20,7 @@ import {
   X,
   ChevronDown,
   Check,
+  Inbox,
 } from "lucide-react";
 import Navbar from "../components/common/Navbar";
 import { useAuth } from "../context/AuthContext";
@@ -28,14 +29,13 @@ import { getBookImageUrl, tokenStore } from "../utils/constants";
 import { mockMyCopies } from "../utils/mockData";
 
 const CONDITION_OPTIONS = [
-  { value: 0, label: "كالجديد" },
-  { value: 1, label: "جيد جدًا" },
-  { value: 2, label: "جيد" },
-  { value: 3, label: "مقبول" },
-  { value: 4, label: "ضعيف" },
+  { value: 0, label: "جديد" },
+  { value: 1, label: "كالجديد" },
+  { value: 2, label: "مقبول" },
+  { value: 3, label: "ضعيف" },
 ];
 
-const LENDING_DAYS_PRESETS = [7, 14, 30, 60];
+const LENDING_DAYS_PRESETS = [7, 14, 21, 30];
 
 /** Custom condition picker — native `<select>` cannot style the open menu. */
 const ConditionDropdown = ({ value, onChange, disabled }) => {
@@ -439,13 +439,22 @@ const MyCopies = () => {
                 واحد.
               </p>
             </div>
-            <Link
-              to="/addbook"
-              className="group inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-library-primary text-white text-sm font-black shadow-md shadow-library-primary/20 transition-all duration-200 shrink-0 hover:shadow-lg hover:shadow-library-primary/30 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99]"
-            >
-              <Plus size={18} className="transition-transform duration-300 group-hover:rotate-90" />
-              إضافة كتاب للكتالوج
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link
+                to="/lending/incoming"
+                className="group inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-white/50 dark:bg-white/5 text-library-primary dark:text-white text-sm font-black shadow-sm border border-library-primary/10 dark:border-white/10 transition-all duration-200 shrink-0 hover:bg-library-accent/10 hover:border-library-accent/30 hover:text-library-accent hover:-translate-y-0.5"
+              >
+                <Inbox size={18} className="transition-transform duration-300 group-hover:scale-110 group-hover:text-library-accent" />
+                الطلبات الواردة
+              </Link>
+              <Link
+                to="/addbook"
+                className="group inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-library-primary text-white text-sm font-black shadow-md shadow-library-primary/20 transition-all duration-200 shrink-0 hover:shadow-lg hover:shadow-library-primary/30 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99]"
+              >
+                <Plus size={18} className="transition-transform duration-300 group-hover:rotate-90" />
+                إضافة كتاب للكتالوج
+              </Link>
+            </div>
           </div>
         </header>
 
@@ -613,11 +622,11 @@ const MyCopies = () => {
               </div>
               <input
                 type="number"
-                min={1}
-                max={365}
+                min={7}
+                max={30}
                 value={lendingDays}
                 onChange={(e) =>
-                  setLendingDays(Math.max(1, parseInt(e.target.value, 10) || 1))
+                  setLendingDays(Math.max(7, Math.min(30, parseInt(e.target.value, 10) || 7)))
                 }
                 className="w-full mb-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-bold transition-all duration-200 hover:border-library-primary/30 focus:outline-none focus:ring-2 focus:ring-library-primary/20"
               />

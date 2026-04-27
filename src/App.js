@@ -13,7 +13,9 @@ import StudentProfile from './pages/StudentProfile';
 import ChangePassword from './pages/ChangePassword';
 import BookDetail from './pages/BookDetail';
 import MyCopies from './pages/MyCopies';
-import LendingList from './pages/LendingList';
+import BorrowingIncomingRequests from './pages/BorrowingIncomingRequests';
+import BorrowingOutgoingRequests from './pages/BorrowingOutgoingRequests';
+import BorrowingTransactions from './pages/BorrowingTransactions';
 import AdminStudents from './pages/AdminStudents';
 import AdminBooks from './pages/AdminBooks';
 import AdminDashboard from './pages/AdminDashboard';
@@ -105,7 +107,9 @@ function AppRoutes() {
               <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />
               <Route path="/catalog/:bookId" element={<ProtectedRoute><BookDetail /></ProtectedRoute>} />
               <Route path="/my-copies" element={<ProtectedRoute><MyCopies /></ProtectedRoute>} />
-              <Route path="/lending" element={<ProtectedRoute><LendingList /></ProtectedRoute>} />
+              <Route path="/lending/incoming" element={<ProtectedRoute><BorrowingIncomingRequests /></ProtectedRoute>} />
+              <Route path="/lending/outgoing" element={<ProtectedRoute><BorrowingOutgoingRequests /></ProtectedRoute>} />
+              <Route path="/lending/transactions" element={<ProtectedRoute><BorrowingTransactions /></ProtectedRoute>} />
               <Route path="/addbook" element={<ProtectedRoute><AddBook /></ProtectedRoute>} />
 
               {/* ── Admin Protected Routes (محمية) ── */}
