@@ -29,7 +29,8 @@ import {
   studentsApi, 
   booksApi, 
   lendingApi, 
-  borrowingApi 
+  borrowingApi,
+  bookCopiesApi
 } from "../services/api";
 import { getStudentImageUrl, getBookImageUrl, tokenStore, STUDENT_STATE_LABELS } from "../utils/constants";
 import { useAuth } from "../context/AuthContext";
@@ -106,8 +107,13 @@ const AdminDashboard = () => {
   const [totalStudentPages, setTotalStudentPages] = React.useState(1);
   const [books, setBooks] = React.useState([]);
   const [loadingBooks, setLoadingBooks] = React.useState(false);
+  const [processingBookId, setProcessingBookId] = React.useState(null);
   const [currentBookPage, setCurrentBookPage] = React.useState(1);
   const [totalBookPages, setTotalBookPages] = React.useState(1);
+  const [adminCopies, setAdminCopies] = React.useState([]);
+  const [loadingAdminCopies, setLoadingAdminCopies] = React.useState(false);
+  const [updatingCopyId, setUpdatingCopyId] = React.useState(null);
+  const [copyConditionDrafts, setCopyConditionDrafts] = React.useState({});
   const [studentSearchInput, setStudentSearchInput] = React.useState("");
   const [studentSearchQuery, setStudentSearchQuery] = React.useState("");
   const [bookSearchInput, setBookSearchInput] = React.useState("");
@@ -125,6 +131,8 @@ const AdminDashboard = () => {
   const [isBookModalOpen, setIsBookModalOpen] = React.useState(false);
   
   const imageObjectUrlsRef = React.useRef(new Set());
+  const attemptedStudentImageIdsRef = React.useRef(new Set());
+  const attemptedBookImageIdsRef = React.useRef(new Set());
 
   const fetchProtectedImageSrc = React.useCallback(async (url) => {
     const { accessToken } = tokenStore.get();
@@ -157,14 +165,32 @@ const AdminDashboard = () => {
   React.useEffect(() => { setCurrentLendingPage(1); }, [subTab]);
 
   const handleBookAction = async (bookId, action) => {
-    toast.error("هذا الإجراء غير متوفر حالياً في النظام");
+    setProcessingBookId(bookId);
+    const t = toast.loading("جاري تنفيذ الإجراء على الكتاب...");
+    try {
+      if (action === "approve") {
+        await booksApi.approve(bookId);
+      } else if (action === "reject") {
+        const reason =
+          window.prompt("اكتب سبب الرفض (اختياري):", "البيانات غير مكتملة") || "";
+        await booksApi.reject(bookId, reason);
+      } else if (action === "delete") {
+        await booksApi.delete(bookId);
+      }
+      toast.success("تم تحديث حالة الكتاب بنجاح", { id: t });
+      await fetchBooks();
+    } catch (error) {
+      toast.error(error?.message || "فشل تنفيذ الإجراء", { id: t });
+    } finally {
+      setProcessingBookId(null);
+    }
   };
 
   const fetchBooks = React.useCallback(async () => {
     setLoadingBooks(true);
     try {
-      let params = { pageSize: 20, Page: currentBookPage }; // Fetch slightly more to allow for filtering if API is missing States param
-      if (bookSearchQuery) params.SearchTerm = bookSearchQuery;
+      let params = { pageSize: 20, page: currentBookPage }; // Fetch slightly more to allow for filtering if API is missing states param
+      if (bookSearchQuery) params.searchTerm = bookSearchQuery;
       
       // Use client-side filtering since the backend doesn't support State filtering yet in apis.json
       const res = await booksApi.getAll(params);
@@ -172,10 +198,25 @@ const AdminDashboard = () => {
       
       // Client-side filtering as a fallback and to ensure correctness
       if (subTab === "pending") {
-        items = items.filter(b => b.state === 0 || !b.isApproved || b.status === "pending");
+        items = items.filter((b) => {
+          const state = String(b?.state ?? "").toLowerCase();
+          const status = String(b?.status ?? "").toLowerCase();
+          return state === "0" || state === "pending" || status === "pending";
+        });
       } else {
-        // Only show approved books in the main list
-        items = items.filter(b => b.state === 1 || b.isApproved || b.status === "active");
+        // "all" tab: show approved/available books only
+        items = items.filter((b) => {
+          const state = String(b?.state ?? "").toLowerCase();
+          const status = String(b?.status ?? "").toLowerCase();
+          return (
+            b?.isApproved === true ||
+            state === "1" ||
+            state === "available" ||
+            state === "active" ||
+            status === "available" ||
+            status === "active"
+          );
+        });
       }
 
       setBooks(items);
@@ -193,13 +234,13 @@ const AdminDashboard = () => {
       let list = [];
       let total = 1;
       if (subTab === "active") {
-        const res = await lendingApi.getAll({ pageSize: 10, Page: currentLendingPage });
+        const res = await lendingApi.getAll({ pageSize: 10, page: currentLendingPage });
         list = res.items || res.data || [];
         total = res.totalPages || 1;
       } else {
-        let params = { pageSize: 10, Page: currentLendingPage };
-        if (subTab === "pending_owner") params.States = [0]; // Pending
-        else if (subTab === "pending_handover") params.States = [1]; // Approved
+        let params = { pageSize: 10, page: currentLendingPage };
+        if (subTab === "pending_owner") params.states = [0]; // Pending
+        else if (subTab === "pending_handover") params.states = [1]; // Approved
         const res = await borrowingApi.getAll(params);
         list = res.items || res.data || [];
         total = res.totalPages || 1;
@@ -213,21 +254,47 @@ const AdminDashboard = () => {
     }
   }, [subTab, currentLendingPage]);
 
+  const fetchAdminCopies = React.useCallback(async () => {
+    setLoadingAdminCopies(true);
+    try {
+      const res = await bookCopiesApi.getAll({
+        page: 1,
+        pageSize: 8,
+        sortColumn: "updatedAt",
+        sortDirection: "desc",
+      });
+      const items = res?.items || res?.data || [];
+      const safeItems = Array.isArray(items) ? items : [];
+      setAdminCopies(safeItems);
+      const drafts = {};
+      safeItems.forEach((copy) => {
+        const id = copy?.id || copy?.Id;
+        drafts[id] = copy?.condition ?? copy?.Condition ?? 0;
+      });
+      setCopyConditionDrafts(drafts);
+    } catch (err) {
+      setAdminCopies([]);
+      toast.error(err?.message || "تعذر تحميل نسخ الكتب");
+    } finally {
+      setLoadingAdminCopies(false);
+    }
+  }, []);
+
   React.useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
         const [studentsRes, booksRes, lendingsRes, pendingApprovalRes, pendingVerificationRes, unconfirmedRes, recentRequestsRes, recentStudentsRes, bannedStudentsRes, pendingBooksRes] = await Promise.all([
-          studentsApi.getAll({ pageSize: 1, States: [2] }).catch(() => ({ totalCount: 0 })), // Active (Verified)
-          booksApi.getAll({ pageSize: 1, States: [1] }).catch(() => ({ totalCount: 0 })),
+          studentsApi.getAll({ pageSize: 1, states: [2] }).catch(() => ({ totalCount: 0 })), // Active (Verified)
+          booksApi.getAll({ pageSize: 1, states: [1] }).catch(() => ({ totalCount: 0 })),
           lendingApi.getAll({ pageSize: 1 }).catch(() => ({ totalCount: 0 })),
-          studentsApi.getAll({ pageSize: 1, States: [0], EmailConfirmed: true }).catch(() => ({ totalCount: 0 })), // Pending Approval (Confirmed & 0)
-          studentsApi.getAll({ pageSize: 1, States: [1], EmailConfirmed: true }).catch(() => ({ totalCount: 0 })), // Pending Verification (Confirmed & 1)
-          studentsApi.getAll({ pageSize: 1, EmailConfirmed: false }).catch(() => ({ totalCount: 0 })), // Unconfirmed Email
-          borrowingApi.getAll({ pageSize: 4, States: [0] }).catch(() => ({ items: [] })),
-          studentsApi.getAll({ pageSize: 4, States: [0, 1], EmailConfirmed: true }).catch(() => ({ items: [] })), // Confirmed students for recent
-          studentsApi.getAll({ pageSize: 1, States: [4] }).catch(() => ({ totalCount: 0 })), // Banned Students
-          booksApi.getAll({ pageSize: 1, States: [0] }).catch(() => ({ totalCount: 0 })) // Pending Books
+          studentsApi.getAll({ pageSize: 1, states: [0], emailConfirmed: true }).catch(() => ({ totalCount: 0 })), // Pending Approval (Confirmed & 0)
+          studentsApi.getAll({ pageSize: 1, states: [1], emailConfirmed: true }).catch(() => ({ totalCount: 0 })), // Pending Verification (Confirmed & 1)
+          studentsApi.getAll({ pageSize: 1, emailConfirmed: false }).catch(() => ({ totalCount: 0 })), // Unconfirmed Email
+          borrowingApi.getAll({ pageSize: 4, states: [0] }).catch(() => ({ items: [] })),
+          studentsApi.getAll({ pageSize: 4, states: [0, 1], emailConfirmed: true }).catch(() => ({ items: [] })), // Confirmed students for recent
+          studentsApi.getAll({ pageSize: 1, states: [4] }).catch(() => ({ totalCount: 0 })), // Banned Students
+          booksApi.getAll({ pageSize: 1, states: [0] }).catch(() => ({ totalCount: 0 })) // Pending Books
         ]);
 
         const activeCount = (studentsRes?.totalCount || 0);
@@ -267,24 +334,24 @@ const AdminDashboard = () => {
   const fetchStudents = React.useCallback(async () => {
     setLoadingStudents(true);
     try {
-      const params = { pageSize: 15, Page: currentStudentPage };
-      if (studentSearchQuery) params.SearchTerm = studentSearchQuery;
+      const params = { pageSize: 15, page: currentStudentPage };
+      if (studentSearchQuery) params.searchTerm = studentSearchQuery;
       
       if (subTab === "pending_approval") {
-        params.States = [0]; 
-        params.EmailConfirmed = true; 
+        params.states = [0]; 
+        params.emailConfirmed = true; 
       } else if (subTab === "pending_verification") {
-        params.States = [1]; 
-        params.EmailConfirmed = true; 
+        params.states = [1]; 
+        params.emailConfirmed = true; 
       } else if (subTab === "unconfirmed") {
-        params.EmailConfirmed = false; 
+        params.emailConfirmed = false; 
       } else if (subTab === "verified") {
-        params.States = [2]; 
+        params.states = [2]; 
       } else if (subTab === "banned") {
-        params.States = [4]; 
+        params.states = [4]; 
       } else {
-        // "all" tab: Show everyone
-        params.States = [0, 1, 2, 4]; 
+        // "all" tab: ask backend for all states (including unbanned/any future states)
+        delete params.states;
       }
 
       const res = await studentsApi.getAll(params);
@@ -314,6 +381,8 @@ const AdminDashboard = () => {
       const nextMap = {};
       await Promise.all(
         ids.map(async (id) => {
+          if (studentImageMap[id] || attemptedStudentImageIdsRef.current.has(id)) return;
+          attemptedStudentImageIdsRef.current.add(id);
           try {
             const src = await fetchProtectedImageSrc(getStudentImageUrl(id));
             if (src) nextMap[id] = src;
@@ -342,7 +411,8 @@ const AdminDashboard = () => {
       const nextMap = {};
       await Promise.all(
         ids.map(async (id) => {
-          if (bookImageMap[id]) return; // Skip if already loaded
+          if (bookImageMap[id] || attemptedBookImageIdsRef.current.has(id)) return;
+          attemptedBookImageIdsRef.current.add(id);
           try {
             const src = await fetchProtectedImageSrc(getBookImageUrl(id));
             if (src) nextMap[id] = src;
@@ -370,9 +440,12 @@ const AdminDashboard = () => {
 
   React.useEffect(() => {
     if (activeTab === "students") fetchStudents();
-    if (activeTab === "books") fetchBooks();
+    if (activeTab === "books") {
+      fetchBooks();
+      fetchAdminCopies();
+    }
     if (activeTab === "lending") fetchLendings();
-  }, [activeTab, subTab, fetchStudents, fetchBooks, fetchLendings]);
+  }, [activeTab, subTab, fetchStudents, fetchBooks, fetchLendings, fetchAdminCopies]);
 
   const handleStudentAction = async (id, action) => {
     try {
@@ -382,6 +455,7 @@ const AdminDashboard = () => {
       else if (action === "ban") await studentsApi.ban(id);
       else if (action === "unban") await studentsApi.unban(id);
       else if (action === "reject") await studentsApi.reject(id);
+      else if (action === "pend") await studentsApi.pend(id);
       
       toast.dismiss(loadingToast);
       toast.success("تم تنفيذ الإجراء بنجاح");
@@ -389,6 +463,22 @@ const AdminDashboard = () => {
     } catch (error) {
       toast.error("فشل تنفيذ الإجراء");
       toast.dismiss();
+    }
+  };
+
+  const handleUpdateCopyCondition = async (copyId) => {
+    const nextCondition = Number(copyConditionDrafts?.[copyId]);
+    if (Number.isNaN(nextCondition)) return;
+    setUpdatingCopyId(copyId);
+    const t = toast.loading("جاري تحديث حالة النسخة...");
+    try {
+      await bookCopiesApi.update(copyId, nextCondition);
+      toast.success("تم تحديث حالة النسخة", { id: t });
+      await fetchAdminCopies();
+    } catch (err) {
+      toast.error(err?.message || "تعذر تحديث حالة النسخة", { id: t });
+    } finally {
+      setUpdatingCopyId(null);
     }
   };
 
@@ -456,9 +546,9 @@ const AdminDashboard = () => {
               }}
             >
               <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-white/5 overflow-hidden border border-gray-100 dark:border-white/10 group-hover:scale-105 transition-transform duration-500 shadow-inner">
-                {student.id ? (
+                {student.id && studentImageMap[student.id] ? (
                   <img 
-                    src={studentImageMap[student.id] || ""} 
+                    src={studentImageMap[student.id]} 
                     className="w-full h-full object-cover" 
                     alt="" 
                     onError={(e) => {
@@ -564,9 +654,9 @@ const AdminDashboard = () => {
             <div className="relative -mt-12 mb-6">
               <div className="w-24 h-24 rounded-3xl bg-white dark:bg-[#121214] p-1.5 shadow-xl mx-auto">
                 <div className="w-full h-full rounded-2xl overflow-hidden bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 shadow-inner">
-                  {selectedStudent.id ? (
+                  {selectedStudent.id && studentImageMap[selectedStudent.id] ? (
                     <img 
-                      src={studentImageMap[selectedStudent.id] || ""} 
+                      src={studentImageMap[selectedStudent.id]} 
                       className="w-full h-full object-cover" 
                       alt="" 
                       onError={(e) => {
@@ -654,15 +744,29 @@ const AdminDashboard = () => {
                       >
                         رفض الطلب
                       </button>
+                      <button
+                        onClick={() => { handleStudentAction(selectedStudent.id, "pend"); setIsModalOpen(false); }}
+                        className="flex-grow py-3 rounded-xl bg-amber-500 text-white text-[11px] font-black shadow-lg shadow-amber-500/20 hover:bg-amber-600 transition-all"
+                      >
+                        إرجاع لانتظار المراجعة
+                      </button>
                     </>
                   )}
                   {selectedStudent.status?.toLowerCase() === 'active' && (
-                    <button 
-                      onClick={() => { handleStudentAction(selectedStudent.id, "ban"); setIsModalOpen(false); }}
-                      className="flex-grow py-3 rounded-xl bg-rose-500 text-white text-[11px] font-black shadow-lg shadow-rose-500/20"
-                    >
-                      حظر الطالب
-                    </button>
+                    <>
+                      <button 
+                        onClick={() => { handleStudentAction(selectedStudent.id, "ban"); setIsModalOpen(false); }}
+                        className="flex-grow py-3 rounded-xl bg-rose-500 text-white text-[11px] font-black shadow-lg shadow-rose-500/20"
+                      >
+                        حظر الطالب
+                      </button>
+                      <button
+                        onClick={() => { handleStudentAction(selectedStudent.id, "pend"); setIsModalOpen(false); }}
+                        className="flex-grow py-3 rounded-xl bg-amber-500 text-white text-[11px] font-black shadow-lg shadow-amber-500/20 hover:bg-amber-600 transition-all"
+                      >
+                        إرجاع لانتظار المراجعة
+                      </button>
+                    </>
                   )}
                 </>
               )}
@@ -736,9 +840,9 @@ const AdminDashboard = () => {
                   }}
                 >
                   <div className="w-12 h-16 rounded-lg bg-gray-100 dark:bg-white/5 overflow-hidden border border-gray-100 dark:border-white/10 group-hover:scale-105 transition-transform duration-500 shadow-inner">
-                    {book.id ? (
+                    {(book.bookCoverImageUrl || bookImageMap[book.id]) ? (
                       <img 
-                        src={book.bookCoverImageUrl || bookImageMap[book.id] || ""} 
+                        src={book.bookCoverImageUrl || bookImageMap[book.id]} 
                         className="w-full h-full object-cover" 
                         alt={book.title}
                         loading="lazy"
@@ -767,12 +871,81 @@ const AdminDashboard = () => {
 
                 <div className="flex items-center justify-between gap-3 w-full md:w-auto">
                   <div className="flex items-center gap-1">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    <span className="text-xs md:text-[10px] font-black text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">{book.copiesCount || 0} نسخة</span>
+                    {subTab === "pending" ? (
+                      <>
+                        <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                        <span className="text-xs md:text-[10px] font-black text-amber-700 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/15">
+                          بانتظار المراجعة
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        {String(book?.status || "").toLowerCase() === "rejected" ? (
+                          <>
+                            <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                            <span className="text-xs md:text-[10px] font-black text-rose-700 bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-500/15">
+                              مرفوض
+                            </span>
+                          </>
+                        ) : String(book?.status || "").toLowerCase() === "pending" ? (
+                          <>
+                            <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                            <span className="text-xs md:text-[10px] font-black text-amber-700 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/15">
+                              بانتظار المراجعة
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            <span className="text-xs md:text-[10px] font-black text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                              معتمد
+                            </span>
+                          </>
+                        )}
+                      </>
+                    )}
                   </div>
                   <div className="flex items-center gap-1">
+                    {subTab === "pending" && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleBookAction(book.id, "approve");
+                          }}
+                          disabled={processingBookId === book.id}
+                          className="px-2.5 py-1.5 rounded-lg bg-emerald-500 text-white text-[10px] font-black hover:bg-emerald-600 transition-all disabled:opacity-50"
+                        >
+                          {processingBookId === book.id ? "..." : "قبول"}
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleBookAction(book.id, "reject");
+                          }}
+                          disabled={processingBookId === book.id}
+                          className="px-2.5 py-1.5 rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-600 text-[10px] font-black hover:bg-rose-500 hover:text-white transition-all disabled:opacity-50"
+                        >
+                          {processingBookId === book.id ? "..." : "رفض"}
+                        </button>
+                      </>
+                    )}
+                    {subTab !== "pending" && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!window.confirm("هل تريد حذف هذا الكتاب نهائيًا؟")) return;
+                          handleBookAction(book.id, "delete");
+                        }}
+                        disabled={processingBookId === book.id}
+                        className="px-2.5 py-1.5 rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-600 text-[10px] font-black hover:bg-rose-500 hover:text-white transition-all disabled:opacity-50"
+                      >
+                        {processingBookId === book.id ? "..." : "حذف"}
+                      </button>
+                    )}
                     <button 
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setSelectedBook(book);
                         setIsBookModalOpen(true);
                       }}
@@ -791,6 +964,66 @@ const AdminDashboard = () => {
           totalPages={totalBookPages} 
           onPageChange={setCurrentBookPage} 
         />
+        <div className="bg-white/80 dark:bg-[#121214]/80 backdrop-blur-xl rounded-2xl p-4 border border-white dark:border-white/5 shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-sm font-black text-library-primary dark:text-white">إدارة النسخ (Admin)</h4>
+            <button
+              type="button"
+              onClick={fetchAdminCopies}
+              className="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-white/5 text-[10px] font-black text-library-primary dark:text-white"
+            >
+              تحديث
+            </button>
+          </div>
+          {loadingAdminCopies ? (
+            <div className="flex items-center gap-2 text-xs font-black text-gray-400">
+              <Loader2 size={14} className="animate-spin" />
+              جاري تحميل النسخ...
+            </div>
+          ) : adminCopies.length === 0 ? (
+            <p className="text-xs font-black text-gray-400">لا توجد نسخ لعرضها</p>
+          ) : (
+            <div className="space-y-2">
+              {adminCopies.map((copy) => {
+                const id = copy?.id || copy?.Id;
+                const title = copy?.bookTitle || copy?.BookTitle || copy?.book?.title || "كتاب";
+                const owner = copy?.ownerName || copy?.studentName || copy?.OwnerName || "طالب";
+                return (
+                  <div
+                    key={id}
+                    className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 rounded-xl border border-gray-100 dark:border-white/10 bg-white/60 dark:bg-white/[0.03] p-3"
+                  >
+                    <div className="text-xs font-bold text-gray-600 dark:text-gray-300">
+                      <span className="font-mono">#{id}</span> - {title} - {owner}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={copyConditionDrafts[id] ?? 0}
+                        onChange={(e) =>
+                          setCopyConditionDrafts((prev) => ({ ...prev, [id]: Number(e.target.value) }))
+                        }
+                        className="rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#08080a] px-2 py-1.5 text-xs font-black text-library-primary dark:text-white"
+                      >
+                        <option value={0}>جديد</option>
+                        <option value={1}>جيد جداً</option>
+                        <option value={2}>مقبول</option>
+                        <option value={3}>مهترئ</option>
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateCopyCondition(id)}
+                        disabled={updatingCopyId === id}
+                        className="px-3 py-1.5 rounded-lg bg-emerald-500 text-white text-[10px] font-black disabled:opacity-50"
+                      >
+                        {updatingCopyId === id ? "..." : "تحديث"}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     );
   };
@@ -824,15 +1057,21 @@ const AdminDashboard = () => {
             <div className="relative -mt-12 mb-6">
               <div className="w-24 h-32 rounded-2xl bg-white dark:bg-[#121214] p-1.5 shadow-xl mx-auto">
                 <div className="w-full h-full rounded-xl overflow-hidden bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 shadow-inner">
-                  <img 
-                    src={selectedBook.bookCoverImageUrl || bookImageMap[selectedBook.id] || ""} 
-                    className="w-full h-full object-cover" 
-                    alt={selectedBook.title}
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.parentElement.innerHTML = `<div class="w-full h-full flex flex-col items-center justify-center p-4 text-center"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open text-emerald-500/20 mb-2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>`;
-                    }}
-                  />
+                  {(selectedBook.bookCoverImageUrl || bookImageMap[selectedBook.id]) ? (
+                    <img 
+                      src={selectedBook.bookCoverImageUrl || bookImageMap[selectedBook.id]} 
+                      className="w-full h-full object-cover" 
+                      alt={selectedBook.title}
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.parentElement.innerHTML = `<div class="w-full h-full flex flex-col items-center justify-center p-4 text-center"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open text-emerald-500/20 mb-2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>`;
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center">
+                      <BookOpen size={28} className="text-emerald-500/20 mb-2" />
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="mt-4 text-center">
@@ -877,12 +1116,38 @@ const AdminDashboard = () => {
             </div>
 
             <div className="mt-8">
-              <button 
-                onClick={() => setIsBookModalOpen(false)}
-                className="w-full py-3 rounded-xl bg-gray-100 dark:bg-white/5 text-library-primary dark:text-white text-[11px] font-black hover:bg-gray-200 dark:hover:bg-white/10 transition-all"
-              >
-                إغلاق النافذة
-              </button>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {selectedBook?.status === "pending" || selectedBook?.state === 0 ? (
+                  <>
+                    <button
+                      onClick={async () => {
+                        await handleBookAction(selectedBook.id, "approve");
+                        setIsBookModalOpen(false);
+                      }}
+                      disabled={processingBookId === selectedBook.id}
+                      className="w-full py-3 rounded-xl bg-emerald-500 text-white text-[11px] font-black hover:bg-emerald-600 transition-all disabled:opacity-50"
+                    >
+                      اعتماد الكتاب
+                    </button>
+                    <button
+                      onClick={async () => {
+                        await handleBookAction(selectedBook.id, "reject");
+                        setIsBookModalOpen(false);
+                      }}
+                      disabled={processingBookId === selectedBook.id}
+                      className="w-full py-3 rounded-xl border border-rose-500/20 bg-rose-500/10 text-rose-600 text-[11px] font-black hover:bg-rose-500 hover:text-white transition-all disabled:opacity-50"
+                    >
+                      رفض الكتاب
+                    </button>
+                  </>
+                ) : null}
+                <button 
+                  onClick={() => setIsBookModalOpen(false)}
+                  className="w-full py-3 rounded-xl bg-gray-100 dark:bg-white/5 text-library-primary dark:text-white text-[11px] font-black hover:bg-gray-200 dark:hover:bg-white/10 transition-all"
+                >
+                  إغلاق النافذة
+                </button>
+              </div>
             </div>
           </div>
         </motion.div>

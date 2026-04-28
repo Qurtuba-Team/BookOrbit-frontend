@@ -1,9 +1,6 @@
-export const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:7240"; // من ال env او هنا الإتنبن واحد
+export const API_BASE_URL =
+  process.env.REACT_APP_API_URL || "https://trapeze-sprawl-moneyless.ngrok-free.dev";
 export const API_V1 = `${API_BASE_URL}/api/v1.0`;
-
-// دول بتوع السيرفر (ngrok) مش هتحتاجوهم بس سايبهم ليا
-// export const API_BASE_URL = " https://trapeze-sprawl-moneyless.ngrok-free.dev";
-// export const API_V1 = `${API_BASE_URL}/api/v1`;
 
 // ─── Token Storage ───────────────────────────────────────────────────────────
 export const tokenStore = {

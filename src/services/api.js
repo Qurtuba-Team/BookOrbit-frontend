@@ -1,11 +1,33 @@
 // ─── BookOrbit API Configuration ────────────────────────────────────────────
-import { API_V1, tokenStore, BOOK_CATEGORY_LABELS } from "../utils/constants";
+import { API_BASE_URL, API_V1, tokenStore, BOOK_CATEGORY_LABELS } from "../utils/constants";
 
 // ─── Token Refresh Queue ─────────────────────────────────────────────────────
 let isRefreshing = false;
 let failedQueue = [];
 
 const toLowerSafe = (value) => String(value ?? "").toLowerCase();
+const toApiAssetUrl = (value) => {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  try {
+    const url = new URL(raw);
+    if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
+      const base = new URL(API_BASE_URL);
+      return `${base.origin}${url.pathname}${url.search}${url.hash}`;
+    }
+    return raw;
+  } catch {
+    if (raw.startsWith("/")) {
+      try {
+        const base = new URL(API_BASE_URL);
+        return `${base.origin}${raw}`;
+      } catch {
+        return raw;
+      }
+    }
+    return raw;
+  }
+};
 
 const studentStateMap = {
   0: "pending",   // Unconfirmed
@@ -13,6 +35,7 @@ const studentStateMap = {
   2: "active",    // Verified (Full permissions)
   3: "rejected",
   4: "banned",
+  5: "unbanned",
 };
 
 const borrowingStateMap = {
@@ -54,13 +77,16 @@ export const normalizeStudent = (student = {}) => {
 const normalizeBook = (book = {}) => {
   try {
     const stateValue = book.state ?? book.State;
-    // Robust check for approval: state 1, or explicit true, or status strings
+    const statusValue = String(book.status ?? book.Status ?? "").toLowerCase();
+    const normalizedState = stateValue ?? statusValue;
+    // Robust check for approval: state 1, explicit true, or approved-like status strings
     const isApproved = 
       stateValue === 1 || 
       stateValue === true ||
       book.isApproved === true ||
       book.IsApproved === true ||
-      ["approved", "active", "verified"].includes(String(stateValue ?? "").toLowerCase());
+      ["approved", "active", "verified", "available"].includes(String(stateValue ?? "").toLowerCase()) ||
+      ["approved", "active", "verified", "available"].includes(statusValue);
     
       const categoryRaw = book.category ?? book.Category;
       let categoryLabel = categoryRaw;
@@ -82,10 +108,18 @@ const normalizeBook = (book = {}) => {
         isbn: book.isbn || book.ISBN || "",
         category: categoryLabel || "عام",
         copiesCount: book.copiesCount ?? book.availableCopiesCount ?? 0,
-        bookCoverImageUrl: book.bookCoverImageUrl || book.BookCoverImageUrl || "",
-        state: stateValue,
+        bookCoverImageUrl:
+          (book.id || book.Id)
+            ? `${API_V1}/images/books/${book.id || book.Id}`
+            : toApiAssetUrl(book.bookCoverImageUrl || book.BookCoverImageUrl || ""),
+        state: normalizedState,
         isApproved: isApproved,
-        status: isApproved ? "active" : (stateValue === 0 || stateValue === "Pending" ? "pending" : "rejected")
+        status:
+          isApproved
+            ? "active"
+            : (String(normalizedState ?? "").toLowerCase() === "pending" || normalizedState === 0
+                ? "pending"
+                : "rejected")
       };
     } catch (err) {
       console.error("Error normalizing book:", err, book);
@@ -238,7 +272,7 @@ async function apiRequest(path, options = {}) {
     }
 
     // ─── Token Refresh Interceptor ───────────────────────────────────────────
-    if (response.status === 401 && !options.skipAuth && storedRefreshToken && !accessToken?.startsWith("mock-access-token")) {
+    if (response.status === 401 && !options.skipAuth && storedRefreshToken) {
       if (!isRefreshing) {
         isRefreshing = true;
         try {
@@ -282,11 +316,7 @@ async function apiRequest(path, options = {}) {
 
     // لو مفيش Refresh Token أو الـ Refresh نفسه فشل
     if (response.status === 401 && !options.skipAuth) {
-      const { accessToken } = tokenStore.get();
-      // لا تقم بتسجيل الخروج تلقائياً إذا كنا نستخدم توكن تجريبي (Mock)
-      if (!accessToken?.startsWith("mock-access-token")) {
-        window.dispatchEvent(new CustomEvent("auth:logout"));
-      }
+      window.dispatchEvent(new CustomEvent("auth:logout"));
     }
 
     const errorMessage = errorData.detail || errorData.message || errorData.title || `HTTP ${response.status}`;
@@ -598,6 +628,16 @@ export const lendingApi = {
   /** GET /lendinglist/{lendingListRecordId} — Record by ID */
   getById: (lendingListRecordId) =>
     apiRequest(`/lendinglist/${lendingListRecordId}`),
+
+  /** GET /lendinglist/{lendingListRecordId}/contact-info */
+  getContactInfo: (lendingListRecordId) =>
+    apiRequest(`/lendinglist/${lendingListRecordId}/contact-info`),
+
+  /** POST /lendinglist/{lendingListRecordId}/close */
+  close: (lendingListRecordId) =>
+    apiRequest(`/lendinglist/${lendingListRecordId}/close`, {
+      method: "POST",
+    }),
 };
 
 // ─── 6. BORROWING REQUESTS ───────────────────────────────────────────────────

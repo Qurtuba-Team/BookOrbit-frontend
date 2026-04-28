@@ -96,8 +96,11 @@ function AppRoutes() {
               <Route path="/" element={<GuestRoute><Home /></GuestRoute>} />
               <Route path="/login" element={<GuestRoute><AuthPage /></GuestRoute>} />
               <Route path="/register" element={<GuestRoute><AuthPage /></GuestRoute>} />
+              <Route path="/confirm-email" element={<EmailVerified />} />
+              <Route path="/email-verified" element={<EmailVerified />} />
               <Route path="/EmailVerified" element={<EmailVerified />} />
               <Route path="/EmailVerfied" element={<EmailVerified />} />
+              <Route path='/reset-password' element={<GuestRoute><ResetPassword /></GuestRoute>} />
               <Route path='/ResetPassword' element={<GuestRoute><ResetPassword /></GuestRoute>} />
 
               {/* ── Student Protected Routes (محمية) ── */}

@@ -15,9 +15,11 @@ const EmailVerified = () => {
   useEffect(() => {
     if (verifiedRef.current) return;
 
-    const email = params.get("email");
+    const email = params.get("email")?.trim();
+    // بعض البواك تبعت encodedToken بدل token.
+    const tokenParam = params.get("token") || params.get("encodedToken");
     // استرجاع التوكن مع استبدال المسافات بعلامة + (لأن المتصفح قد يحول + إلى مسافة)
-    const token = params.get("token")?.replace(/ /g, "+");
+    const token = tokenParam?.replace(/ /g, "+");
 
     if (!email || !token) {
       setStatus("error");

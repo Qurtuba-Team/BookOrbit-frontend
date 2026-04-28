@@ -21,12 +21,15 @@ import {
   ChevronDown,
   Check,
   Inbox,
+  Eye,
+  EyeOff,
+  Info,
 } from "lucide-react";
 import Navbar from "../components/common/Navbar";
 import { useAuth } from "../context/AuthContext";
 import { bookCopiesApi } from "../services/api";
-import { getBookImageUrl, tokenStore } from "../utils/constants";
-import { mockMyCopies } from "../utils/mockData";
+import { showReadableAccessErrorToast } from "../utils/accessMessages";
+import { API_BASE_URL, getBookImageUrl, tokenStore } from "../utils/constants";
 
 const CONDITION_OPTIONS = [
   { value: 0, label: "جديد" },
@@ -36,6 +39,28 @@ const CONDITION_OPTIONS = [
 ];
 
 const LENDING_DAYS_PRESETS = [7, 14, 21, 30];
+const CONDITION_KEY_TO_VALUE = {
+  new: 0,
+  likenew: 1,
+  verygood: 1,
+  acceptable: 2,
+  poor: 3,
+  worn: 3,
+};
+const toApiAssetUrl = (value) => {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  try {
+    const url = new URL(raw);
+    if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
+      const base = new URL(API_BASE_URL);
+      return `${base.origin}${url.pathname}${url.search}${url.hash}`;
+    }
+    return raw;
+  } catch {
+    return raw;
+  }
+};
 
 /** Custom condition picker — native `<select>` cannot style the open menu. */
 const ConditionDropdown = ({ value, onChange, disabled }) => {
@@ -150,27 +175,35 @@ const normalizeCopy = (row = {}) => {
     row.authorName ||
     row.AuthorName ||
     "";
-  const condition = row.condition ?? row.Condition;
+  const conditionRaw = row.condition ?? row.Condition;
+  const normalizedCondition =
+    typeof conditionRaw === "number"
+      ? conditionRaw
+      : CONDITION_KEY_TO_VALUE[String(conditionRaw ?? "").toLowerCase()] ?? null;
   const state = row.state ?? row.State;
   const isOnLendingList =
     row.isOnLendingList ??
     row.IsOnLendingList ??
+    row.IsListed ??
     row.isListed ??
-    row.onLendingList;
+    row.onLendingList ??
+    Boolean(row.lendingListRecordId || row.LendingListRecordId);
   return {
     ...row,
     id,
     bookId,
     title,
     author,
-    condition,
+    condition: normalizedCondition,
     state,
     isOnLendingList: Boolean(isOnLendingList),
-    bookCoverImageUrl: book.bookCoverImageUrl || book.BookCoverImageUrl || row.bookCoverImageUrl || "",
+    bookCoverImageUrl: bookId
+      ? `${API_BASE_URL}/api/v1.0/images/books/${bookId}`
+      : toApiAssetUrl(book.bookCoverImageUrl || book.BookCoverImageUrl || row.bookCoverImageUrl || row.BookCoverImageUrl || ""),
   };
 };
 
-const CopyCard = ({ copy, imageSrc, onList }) => {
+const CopyCard = ({ copy, imageSrc, onList, onToggleAvailability, onViewDetails, togglingId, detailsLoadingId }) => {
   const cond = CONDITION_OPTIONS.find((c) => c.value === copy.condition);
   const condLabel = cond?.label ?? (copy.condition != null ? String(copy.condition) : "—");
   const listed = Boolean(copy.isOnLendingList);
@@ -256,6 +289,34 @@ const CopyCard = ({ copy, imageSrc, onList }) => {
                 عرض للإعارة
               </button>
             ) : null}
+            {copy.id ? (
+              <button
+                type="button"
+                onClick={() => onToggleAvailability(copy)}
+                disabled={togglingId === copy.id}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-xs font-black text-gray-700 transition-all duration-200 hover:bg-gray-100 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 disabled:opacity-50"
+              >
+                {togglingId === copy.id ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : copy.state === 1 || String(copy.state).toLowerCase() === "available" ? (
+                  <EyeOff size={14} />
+                ) : (
+                  <Eye size={14} />
+                )}
+                {copy.state === 1 || String(copy.state).toLowerCase() === "available" ? "إخفاء النسخة" : "إتاحة النسخة"}
+              </button>
+            ) : null}
+            {copy.id ? (
+              <button
+                type="button"
+                onClick={() => onViewDetails(copy.id)}
+                disabled={detailsLoadingId === copy.id}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-library-primary/20 bg-library-primary/5 text-xs font-black text-library-primary transition-all duration-200 hover:bg-library-primary hover:text-white disabled:opacity-50"
+              >
+                {detailsLoadingId === copy.id ? <Loader2 size={14} className="animate-spin" /> : <Info size={14} />}
+                تفاصيل النسخة
+              </button>
+            ) : null}
           </div>
         </div>
       </div>
@@ -278,8 +339,11 @@ const MyCopies = () => {
   const [listModalCopy, setListModalCopy] = useState(null);
   const [lendingDays, setLendingDays] = useState(14);
   const [listSubmitting, setListSubmitting] = useState(false);
+  const [togglingAvailabilityId, setTogglingAvailabilityId] = useState(null);
+  const [detailLoadingId, setDetailLoadingId] = useState(null);
+  const [selectedCopyDetails, setSelectedCopyDetails] = useState(null);
 
-  const studentId = user?.id;
+  const studentId = user?.studentId || user?.id;
   const isAdmin = user?.role?.toLowerCase() === "admin";
 
   const fetchCopies = useCallback(async () => {
@@ -290,20 +354,21 @@ const MyCopies = () => {
     setLoading(true);
     try {
       const res = await bookCopiesApi.getByStudentId(studentId, {
-        Page: 1,
+        page: 1,
         pageSize: 50,
+        _t: Date.now(),
       });
       const raw = res?.items || res?.data || res || [];
       const list = Array.isArray(raw) ? raw.map(normalizeCopy) : [];
-      setCopies(list.length ? list : mockMyCopies);
+      setCopies(list);
     } catch (e) {
       console.error(e);
-      toast.error("تعذر تحميل نسخك. حاول مرة أخرى.");
-      setCopies(mockMyCopies);
+      showReadableAccessErrorToast(e, user, "تعذر تحميل نسخك. حاول مرة أخرى.");
+      setCopies([]);
     } finally {
       setLoading(false);
     }
-  }, [studentId]);
+  }, [studentId, user]);
 
   const fetchBookImage = useCallback(async (bookId) => {
     if (!bookId || imageFetchStarted.current.has(bookId)) return;
@@ -364,7 +429,7 @@ const MyCopies = () => {
       setNewBookId("");
       await fetchCopies();
     } catch (err) {
-      toast.error(err?.message || "فشل إضافة النسخة", { id: t });
+      showReadableAccessErrorToast(err, user, "فشل إضافة النسخة", { id: t });
     } finally {
       setCreating(false);
     }
@@ -376,13 +441,52 @@ const MyCopies = () => {
     const t = toast.loading("جاري إضافة النسخة لقائمة الإعارة…");
     try {
       await bookCopiesApi.listForLending(listModalCopy.id, lendingDays);
+      setCopies((prev) =>
+        prev.map((copy) =>
+          copy.id === listModalCopy.id
+            ? { ...copy, isOnLendingList: true, isListed: true }
+            : copy
+        )
+      );
       toast.success("تم عرض النسخة للإعارة", { id: t });
       setListModalCopy(null);
       await fetchCopies();
     } catch (err) {
-      toast.error(err?.message || "تعذر الإدراج في قائمة الإعارة", { id: t });
+      showReadableAccessErrorToast(err, user, "تعذر الإدراج في قائمة الإعارة", { id: t });
     } finally {
       setListSubmitting(false);
+    }
+  };
+
+  const handleToggleAvailability = async (copy) => {
+    if (!copy?.id) return;
+    setTogglingAvailabilityId(copy.id);
+    const t = toast.loading("جاري تحديث حالة النسخة...");
+    try {
+      const isAvailable = copy.state === 1 || String(copy.state).toLowerCase() === "available";
+      if (isAvailable) {
+        await bookCopiesApi.markUnavailable(copy.id);
+      } else {
+        await bookCopiesApi.markAvailable(copy.id);
+      }
+      toast.success("تم تحديث حالة النسخة", { id: t });
+      await fetchCopies();
+    } catch (err) {
+      showReadableAccessErrorToast(err, user, "تعذر تحديث الحالة", { id: t });
+    } finally {
+      setTogglingAvailabilityId(null);
+    }
+  };
+
+  const handleViewCopyDetails = async (copyId) => {
+    setDetailLoadingId(copyId);
+    try {
+      const details = await bookCopiesApi.getById(copyId);
+      setSelectedCopyDetails(details || null);
+    } catch (err) {
+      showReadableAccessErrorToast(err, user, "تعذر تحميل تفاصيل النسخة");
+    } finally {
+      setDetailLoadingId(null);
     }
   };
 
@@ -561,6 +665,10 @@ const MyCopies = () => {
                     copy.bookCoverImageUrl || imageMap[copy.bookId] || null
                   }
                   onList={(c) => setListModalCopy(c)}
+                  onToggleAvailability={handleToggleAvailability}
+                  onViewDetails={handleViewCopyDetails}
+                  togglingId={togglingAvailabilityId}
+                  detailsLoadingId={detailLoadingId}
                 />
               ))}
             </div>
@@ -642,6 +750,41 @@ const MyCopies = () => {
                   <Share2 size={18} />
                 )}
                 تأكيد العرض
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+        {selectedCopyDetails && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          >
+            <div
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
+              onClick={() => setSelectedCopyDetails(null)}
+            />
+            <motion.div
+              initial={{ scale: 0.95, y: 10 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 10 }}
+              className="relative w-full max-w-md rounded-2xl bg-white dark:bg-[#121214] border border-gray-100 dark:border-white/10 shadow-2xl p-6"
+            >
+              <h3 className="text-lg font-black text-library-primary dark:text-white mb-3">تفاصيل النسخة</h3>
+              <div className="space-y-2 text-xs font-bold text-gray-600 dark:text-gray-300">
+                <p>رقم النسخة: <span className="font-mono">#{selectedCopyDetails.id || selectedCopyDetails.Id}</span></p>
+                <p>رقم الكتاب: <span className="font-mono">#{selectedCopyDetails.bookId || selectedCopyDetails.BookId}</span></p>
+                <p>الحالة: {String(selectedCopyDetails.state ?? selectedCopyDetails.State ?? "—")}</p>
+                <p>الحالة الفيزيائية: {String(selectedCopyDetails.condition ?? selectedCopyDetails.Condition ?? "—")}</p>
+                <p>معروضة للإعارة: {String(Boolean(selectedCopyDetails.isListed ?? selectedCopyDetails.isOnLendingList ?? false) ? "نعم" : "لا")}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedCopyDetails(null)}
+                className="mt-4 w-full py-3 rounded-xl bg-library-primary text-white text-sm font-black"
+              >
+                إغلاق
               </button>
             </motion.div>
           </motion.div>

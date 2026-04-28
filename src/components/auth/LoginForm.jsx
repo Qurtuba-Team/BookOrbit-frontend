@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Eye, EyeOff, Loader2, Mail, Shield, User } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Loader2, Mail } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
 import { tokenStore } from "../../utils/constants";
@@ -9,7 +9,7 @@ import { tokenStore } from "../../utils/constants";
 const LoginForm = ({ onForgotPassword, onUnconfirmed }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { login, mockLogin } = useAuth();
+  const { login } = useAuth();
 
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [loginError, setLoginError] = useState("");
@@ -132,23 +132,6 @@ const LoginForm = ({ onForgotPassword, onUnconfirmed }) => {
     }
   };
 
-  // ✅ دخول وهمي (Mock) لتخطي الباك إند ورؤية الفرونت إند مباشرة
-  const handleQuickLogin = (role) => {
-    setIsLoading(true);
-    setTimeout(() => {
-      const result = mockLogin(role);
-      if (result.success) {
-        toast.success(`تم الدخول (Mock ${role === 'admin' ? 'Admin' : 'Student'}) بنجاح ⚡`);
-        if (role === 'admin') {
-          navigate("/admin/students", { replace: true });
-        } else {
-          navigate("/app", { replace: true });
-        }
-      }
-      setIsLoading(false);
-    }, 500);
-  };
-
   const getInputClass = (name) =>
     `w-full px-4 py-3.5 bg-white dark:bg-dark-surface border-2 ${
       errors[name]
@@ -243,7 +226,7 @@ const LoginForm = ({ onForgotPassword, onUnconfirmed }) => {
           />
         </div>
 
-        <div className="space-y-2 mt-2">
+        <div className="mt-2">
           <button
             type="submit"
             disabled={isLoading}
@@ -258,28 +241,6 @@ const LoginForm = ({ onForgotPassword, onUnconfirmed }) => {
               </>
             )}
           </button>
-
-          {/* أزرار الدخول السريع للمطورين */}
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => handleQuickLogin("admin")}
-              disabled={isLoading}
-              className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-black py-3 rounded-xl hover:bg-amber-500/20 transition-all text-[10px] flex items-center justify-center gap-2"
-            >
-              <Shield size={14} />
-              <span>دخول سريع (أدمن)</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickLogin("student")}
-              disabled={isLoading}
-              className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-black py-3 rounded-xl hover:bg-emerald-500/20 transition-all text-[10px] flex items-center justify-center gap-2"
-            >
-              <User size={14} />
-              <span>دخول سريع (طالب)</span>
-            </button>
-          </div>
         </div>
       </form>
 
