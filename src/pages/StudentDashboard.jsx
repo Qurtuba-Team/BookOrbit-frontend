@@ -139,10 +139,6 @@ const StudentDashboard = () => {
                       تصفح الأرشيف
                     </Link>
                   </div>
-                  <div className="mt-5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black bg-indigo-500/10 text-indigo-600 border border-indigo-500/20">
-                    <Clock3 size={12} />
-                    آخر تحديث: الآن
-                  </div>
                 </motion.div>
               </div>
 
@@ -167,9 +163,6 @@ const StudentDashboard = () => {
             <div>
               <h2 className="text-base sm:text-lg font-black text-library-primary dark:text-white">لوحة التحكم السريعة</h2>
               <p className="text-xs text-library-primary/60 dark:text-gray-400 font-bold mt-1">اختر المسار الذي تريده وابدأ في خطوة واحدة.</p>
-            </div>
-            <div className="px-3 py-1.5 rounded-full text-[10px] font-black bg-indigo-500/10 text-indigo-600 w-fit">
-              واجهة محدثة
             </div>
           </div>
 
