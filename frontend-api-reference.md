@@ -208,7 +208,7 @@ When filtering books by categories:
 - filter logic is `(book.Category & selectedFlags) == selectedFlags`
 - this means the book must contain **all selected categories**, not just any one of them
 
-## 5. Response DTOs
+## 5. Response DTOs #################################################
 
 ### `TokenDto`
 

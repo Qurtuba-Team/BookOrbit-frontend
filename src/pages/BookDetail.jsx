@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { BookOpen, User, Building, Hash, CopyPlus, ArrowRight, Loader2, AlertCircle, CalendarDays, Coins, Repeat } from "lucide-react";
@@ -21,10 +21,15 @@ const CONDITION_KEY_TO_LABEL = {
   worn: "قديم/مهترئ (Worn)",
 };
 
-const LendingRecordCard = ({ record, isProcessing, onBorrow }) => {
+const BookCopyCard = ({ copy, lendingRecord, isProcessing, onBorrow }) => {
+  const copyId = copy?.id ?? copy?.Id;
+  const copyState = String(copy?.state ?? copy?.State ?? "").toLowerCase();
+  const listedRaw = copy?.isListed ?? copy?.IsListed;
+  const isListed = listedRaw === true || String(listedRaw ?? "").toLowerCase() === "true";
+  const canBorrow = isListed && copyState === "available";
   const conditionLabel =
-    BOOK_COPY_CONDITIONS[record.condition] ||
-    CONDITION_KEY_TO_LABEL[String(record.condition ?? "").toLowerCase()] ||
+    BOOK_COPY_CONDITIONS[copy.condition] ||
+    CONDITION_KEY_TO_LABEL[String(copy.condition ?? "").toLowerCase()] ||
     "غير محدد";
   
   return (
@@ -36,7 +41,7 @@ const LendingRecordCard = ({ record, isProcessing, onBorrow }) => {
           </div>
           <div>
             <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">صاحب النسخة</p>
-            <p className="text-sm font-black text-library-primary dark:text-white">{record.studentName || record.ownerName || "زميل"}</p>
+            <p className="text-sm font-black text-library-primary dark:text-white">{copy.studentName || copy.ownerName || "زميل"}</p>
           </div>
         </div>
         
@@ -47,22 +52,23 @@ const LendingRecordCard = ({ record, isProcessing, onBorrow }) => {
           </div>
           <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-2.5 border border-gray-100 dark:border-white/5">
             <p className="text-[10px] font-bold text-gray-500 mb-1 flex items-center gap-1"><CalendarDays size={10}/> مدة الاستعارة</p>
-            <p className="text-xs font-black text-library-primary dark:text-gray-200">{record.borrowingDurationInDays} يوم</p>
+            <p className="text-xs font-black text-library-primary dark:text-gray-200">{lendingRecord?.borrowingDurationInDays ? `${lendingRecord.borrowingDurationInDays} يوم` : "غير معروضة"}</p>
           </div>
           <div className="col-span-2 bg-indigo-50 dark:bg-indigo-500/5 rounded-xl p-2.5 border border-indigo-100 dark:border-indigo-500/10 flex justify-between items-center">
             <p className="text-[10px] font-bold text-indigo-600/70 dark:text-indigo-400/70 flex items-center gap-1"><Coins size={12}/> التكلفة المطلوبة</p>
-            <p className="text-sm font-black text-indigo-600 dark:text-indigo-400">{record.cost} نقاط</p>
+            <p className="text-sm font-black text-indigo-600 dark:text-indigo-400">{lendingRecord?.cost ?? "—"} {lendingRecord?.cost != null ? "نقاط" : ""}</p>
           </div>
+
         </div>
       </div>
       
       <button 
-        onClick={() => onBorrow(record.id)}
-        disabled={isProcessing}
-        className="w-full py-3 rounded-xl bg-library-primary text-white font-black text-xs hover:bg-library-accent transition-all flex items-center justify-center gap-2 shadow-md hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50"
+        onClick={() => canBorrow && onBorrow(copy, lendingRecord)}
+        disabled={isProcessing || !canBorrow}
+        className="w-full py-3 rounded-xl bg-library-primary text-white font-black text-xs hover:bg-library-accent transition-all flex items-center justify-center gap-2 shadow-md hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:hover:bg-library-primary"
       >
         {isProcessing ? <Loader2 size={16} className="animate-spin" /> : <Repeat size={16} />}
-        طلب استعارة هذه النسخة
+        {canBorrow ? "طلب استعارة هذه النسخة" : "هذه النسخة غير متاحة للإعارة الآن"}
       </button>
     </div>
   );
@@ -75,6 +81,7 @@ const BookDetail = () => {
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [bookCopies, setBookCopies] = useState([]);
   
   const [lendingRecords, setLendingRecords] = useState([]);
   const [loadingLending, setLoadingLending] = useState(true);
@@ -84,20 +91,109 @@ const BookDetail = () => {
   const [selectedCondition, setSelectedCondition] = useState("");
   const [isAddingCopy, setIsAddingCopy] = useState(false);
   const [bookCopiesCount, setBookCopiesCount] = useState(0);
+  const [availableCopiesCount, setAvailableCopiesCount] = useState(0);
+  const DEFAULT_LENDING_DAYS = 14;
+  const lendingRecordByCopyId = useMemo(() => {
+    const map = new Map();
+    lendingRecords.forEach((record) => {
+      const copyId = record?.bookCopyId ?? record?.BookCopyId;
+      if (copyId != null && !map.has(String(copyId))) {
+        map.set(String(copyId), record);
+      }
+    });
+    return map;
+  }, [lendingRecords]);
+
+  const isCopyListedAndAvailable = useCallback((copy) => {
+    const listed = copy?.isListed ?? copy?.IsListed;
+    const state = copy?.state ?? copy?.State;
+    return listed === true && (state === 1 || String(state ?? "").toLowerCase() === "available");
+  }, []);
+
+  const getAllBookCopies = useCallback(async (id) => {
+    const pageSize = 100;
+    let page = 1;
+    let totalPages = 1;
+    const allItems = [];
+
+    while (page <= totalPages) {
+      const res = await bookCopiesApi.getByBookId(id, { page, pageSize });
+      const items = Array.isArray(res?.items)
+        ? res.items
+        : Array.isArray(res?.data)
+          ? res.data
+          : [];
+      allItems.push(...items);
+
+      if (page === 1) {
+        const apiTotalPages = Number(res?.totalPages ?? res?.TotalPages ?? 0);
+        if (apiTotalPages > 0) {
+          totalPages = apiTotalPages;
+        } else {
+          const totalCount = Number(res?.totalCount ?? res?.TotalCount ?? items.length);
+          totalPages = totalCount > 0 ? Math.ceil(totalCount / pageSize) : 1;
+        }
+      }
+
+      page += 1;
+    }
+
+    return allItems;
+  }, []);
+
+  const getAvailableLendingRecordsByCopies = useCallback(async (copies) => {
+    const availableCopies = copies.filter(isCopyListedAndAvailable);
+    if (availableCopies.length === 0) return [];
+
+    const recordsNested = await Promise.all(
+      availableCopies.map(async (copy) => {
+        const copyId = copy?.id ?? copy?.Id;
+        if (!copyId) return [];
+        try {
+          const res = await lendingApi.getAll({
+            bookCopyId: copyId,
+            page: 1,
+            pageSize: 20,
+            states: "available",
+          });
+          const rows = Array.isArray(res?.items)
+            ? res.items
+            : Array.isArray(res?.data)
+              ? res.data
+              : [];
+          return rows.filter((record) => {
+            const recordCopyId = record?.bookCopyId ?? record?.BookCopyId;
+            const state = String(record?.state ?? record?.State ?? "").toLowerCase();
+            return String(recordCopyId ?? "") === String(copyId) && state === "available";
+          });
+        } catch {
+          return [];
+        }
+      })
+    );
+
+    const deduped = new Map();
+    recordsNested.flat().forEach((record) => {
+      const id = record?.id ?? record?.Id;
+      if (id && !deduped.has(id)) deduped.set(id, record);
+    });
+    return Array.from(deduped.values());
+  }, [isCopyListedAndAvailable]);
 
   useEffect(() => {
     const fetchBookAndLending = async () => {
+      let allCopies = [];
       try {
-        const [bookData, copiesData] = await Promise.all([
+        const [bookData, fetchedCopies] = await Promise.all([
           booksApi.getById(bookId),
-          bookCopiesApi.getByBookId(bookId, { page: 1, pageSize: 1 }),
+          getAllBookCopies(bookId),
         ]);
+        allCopies = fetchedCopies;
         setBook(bookData);
-        const total =
-          copiesData?.totalCount ??
-          copiesData?.TotalCount ??
-          (Array.isArray(copiesData?.items) ? copiesData.items.length : 0);
-        setBookCopiesCount(total);
+        setBookCopies(fetchedCopies);
+        const availableCount = fetchedCopies.filter(isCopyListedAndAvailable).length;
+        setBookCopiesCount(fetchedCopies.length);
+        setAvailableCopiesCount(availableCount);
       } catch (err) {
         setError("تعذر تحميل تفاصيل الكتاب. قد يكون الكتاب غير موجود.");
         toast.error(err?.message || "فشل تحميل بيانات الكتاب");
@@ -107,12 +203,7 @@ const BookDetail = () => {
 
       try {
         setLoadingLending(true);
-        // Fetch all lending opportunities for this specific book
-        // Passing states: 0 assumes 0 is "available" for LendingListRecord
-        const lendingData = await lendingApi.getAll({ bookId, states: 0 });
-        const items = lendingData.items || [];
-        // Double check filtering to only show available
-        const availableRecords = items.filter(r => r.state === 0 || r.state === 'available' || r.state === 'Available');
+        const availableRecords = await getAvailableLendingRecordsByCopies(allCopies);
         setLendingRecords(availableRecords);
       } catch (err) {
         console.error("Failed to fetch lending records", err);
@@ -123,7 +214,7 @@ const BookDetail = () => {
     };
     
     fetchBookAndLending();
-  }, [bookId]);
+  }, [bookId, getAllBookCopies, getAvailableLendingRecordsByCopies, isCopyListedAndAvailable]);
 
   const handleAddCopySubmit = async () => {
     if (selectedCondition === "") {
@@ -134,19 +225,31 @@ const BookDetail = () => {
     setIsAddingCopy(true);
     const toastId = toast.loading("جاري إضافة نسختك...");
     try {
-      await bookCopiesApi.create(bookId, Number(selectedCondition));
-      toast.success("تم تسجيل نسختك بنجاح! يمكن للطلاب الآخرين استعارتها الآن.", { id: toastId });
+      const createdCopy = await bookCopiesApi.create(bookId, Number(selectedCondition));
+      const createdCopyId = createdCopy?.id ?? createdCopy?.Id;
+
+      if (createdCopyId) {
+        try {
+          await bookCopiesApi.listForLending(createdCopyId, DEFAULT_LENDING_DAYS);
+          toast.success("تم تسجيل نسختك وإتاحتها للإعارة بنجاح!", { id: toastId });
+        } catch {
+          toast.success("تم تسجيل نسختك بنجاح. يمكنك إتاحتها للإعارة من صفحة نسخي.", { id: toastId });
+        }
+      } else {
+        toast.success("تم تسجيل نسختك بنجاح", { id: toastId });
+      }
+
       setIsAddCopyModalOpen(false);
       const [updatedData, copiesData] = await Promise.all([
         booksApi.getById(bookId),
-        bookCopiesApi.getByBookId(bookId, { page: 1, pageSize: 1 }),
+        getAllBookCopies(bookId),
       ]);
       setBook(updatedData);
-      const total =
-        copiesData?.totalCount ??
-        copiesData?.TotalCount ??
-        (Array.isArray(copiesData?.items) ? copiesData.items.length : 0);
-      setBookCopiesCount(total);
+      setBookCopies(copiesData);
+      setBookCopiesCount(copiesData.length);
+      setAvailableCopiesCount(copiesData.filter(isCopyListedAndAvailable).length);
+      const updatedLendingRecords = await getAvailableLendingRecordsByCopies(copiesData);
+      setLendingRecords(updatedLendingRecords);
     } catch (err) {
       toast.error("فشل إضافة النسخة. تأكد من أنك لم تضف نسخة مسبقاً، أو حاول لاحقاً.", { id: toastId });
     } finally {
@@ -154,7 +257,30 @@ const BookDetail = () => {
     }
   };
 
-  const handleBorrowRequest = async (recordId) => {
+  const handleBorrowRequest = async (copy, lendingRecord) => {
+    const copyId = copy?.id ?? copy?.Id;
+    let recordId = lendingRecord?.id ?? lendingRecord?.Id;
+
+    if (!recordId && copyId) {
+      try {
+        const res = await lendingApi.getAll({ bookCopyId: copyId, page: 1, pageSize: 20 });
+        const rows = Array.isArray(res?.items) ? res.items : (Array.isArray(res?.data) ? res.data : []);
+        const availableRecord = rows.find((r) => {
+          const state = String(r?.state ?? r?.State ?? "").toLowerCase();
+          const rCopyId = r?.bookCopyId ?? r?.BookCopyId;
+          return String(rCopyId ?? "") === String(copyId) && state === "available";
+        });
+        recordId = availableRecord?.id ?? availableRecord?.Id;
+      } catch {
+        // handled below by missing record check
+      }
+    }
+
+    if (!recordId) {
+      toast.error("النسخة معروضة لكن لم يتم العثور على سجل إعارة نشط لها حالياً. جرّب لاحقاً.");
+      return;
+    }
+
     setProcessingRecordId(recordId);
     const toastId = toast.loading("جاري إرسال طلب الاستعارة...");
     try {
@@ -299,7 +425,7 @@ const BookDetail = () => {
                   {book.title}
                 </h1>
                 <span className="shrink-0 bg-emerald-500/10 text-emerald-600 px-3 py-1 rounded-full text-[10px] font-black border border-emerald-500/20">
-                  {bookCopiesCount || book.copiesCount || 0} نسخة في النظام
+                  {availableCopiesCount} متاحة الآن من أصل {bookCopiesCount} نسخة في النظام
                 </span>
               </div>
               
@@ -352,33 +478,37 @@ const BookDetail = () => {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-blue-500/10 flex items-center justify-center text-indigo-500">
               <BookOpen size={20} />
             </div>
-            <h2 className="text-xl font-black text-library-primary dark:text-white">النسخ المتاحة للاستعارة من الزملاء</h2>
+            <h2 className="text-xl font-black text-library-primary dark:text-white">كل نسخ الكتاب في النظام</h2>
           </div>
           <p className="text-xs font-bold text-gray-500 mb-8 max-w-xl">
-            هذه القائمة تعرض النسخ المعروضة حالياً من قبل الزملاء في كليتك والجاهزة للاستعارة. قم باختيار النسخة التي تناسبك واضغط على طلب الاستعارة.
+            هذه القائمة تعرض كل النسخ المسجلة لهذا الكتاب. يمكنك طلب النسخ المعروضة والمتاحة فقط.
           </p>
 
           {loadingLending ? (
             <div className="flex flex-col items-center justify-center py-12">
               <Loader2 className="animate-spin text-library-accent mb-3" size={30} />
-              <p className="text-xs font-black text-gray-400">جاري البحث عن النسخ المتاحة...</p>
+              <p className="text-xs font-black text-gray-400">جاري تحميل جميع النسخ...</p>
             </div>
-          ) : lendingRecords.length === 0 ? (
+          ) : bookCopies.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.02] p-12 text-center">
               <Repeat className="mx-auto mb-3 h-12 w-12 text-gray-300 dark:text-gray-600" />
-              <p className="text-base font-black text-library-primary dark:text-white mb-1">عذراً، لا توجد نسخ متاحة حالياً</p>
-              <p className="text-xs font-bold text-gray-500">لم يقم أي طالب بعرض نسخة من هذا الكتاب للاستعارة في الوقت الحالي. عُد لاحقاً!</p>
+              <p className="text-base font-black text-library-primary dark:text-white mb-1">لا توجد نسخ مسجلة لهذا الكتاب حالياً</p>
+              <p className="text-xs font-bold text-gray-500">أضف أول نسخة ليظهر الكتاب ضمن النسخ المتاحة في النظام.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {lendingRecords.map((record) => (
-                <LendingRecordCard 
-                  key={record.id} 
-                  record={record} 
-                  isProcessing={processingRecordId === record.id}
+              {bookCopies.map((copy) => {
+                const copyId = copy?.id ?? copy?.Id;
+                const lendingRecord = lendingRecordByCopyId.get(String(copyId));
+                return (
+                <BookCopyCard 
+                  key={copyId} 
+                  copy={copy}
+                  lendingRecord={lendingRecord}
+                  isProcessing={processingRecordId === (lendingRecord?.id ?? lendingRecord?.Id)}
                   onBorrow={handleBorrowRequest} 
                 />
-              ))}
+              )})}
             </div>
           )}
         </div>

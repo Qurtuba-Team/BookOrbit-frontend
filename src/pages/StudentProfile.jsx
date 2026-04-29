@@ -6,12 +6,10 @@ import {
   User, 
   Mail,
   Phone, 
-  GraduationCap, 
   ShieldCheck, 
   Camera, 
   Lock,
   ChevronLeft,
-  BadgeCheck,
   Save,
   PencilLine,
   X,
@@ -247,7 +245,6 @@ const StudentProfile = () => {
                         {!isAdmin ? (
                           <>
                             <ProfileField icon={Phone} label="رقم الهاتف" value={user?.phoneNumber} />
-                            <ProfileField icon={GraduationCap} label="التخصص الأكاديمي" value={user?.major} />
                           </>
                         ) : (
                           <>
@@ -280,25 +277,6 @@ const StudentProfile = () => {
                     )}
                   </div>
 
-                  <div className="bg-white/60 dark:bg-dark-surface/60 backdrop-blur-xl rounded-2xl p-6 border border-white dark:border-white/5 shadow-sm">
-                    <h3 className="text-base font-black text-library-primary dark:text-white mb-5">النشاط الأخير</h3>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between rounded-xl border border-gray-100 dark:border-white/5 p-3 bg-gray-50/60 dark:bg-white/[0.03]">
-                        <div className="flex items-center gap-2">
-                          <BadgeCheck size={14} className="text-emerald-500" />
-                          <p className="text-sm font-black text-library-primary dark:text-white">تحديث بيانات الحساب</p>
-                        </div>
-                        <span className="text-[11px] font-black text-gray-400">اليوم</span>
-                      </div>
-                      <div className="flex items-center justify-between rounded-xl border border-gray-100 dark:border-white/5 p-3 bg-gray-50/60 dark:bg-white/[0.03]">
-                        <div className="flex items-center gap-2">
-                          <ShieldCheck size={14} className="text-amber-500" />
-                          <p className="text-sm font-black text-library-primary dark:text-white">مراجعة تفضيلات الأمان</p>
-                        </div>
-                        <span className="text-[11px] font-black text-gray-400">اليوم</span>
-                      </div>
-                    </div>
-                  </div>
                 </motion.div>
               ) : (
                 <motion.div 

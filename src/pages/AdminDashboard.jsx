@@ -555,7 +555,7 @@ const AdminDashboard = () => {
           </div>
           <input 
             type="text" 
-            placeholder="ابحث عن طالب بالاسم، البريد، أو التخصص..." 
+            placeholder="ابحث عن طالب بالاسم أو البريد..." 
             value={studentSearchInput}
             onChange={(e) => setStudentSearchInput(e.target.value)}
             onKeyDown={(e) => {
@@ -635,7 +635,6 @@ const AdminDashboard = () => {
 
                 {/* Academic Details */}
                 <div className="col-span-4 hidden md:block">
-                  <p className="text-[11px] font-bold text-library-primary dark:text-gray-300">{student.major || "تخصص غير محدد"}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-[9px] font-black text-gray-400 bg-gray-100 dark:bg-white/5 px-2 py-0.5 rounded-md">ID: {student.id}</span>
                   </div>
@@ -736,7 +735,6 @@ const AdminDashboard = () => {
               </div>
               <div className="mt-4 text-center">
                 <h3 className="text-xl font-black text-library-primary dark:text-white">{selectedStudent.fullName}</h3>
-                <p className="text-[10px] text-library-accent font-black tracking-widest uppercase mt-1">{selectedStudent.major || "تخصص غير محدد"}</p>
               </div>
             </div>
 
@@ -1921,8 +1919,7 @@ const AdminDashboard = () => {
       color: "emerald",
       subTabs: [
         { id: "all", title: "المتاحة", icon: BookOpen },
-        { id: "pending", title: "قيد المراجعة", icon: Clock },
-        { id: "rejected", title: "المرفوضة", icon: XCircle }
+        { id: "pending", title: "قيد المراجعة", icon: Clock }
       ]
     },
     { id: "copies", title: "إدارة النسخ", icon: Copy, color: "teal" },

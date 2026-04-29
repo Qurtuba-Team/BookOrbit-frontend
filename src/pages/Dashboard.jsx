@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import Navbar from '../components/common/Navbar';
 import { useAuth } from '../context/AuthContext';
-import { booksApi } from '../services/api';
+import { booksApi, bookCopiesApi } from '../services/api';
 import { getBookImageUrl } from '../utils/constants';
 import { showReadableAccessErrorToast } from "../utils/accessMessages";
 import { useNavigate } from 'react-router-dom';
@@ -40,7 +40,8 @@ const bookCardItem = {
 };
 
 const BookCard3D = ({ book }) => {
-  const available = book.copiesCount > 0;
+  const availableCopies = Number(book.availableCopiesCountActual ?? 0);
+  const available = availableCopies > 0;
   const navigate = useNavigate();
   return (
     <motion.div
@@ -127,6 +128,42 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const isCopyListedAndAvailable = useCallback((copy) => {
+    const listed = copy?.isListed ?? copy?.IsListed;
+    const state = copy?.state ?? copy?.State;
+    return listed === true && (state === 1 || String(state ?? "").toLowerCase() === "available");
+  }, []);
+
+  const getAvailableCopiesCountForBook = useCallback(async (bookId) => {
+    const pageSize = 100;
+    let page = 1;
+    let totalPages = 1;
+    let availableCount = 0;
+
+    while (page <= totalPages) {
+      const response = await bookCopiesApi.getByBookId(bookId, { page, pageSize });
+      const items = Array.isArray(response?.items)
+        ? response.items
+        : Array.isArray(response?.data)
+          ? response.data
+          : [];
+      availableCount += items.filter(isCopyListedAndAvailable).length;
+
+      if (page === 1) {
+        const responseTotalPages = Number(response?.totalPages ?? response?.TotalPages ?? 0);
+        if (responseTotalPages > 0) {
+          totalPages = responseTotalPages;
+        } else {
+          const totalCount = Number(response?.totalCount ?? response?.TotalCount ?? 0);
+          totalPages = totalCount > 0 ? Math.ceil(totalCount / pageSize) : 1;
+        }
+      }
+
+      page += 1;
+    }
+
+    return availableCount;
+  }, [isCopyListedAndAvailable]);
   // Prioritize fullName from the student profile
   const rawName = user?.fullName || user?.Name || user?.name || user?.userName || user?.email?.split('@')[0] || "يا بطل";
   const firstName = rawName.split(' ')[0];
@@ -158,14 +195,24 @@ const Dashboard = () => {
           String(state).toLowerCase() === "available"
         );
       });
-      setBooksData(approvedOnly);
+      const booksWithRealAvailability = await Promise.all(
+        approvedOnly.map(async (book) => {
+          try {
+            const availableCopiesCountActual = await getAvailableCopiesCountForBook(book.id);
+            return { ...book, availableCopiesCountActual };
+          } catch {
+            return { ...book, availableCopiesCountActual: 0 };
+          }
+        })
+      );
+      setBooksData(booksWithRealAvailability);
     } catch (e) {
       showReadableAccessErrorToast(e, user, "تعذر تحميل الكتب المتاحة للإعارة");
       setBooksData([]);
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, user]);
+  }, [debouncedSearch, getAvailableCopiesCountForBook, user]);
 
   useEffect(() => {
     fetchAvailable();
@@ -173,7 +220,10 @@ const Dashboard = () => {
 
 
 
-  const availableCount = useMemo(() => booksData.length, [booksData]);
+  const availableCount = useMemo(
+    () => booksData.filter((book) => Number(book.availableCopiesCountActual ?? 0) > 0).length,
+    [booksData]
+  );
 
   return (
     <div className="min-h-screen relative bg-library-paper dark:bg-dark-bg text-library-primary dark:text-library-paper transition-colors duration-300 overflow-x-hidden">
@@ -225,7 +275,7 @@ const Dashboard = () => {
                 </span>
                 بحث في الكتب المتاحة
               </h3>
-              <p className="text-xs text-library-primary/50 dark:text-gray-500 font-bold mb-5">تعرض هذه الصفحة الكتب المتاحة للإعارة فقط.</p>
+              <p className="text-xs text-library-primary/50 dark:text-gray-500 font-bold mb-5">حالة الإتاحة تُحسب من النسخ الفعلية المعروضة حالياً.</p>
               <div className="space-y-4">
                 <div>
                   <h4 className="text-xs font-black text-library-primary/60 dark:text-gray-400 mb-2 uppercase tracking-wide">ابحث بالعنوان / المالك</h4>
@@ -262,7 +312,7 @@ const Dashboard = () => {
                   <LayoutGrid size={20} strokeWidth={2} />
                 </span>
                 <div className="min-w-0">
-                  <h2 className="text-base font-black text-library-primary dark:text-white sm:text-lg">الكتب المتاحة للإعارة</h2>
+                  <h2 className="text-base font-black text-library-primary dark:text-white sm:text-lg">كتب الأرشيف</h2>
                   <p className="mt-0.5 text-xs font-bold text-library-primary/55 dark:text-gray-500">
                     <span className="text-library-accent">{availableCount}</span> كتاباً متاحاً حالياً
                   </p>

@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import Navbar from "../components/common/Navbar";
 import { useAuth } from "../context/AuthContext";
-import { bookCopiesApi } from "../services/api";
+import { bookCopiesApi, lendingApi } from "../services/api";
 import { showReadableAccessErrorToast } from "../utils/accessMessages";
 import { API_BASE_URL, getBookImageUrl, tokenStore } from "../utils/constants";
 
@@ -360,7 +360,43 @@ const MyCopies = () => {
       });
       const raw = res?.items || res?.data || res || [];
       const list = Array.isArray(raw) ? raw.map(normalizeCopy) : [];
-      setCopies(list);
+      const listedStatusByCopyId = new Map();
+
+      await Promise.all(
+        list.map(async (copy) => {
+          if (!copy?.id) return;
+          try {
+            const lendingRes = await lendingApi.getAll({
+              bookCopyId: copy.id,
+              page: 1,
+              pageSize: 20,
+              states: "available",
+            });
+            const rows = Array.isArray(lendingRes?.items)
+              ? lendingRes.items
+              : Array.isArray(lendingRes?.data)
+                ? lendingRes.data
+                : [];
+            const hasActiveRecord = rows.some((record) => {
+              const recordCopyId = record?.bookCopyId ?? record?.BookCopyId;
+              const state = String(record?.state ?? record?.State ?? "").toLowerCase();
+              return String(recordCopyId ?? "") === String(copy.id) && state === "available";
+            });
+            listedStatusByCopyId.set(copy.id, hasActiveRecord);
+          } catch {
+            listedStatusByCopyId.set(copy.id, Boolean(copy.isOnLendingList));
+          }
+        })
+      );
+
+      setCopies(
+        list.map((copy) => ({
+          ...copy,
+          isOnLendingList: listedStatusByCopyId.has(copy.id)
+            ? listedStatusByCopyId.get(copy.id)
+            : copy.isOnLendingList,
+        }))
+      );
     } catch (e) {
       console.error(e);
       showReadableAccessErrorToast(e, user, "تعذر تحميل نسخك. حاول مرة أخرى.");
