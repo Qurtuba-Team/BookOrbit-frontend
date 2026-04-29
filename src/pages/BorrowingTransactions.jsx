@@ -23,15 +23,11 @@ import Navbar from "../components/common/Navbar";
 import Aurora from "../components/effects/Aurora";
 import { useAuth } from "../context/AuthContext";
 import { borrowingTransactionsApi } from "../services/api";
+import { BORROWING_TRANSACTION_STATE_LABELS, getLabel } from "../utils/constants";
 
 const PAGE_SIZE = 10;
 
-const TRANSACTIONS_AR = {
-  Borrowed: "قيد الاستعارة (لم يُرجع بعد)",
-  Returned: "تم الإرجاع",
-  Overdue: "متأخر (تجاوز المدة)",
-  Lost: "مفقود",
-};
+// Removed local TRANSACTIONS_AR in favor of central constants
 
 const transactionNumToKey = {
   0: "Borrowed",
@@ -89,7 +85,7 @@ const TransactionCard = ({ tx, isProcessing, onReturn, onLost, isAdminView }) =>
   const id = tx.id ?? tx.Id;
   const rawSt = tx.status ?? tx.state;
   const statusKey = typeof rawSt === "number" ? transactionNumToKey[rawSt] || "Borrowed" : rawSt || "Borrowed";
-  const statusAr = TRANSACTIONS_AR[statusKey] || String(statusKey);
+  const statusAr = getLabel(BORROWING_TRANSACTION_STATE_LABELS, statusKey);
   const title = tx.bookTitle || tx.BookTitle || "كتاب غير معروف";
   
   const borrowerName = tx.borrowerStudentName || tx.studentName || tx.borrowerName || "مستعير";

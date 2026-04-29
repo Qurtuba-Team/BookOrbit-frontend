@@ -22,17 +22,11 @@ import Aurora from "../components/effects/Aurora";
 import { useAuth } from "../context/AuthContext";
 import { borrowingApi, lendingApi } from "../services/api";
 import { showReadableAccessErrorToast } from "../utils/accessMessages";
+import { BORROWING_REQUEST_STATE_LABELS, getLabel } from "../utils/constants";
 
 const PAGE_SIZE = 10;
 
-const BORROWING_AR = {
-  Pending: "قيد الانتظار",
-  Accepted: "تم القبول (بانتظار التسليم)",
-  Rejected: "تم الرفض",
-  Cancelled: "ملغي",
-  Expired: "منتهي",
-  Borrowed: "تم التسليم (بحوزتك)",
-};
+// Removed local BORROWING_AR in favor of central constants
 
 const borrowingNumToKey = {
   0: "Pending",
@@ -119,7 +113,9 @@ const BorrowingOutgoingRequests = () => {
   const statusChips = useMemo(
     () => [
       { id: "all", label: "الكل" },
-      ...Object.entries(BORROWING_AR).map(([id, label]) => ({ id, label })),
+      ...Object.entries(BORROWING_REQUEST_STATE_LABELS)
+        .filter(([id]) => ["Pending", "Accepted", "Rejected", "Cancelled", "Expired", "Borrowed"].includes(id))
+        .map(([id, label]) => ({ id, label })),
     ],
     []
   );
@@ -320,7 +316,7 @@ const BorrowingOutgoingRequests = () => {
                   const id = req.id ?? req.Id;
                   const rawSt = req.status ?? req.state;
                   const statusKey = typeof rawSt === "number" ? borrowingNumToKey[rawSt] || "Pending" : rawSt || "Pending";
-                  const statusAr = BORROWING_AR[statusKey] || String(statusKey);
+                  const statusAr = getLabel(BORROWING_REQUEST_STATE_LABELS, statusKey);
                   const title = req.bookTitle || req.BookTitle || "كتاب";
                   
                   // For outgoing requests, the related user is the Lender (owner)
@@ -434,7 +430,7 @@ const BorrowingOutgoingRequests = () => {
               <div className="space-y-2 text-xs font-bold text-gray-600 dark:text-gray-300">
                 <p>رقم الطلب: <span className="font-mono">#{detailRequest.id || detailRequest.Id}</span></p>
                 <p>رقم العرض: <span className="font-mono">#{detailRequest.lendingRecordId || detailRequest.LendingRecordId}</span></p>
-                <p>الحالة: {String(detailRequest.status || detailRequest.state || "—")}</p>
+                <p>الحالة: <span className="font-black text-library-primary dark:text-white">{getLabel(BORROWING_REQUEST_STATE_LABELS, detailRequest.status || detailRequest.state)}</span></p>
                 <p>تاريخ الإنشاء: {formatDate(detailRequest.requestDate || detailRequest.createdAtUtc || detailRequest.createdAt)}</p>
                 <p>تاريخ الانتهاء: {formatDate(detailRequest.expirationDateUtc || detailRequest.expectedReturnDate)}</p>
                 {lendingRecordDetails[detailRequest.lendingRecordId || detailRequest.LendingRecordId] ? (

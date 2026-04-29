@@ -124,7 +124,7 @@ const BookGraphic = () => (
         <div className="book-cover-pivot">
           <div className="cover-front flex flex-col justify-between p-5 md:p-8">
             <div className="text-library-accent text-[8px] md:text-[10px] font-bold tracking-[0.3em] uppercase mb-2 opacity-70">
-              Tabaadol
+              تبادل
             </div>
             <div className="flex-1 flex flex-col justify-center">
               <div className="w-8 md:w-10 h-0.5 bg-library-accent mb-4 md:mb-6 rounded-full accent-line"></div>
@@ -133,7 +133,7 @@ const BookGraphic = () => (
                 <span className="text-library-accent">العمارة</span>
               </h2>
               <p className="text-library-paper/40 font-bold text-[7px] md:text-[9px] tracking-widest uppercase">
-                Academic Reserve
+                الأرشيف الأكاديمي
               </p>
             </div>
             <div className="flex justify-between items-end opacity-40">
@@ -175,7 +175,7 @@ const ContactSection = () => (
         {/* Left - Info */}
         <SpringReveal className="pt-4">
           <p className="text-library-accent text-[10px] font-bold uppercase tracking-[0.4em] mb-5">
-            Get In Touch
+            تواصل معنا
           </p>
           <h2 className="text-3xl md:text-4xl font-black text-white mb-5 leading-tight">
             تواصل معنا.
@@ -336,7 +336,7 @@ const Home = () => {
               <SpringReveal className="mb-6 md:mb-10">
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-library-accent/8 text-library-accent font-bold text-[10px] uppercase tracking-[0.2em] border border-library-accent/15 rounded-full">
                   <Sparkles size={11} />
-                  Premier University Network
+                  شبكة الجامعات الأولى
                 </div>
               </SpringReveal>
 
@@ -525,7 +525,7 @@ const Home = () => {
             <SpringReveal className="flex flex-col md:flex-row justify-between items-center md:items-end mb-14 md:mb-20 pb-10 border-b border-library-primary/[0.06] dark:border-white/[0.06] gap-6 text-center md:text-right">
               <div>
                 <p className="text-library-accent text-[10px] font-bold uppercase tracking-[0.4em] mb-4">
-                  Digital Collection
+                  المجموعة الرقمية
                 </p>
                 <h2 className="text-3xl md:text-4xl font-black text-library-primary dark:text-library-paper mb-3 tracking-tight">
                   الأرشيف الرقمي.

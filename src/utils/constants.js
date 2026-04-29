@@ -24,6 +24,7 @@ export const tokenStore = {
     localStorage.removeItem("expiresOnUtc");
     sessionStorage.removeItem("accessToken");
     sessionStorage.removeItem("refreshToken");
+    sessionStorage.removeItem("refreshToken");
     sessionStorage.removeItem("expiresOnUtc");
   },
 };
@@ -33,6 +34,17 @@ export const getStudentImageUrl = (studentId) =>
 
 export const getBookImageUrl = (bookId) =>
   `${API_BASE_URL}/uploads/books/book${bookId}.jpg`;
+
+// ─── Label Helper ────────────────────────────────────────────────────────────
+export const getLabel = (labelsObject, key, defaultValue = "") => {
+  if (key === null || key === undefined) return defaultValue;
+  const s = String(key).trim();
+  const lower = s.toLowerCase();
+  const normalized = lower.replace(/[\s-]/g, '');
+  
+  // Try exact, then lowercase, then normalized (no spaces/dashes)
+  return labelsObject[s] || labelsObject[lower] || labelsObject[normalized] || defaultValue || s;
+};
 
 // ─── Enum Display Labels ─────────────────────────────────────────────────────
 export const STUDENT_STATE_LABELS = {
@@ -48,6 +60,7 @@ export const BOOK_STATE_LABELS = {
   Pending: "قيد المراجعة",
   Approved: "موافق عليه",
   Rejected: "مرفوض",
+  Available: "متاح",
 };
 
 export const BOOK_COPY_CONDITION_LABELS = {
@@ -74,6 +87,23 @@ export const LENDING_STATE_LABELS = {
   Closed: "مغلق",
 };
 
+export const BORROWING_REQUEST_STATE_LABELS = {
+  Pending: "قيد الانتظار",
+  Accepted: "تم القبول",
+  Rejected: "مرفوض",
+  Cancelled: "ملغي",
+  Expired: "منتهي",
+  Delivered: "تم التسليم",
+  Returned: "تم الإرجاع",
+};
+
+export const BORROWING_TRANSACTION_STATE_LABELS = {
+  Borrowed: "قيد الاستعارة (لم يُرجع بعد)",
+  Returned: "تم الإرجاع",
+  Overdue: "متأخر (تجاوز المدة)",
+  Lost: "مفقود",
+};
+
 export const BOOK_CATEGORY_LABELS = {
   Fiction: "خيال",
   Nonfiction: "غير خيالي",
@@ -95,4 +125,10 @@ export const BOOK_CATEGORY_LABELS = {
   Travel: "سفر",
   Cooking: "طبخ",
   ChildrenBooks: "كتب أطفال",
+  Academic: "أكاديمي",
+  Engineering: "هندسة",
+  Medical: "طبي",
+  Programming: "برمجة",
+  History: "تاريخ",
+  General: "عام",
 };

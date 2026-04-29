@@ -107,14 +107,14 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="pt-6 border-t border-white/[0.04] flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-gray-700 text-xs font-medium">
-            © {currentYear} Tabaadol Platform. All rights reserved.
+            © {currentYear} منصة تبادل (Tabaadol). جميع الحقوق محفوظة.
           </p>
           <div className="flex gap-6">
             <Link to="/" className="text-gray-700 text-[11px] font-medium hover:text-library-accent transition-colors">
-              Privacy Policy
+              سياسة الخصوصية
             </Link>
             <Link to="/" className="text-gray-700 text-[11px] font-medium hover:text-library-accent transition-colors">
-              Terms of Service
+              شروط الخدمة
             </Link>
           </div>
         </div>

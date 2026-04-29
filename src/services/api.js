@@ -1,5 +1,5 @@
 // ─── BookOrbit API Configuration ────────────────────────────────────────────
-import { API_BASE_URL, API_V1, tokenStore, BOOK_CATEGORY_LABELS, getBookImageUrl } from "../utils/constants";
+import { API_BASE_URL, API_V1, tokenStore, BOOK_CATEGORY_LABELS, getBookImageUrl, getLabel, BORROWING_REQUEST_STATE_LABELS } from "../utils/constants";
 
 // ─── Token Refresh Queue ─────────────────────────────────────────────────────
 let isRefreshing = false;
@@ -90,14 +90,29 @@ const normalizeBook = (book = {}) => {
       ["approved", "active", "verified", "available"].includes(String(stateValue ?? "").toLowerCase()) ||
       ["approved", "active", "verified", "available"].includes(statusValue);
     
-      const categoryRaw = book.category ?? book.Category;
-      let categoryLabel = categoryRaw;
-      if (typeof categoryRaw === 'number') {
-        try {
+      const categoryRaw = book.categories ?? book.Categories ?? book.category ?? book.Category;
+      let categoryLabel = "";
+      
+      if (Array.isArray(categoryRaw)) {
+        const uniqueMapped = new Set();
+        categoryRaw.forEach(cat => {
+          if (!cat) return;
+          let label = "";
+          if (typeof cat === 'number') {
+            const labels = Object.values(BOOK_CATEGORY_LABELS);
+            label = labels[cat];
+          } else {
+            label = getLabel(BOOK_CATEGORY_LABELS, cat);
+          }
+          uniqueMapped.add(label);
+        });
+        categoryLabel = Array.from(uniqueMapped).filter(Boolean).join('، ');
+      } else if (categoryRaw !== null && categoryRaw !== undefined) {
+        if (typeof categoryRaw === 'number') {
           const labels = Object.values(BOOK_CATEGORY_LABELS);
           categoryLabel = labels[categoryRaw] || categoryRaw;
-        } catch (e) {
-          categoryLabel = categoryRaw;
+        } else {
+          categoryLabel = getLabel(BOOK_CATEGORY_LABELS, categoryRaw);
         }
       }
 
@@ -137,6 +152,8 @@ const normalizeBorrowingRequest = (request = {}) => {
   const mappedState = typeof stateValue === "number"
     ? borrowingStateMap[stateValue] || "Pending"
     : (stateValue || "Pending");
+    
+  const stateLabel = getLabel(BORROWING_REQUEST_STATE_LABELS, mappedState);
 
   return {
     ...request,
@@ -148,7 +165,7 @@ const normalizeBorrowingRequest = (request = {}) => {
     expectedReturnDate: request.expectedReturnDate || request.expirationDateUtc || request.expirationDate,
     returnDate: request.returnDate || request.expirationDateUtc || request.expirationDate,
     isOverdue: Boolean(request.isOverdue),
-    status: request.status || mappedState,
+    status: stateLabel,
     state: stateValue ?? mappedState,
   };
 };
@@ -162,6 +179,38 @@ const processQueue = (error, token = null) => {
     }
   });
   failedQueue = [];
+};
+
+const commonErrorTranslations = {
+  "Email already in use": "هذا البريد الإلكتروني مستخدم بالفعل",
+  "Invalid credentials": "بيانات الدخول غير صحيحة",
+  "Account not found": "الحساب غير موجود",
+  "Passwords do not match": "كلمات المرور غير متطابقة",
+  "Unauthorized": "غير مصرح لك بالقيام بهذا الإجراء",
+  "Forbidden": "ليس لديك الصلاحيات الكافية",
+  "Book not found": "الكتاب غير موجود",
+  "ISBN already exists": "رقم الـ ISBN موجود بالفعل",
+  "Internal server error": "حدث خطأ داخلي في الخادم",
+  "The Email field is required": "حقل البريد الإلكتروني مطلوب",
+  "The Password field is required": "حقل كلمة المرور مطلوب",
+  "Bad Request": "طلب غير صالح",
+  "Not Found": "غير موجود",
+  "User is already verified": "هذا المستخدم موثق بالفعل",
+  "Invalid token": "رمز غير صالح أو منتهي الصلاحية",
+  "Password must have at least": "كلمة المرور يجب أن تحتوي على الأقل على حرف كبير ورقم ورمز",
+  "User not found": "المستخدم غير موجود",
+  "Incorrect current password": "كلمة المرور الحالية غير صحيحة",
+  "Concurrency failure": "حدث خطأ في التزامن، يرجى المحاولة مرة أخرى",
+  "DuplicateEmail": "البريد الإلكتروني موجود مسبقاً",
+  "DuplicateUserName": "اسم المستخدم موجود مسبقاً",
+};
+
+const translateErrorMessage = (msg) => {
+  if (!msg || typeof msg !== 'string') return msg;
+  for (const [en, ar] of Object.entries(commonErrorTranslations)) {
+    if (msg.toLowerCase().includes(en.toLowerCase())) return ar;
+  }
+  return msg;
 };
 
 const buildQuery = (params) => {
@@ -326,7 +375,7 @@ async function apiRequest(path, options = {}) {
       window.dispatchEvent(new CustomEvent("auth:logout"));
     }
 
-    const errorMessage = errorData.detail || errorData.message || errorData.title || `HTTP ${response.status}`;
+    const errorMessage = translateErrorMessage(errorData.detail || errorData.message || errorData.title || `HTTP ${response.status}`);
 
     const error = new Error(errorMessage);
     error.status = response.status;

@@ -29,14 +29,11 @@ import Navbar from "../components/common/Navbar";
 import { useAuth } from "../context/AuthContext";
 import { bookCopiesApi, lendingApi } from "../services/api";
 import { showReadableAccessErrorToast } from "../utils/accessMessages";
-import { API_BASE_URL, getBookImageUrl, tokenStore } from "../utils/constants";
+import { API_BASE_URL, getBookImageUrl, tokenStore, BOOK_COPY_CONDITION_LABELS, getLabel } from "../utils/constants";
 
-const CONDITION_OPTIONS = [
-  { value: 0, label: "جديد" },
-  { value: 1, label: "كالجديد" },
-  { value: 2, label: "مقبول" },
-  { value: 3, label: "ضعيف" },
-];
+const CONDITION_OPTIONS = Object.entries(BOOK_COPY_CONDITION_LABELS)
+  .filter(([key]) => key[0] === key[0].toUpperCase())
+  .map(([key, label], index) => ({ value: index, label, key }));
 
 const LENDING_DAYS_PRESETS = [7, 14, 21, 30];
 const CONDITION_KEY_TO_VALUE = {
@@ -208,8 +205,7 @@ const normalizeCopy = (row = {}) => {
 };
 
 const CopyCard = ({ copy, imageSrc, onList, onToggleAvailability, onViewDetails, togglingId, detailsLoadingId }) => {
-  const cond = CONDITION_OPTIONS.find((c) => c.value === copy.condition);
-  const condLabel = cond?.label ?? (copy.condition != null ? String(copy.condition) : "—");
+  const condLabel = getLabel(BOOK_COPY_CONDITION_LABELS, copy.condition);
   const listed = Boolean(copy.isOnLendingList);
 
   return (

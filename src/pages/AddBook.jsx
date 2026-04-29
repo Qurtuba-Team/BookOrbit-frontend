@@ -376,7 +376,9 @@ const AddBook = () => {
                         <BookOpen size={16} className="text-library-accent" /> التصنيفات (اختر واحدة أو أكثر)
                       </label>
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-                        {Object.entries(BOOK_CATEGORY_LABELS).map(([key, label]) => {
+                        {Object.entries(BOOK_CATEGORY_LABELS)
+                          .filter(([key]) => key[0] === key[0].toUpperCase()) // Only show CamelCase keys to avoid duplicates
+                          .map(([key, label]) => {
                           const isSelected = formData.categories.includes(key);
                           return (
                             <button

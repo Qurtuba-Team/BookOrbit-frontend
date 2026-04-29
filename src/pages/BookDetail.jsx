@@ -7,18 +7,18 @@ import Navbar from "../components/common/Navbar";
 import toast from "react-hot-toast";
 
 const BOOK_COPY_CONDITIONS = {
-  0: "جديد (New)",
-  1: "جيد جداً (Very Good)",
-  2: "مقبول (Acceptable)",
-  3: "قديم/مهترئ (Worn)"
+  0: "جديد",
+  1: "جيد جداً",
+  2: "مقبول",
+  3: "قديم/مهترئ"
 };
 const CONDITION_KEY_TO_LABEL = {
-  new: "جديد (New)",
-  likenew: "جيد جداً (Very Good)",
-  verygood: "جيد جداً (Very Good)",
-  acceptable: "مقبول (Acceptable)",
-  poor: "قديم/مهترئ (Worn)",
-  worn: "قديم/مهترئ (Worn)",
+  new: "جديد",
+  likenew: "جيد جداً",
+  verygood: "جيد جداً",
+  acceptable: "مقبول",
+  poor: "قديم/مهترئ",
+  worn: "قديم/مهترئ",
 };
 
 const BookCopyCard = ({ record, isProcessing, onBorrow }) => {

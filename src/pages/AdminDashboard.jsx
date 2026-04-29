@@ -41,7 +41,7 @@ import {
   borrowingApi,
   bookCopiesApi
 } from "../services/api";
-import { getStudentImageUrl, getBookImageUrl, tokenStore, STUDENT_STATE_LABELS, BOOK_COPY_CONDITION_LABELS, BOOK_COPY_STATE_LABELS } from "../utils/constants";
+import { getStudentImageUrl, getBookImageUrl, tokenStore, STUDENT_STATE_LABELS, BOOK_STATE_LABELS, BOOK_CATEGORY_LABELS, BOOK_COPY_CONDITION_LABELS, BOOK_COPY_STATE_LABELS, BORROWING_REQUEST_STATE_LABELS, getLabel } from "../utils/constants";
 import { useAuth } from "../context/AuthContext";
 
 const StatCard = ({ title, value, change, icon: Icon, color, trend = "up", onClick }) => {
@@ -122,6 +122,23 @@ const normalizeConditionToNumber = (val) => {
   if (typeof val === "number") return val;
   const strMap = { "new": 0, "likenew": 1, "acceptable": 2, "poor": 3 };
   return strMap[String(val).toLowerCase()] ?? 0;
+};
+
+const getStudentStateBadgeClass = (status) => {
+  const s = String(status || "").toLowerCase();
+  if (s === "verified" || s === "active") return "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20";
+  if (s === "pending" || s === "unconfirmed") return "bg-amber-500/10 text-amber-500 border border-amber-500/20";
+  if (s === "approved") return "bg-blue-500/10 text-blue-500 border border-blue-500/20";
+  if (s === "banned" || s === "rejected") return "bg-rose-500/10 text-rose-500 border border-rose-500/20";
+  return "bg-gray-500/10 text-gray-500 border border-gray-500/20";
+};
+
+const getBorrowingStateBadgeClass = (status) => {
+  const s = String(status || "").toLowerCase();
+  if (s === "borrowed" || s === "accepted") return "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20";
+  if (s === "pending") return "bg-amber-500/10 text-amber-500 border border-amber-500/20";
+  if (s === "rejected" || s === "cancelled" || s === "expired") return "bg-rose-500/10 text-rose-500 border border-rose-500/20";
+  return "bg-gray-500/10 text-gray-500 border border-gray-500/20";
 };
 
 const AdminDashboard = () => {
@@ -770,8 +787,8 @@ const AdminDashboard = () => {
                 </div>
                 <div>
                   <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">حالة الحساب</p>
-                  <span className={`px-2 py-0.5 rounded-full text-[8px] font-black border ${selectedStudent.status?.toLowerCase() === 'active' ? 'bg-emerald-500/5 text-emerald-600 border-emerald-500/10' : selectedStudent.status?.toLowerCase() === 'approved' ? 'bg-blue-500/5 text-blue-600 border-blue-500/10' : (selectedStudent.status?.toLowerCase() === 'banned' || selectedStudent.status?.toLowerCase() === 'blocked') ? 'bg-rose-500/5 text-rose-600 border-rose-500/10' : 'bg-amber-500/5 text-amber-600 border-amber-500/10'}`}>
-                    {selectedStudent.status?.toLowerCase() === 'active' ? 'موثق' : selectedStudent.status?.toLowerCase() === 'approved' ? 'انتظار تفعيل' : (selectedStudent.status?.toLowerCase() === 'banned' || selectedStudent.status?.toLowerCase() === 'blocked') ? 'محظور' : 'انتظار موافقة'}
+                  <span className={`px-2 py-0.5 rounded-full text-[8px] font-black border ${getStudentStateBadgeClass(selectedStudent.status)}`}>
+                    {getLabel(STUDENT_STATE_LABELS, selectedStudent.status)}
                   </span>
                 </div>
                 <div>
@@ -949,17 +966,15 @@ const AdminDashboard = () => {
 
                   {/* Status & Category */}
                   <div className="col-span-4 hidden md:flex items-center gap-3">
-                    <span className="text-[11px] font-bold text-library-primary dark:text-gray-300">{book.category || "عام"}</span>
+                    <span className="text-[11px] font-bold text-library-primary dark:text-gray-300">{getLabel(BOOK_CATEGORY_LABELS, book.category) || "عام"}</span>
                     <div className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
-                    {subTab === "pending" ? (
-                      <span className="text-[9px] font-black text-amber-600 bg-amber-50 dark:bg-amber-500/10 dark:text-amber-400 px-2 py-0.5 rounded-md border border-amber-500/10">بانتظار المراجعة</span>
-                    ) : String(book?.status || "").toLowerCase() === "rejected" ? (
-                      <span className="text-[9px] font-black text-rose-600 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400 px-2 py-0.5 rounded-md border border-rose-500/10">مرفوض</span>
-                    ) : String(book?.status || "").toLowerCase() === "pending" ? (
-                      <span className="text-[9px] font-black text-amber-600 bg-amber-50 dark:bg-amber-500/10 dark:text-amber-400 px-2 py-0.5 rounded-md border border-amber-500/10">بانتظار المراجعة</span>
-                    ) : (
-                      <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400 px-2 py-0.5 rounded-md border border-emerald-500/10">معتمد</span>
-                    )}
+                    <span className={`text-[9px] font-black px-2 py-0.5 rounded-md border ${
+                      String(book?.status || "").toLowerCase() === "rejected" ? "text-rose-600 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400 border-rose-500/10" :
+                      (subTab === "pending" || String(book?.status || "").toLowerCase() === "pending") ? "text-amber-600 bg-amber-50 dark:bg-amber-500/10 dark:text-amber-400 border-amber-500/10" :
+                      "text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400 border-emerald-500/10"
+                    }`}>
+                      {getLabel(BOOK_STATE_LABELS, book.status || (subTab === "pending" ? "Pending" : "Approved"))}
+                    </span>
                   </div>
 
                   {/* Actions */}
@@ -1085,7 +1100,7 @@ const AdminDashboard = () => {
                 </div>
                 <div>
                   <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">التصنيف</p>
-                  <p className="text-[11px] font-bold text-library-primary dark:text-gray-200">{selectedBook.category || "—"}</p>
+                  <p className="text-[11px] font-bold text-library-primary dark:text-gray-200">{getLabel(BOOK_CATEGORY_LABELS, selectedBook.category) || "—"}</p>
                 </div>
                 <div>
                   <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">الناشر</p>
@@ -1479,13 +1494,7 @@ const AdminDashboard = () => {
     const borrowingDuration = lend.borrowingDurationInDays || lend.durationInDays;
     
     const stateValue = lend.state ?? lend.status;
-    const stateLabel = 
-      stateValue === 0 || stateValue === "Pending" ? "بانتظار الموافقة" :
-      stateValue === 1 || stateValue === "Approved" ? "تمت الموافقة" :
-      stateValue === 2 || stateValue === "Rejected" ? "مرفوض" :
-      stateValue === 3 || stateValue === "Expired" ? "منتهي" :
-      stateValue === 4 || stateValue === "Completed" ? "مكتمل" : 
-      subTab === "active" ? "نشطة" : "غير معروف";
+    const stateLabel = getLabel(BORROWING_REQUEST_STATE_LABELS, stateValue, subTab === "active" ? "نشطة" : "غير معروف");
     const stateColor = 
       stateValue === 0 || stateValue === "Pending" ? "amber" :
       stateValue === 1 || stateValue === "Approved" ? "blue" :
@@ -1553,6 +1562,9 @@ const AdminDashboard = () => {
                 <div className="flex-grow min-w-0">
                   <p className="text-[9px] text-amber-500 font-black mb-1 uppercase tracking-widest">الكتاب</p>
                   <h4 className="text-sm font-black text-library-primary dark:text-white leading-snug truncate">{bookTitle}</h4>
+                  <span className={`px-3 py-1 rounded-full text-[10px] font-black ${getBorrowingStateBadgeClass(lend.status)}`}>
+                    {getLabel(BORROWING_REQUEST_STATE_LABELS, lend.status)}
+                  </span>
                   {bookAuthor && <p className="text-[11px] text-gray-500 dark:text-gray-400 font-bold mt-0.5">{bookAuthor}</p>}
                   {bookIsbn && <p className="text-[9px] text-gray-400 mt-1 font-mono">ISBN: {bookIsbn}</p>}
                   {bookId && <p className="text-[9px] text-gray-400 mt-0.5">معرف الكتاب: #{bookId}</p>}
@@ -1742,7 +1754,7 @@ const AdminDashboard = () => {
                     subTab === "active" ? 'bg-emerald-500' : 
                     (subTab === "pending_owner" ? 'bg-amber-500' : 'bg-blue-500')
                   }`} />
-                  {subTab === "active" ? 'نشطة' : (subTab === "pending_owner" ? 'بانتظار المالك' : 'بانتظار التسليم')}
+                  {BORROWING_REQUEST_STATE_LABELS[lend.status] || (subTab === "active" ? 'نشطة' : (subTab === "pending_owner" ? 'بانتظار المالك' : 'بانتظار التسليم'))}
                 </span>
               </div>
               
@@ -2021,6 +2033,7 @@ const AdminDashboard = () => {
                           </div>
                           <div>
                             <p className="text-[11px] font-black text-library-primary dark:text-white">{req.studentName}</p>
+                            <p>الحالة: <span className="font-black text-library-primary dark:text-white">{BORROWING_REQUEST_STATE_LABELS[req.status] || req.status}</span></p>
                             <p className="text-[9px] text-gray-400 font-bold flex items-center gap-1 mt-0.5"><BookMarked size={10} /> {req.bookTitle}</p>
                           </div>
                         </div>
