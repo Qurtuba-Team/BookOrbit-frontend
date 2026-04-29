@@ -110,7 +110,7 @@ const ChangePassword = () => {
   };
 
   return (
-    <div className="min-h-screen bg-library-paper dark:bg-[#08080a] pb-12 pt-20 lg:pt-24" dir="rtl">
+    <div className="min-h-screen bg-library-paper dark:bg-dark-bg pb-12 pt-20 lg:pt-24" dir="rtl">
       <Navbar />
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <motion.button
@@ -123,7 +123,7 @@ const ChangePassword = () => {
           رجوع
         </motion.button>
 
-        <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white/90 shadow-sm dark:border-white/10 dark:bg-[#121214]/90">
+        <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white/90 shadow-sm dark:border-white/10 dark:bg-dark-surface/90">
           <div className="relative border-b border-gray-100 bg-library-primary px-6 py-7 text-white dark:border-white/5 sm:px-8">
             <div className="absolute -left-10 -top-10 h-40 w-40 rounded-full bg-library-accent/20 blur-3xl" aria-hidden />
             <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-black text-library-paper">

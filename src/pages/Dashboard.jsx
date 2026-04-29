@@ -88,7 +88,7 @@ const BookCard3D = ({ book }) => {
         </motion.div>
       </div>
 
-      <div className="w-full bg-white/92 dark:bg-[#141820]/92 backdrop-blur-xl rounded-3xl pt-11 pb-5 px-5 border border-library-primary/[0.07] dark:border-white/[0.07] shadow-lg shadow-library-primary/[0.05] dark:shadow-black/40 transition-all duration-300 relative z-0 flex flex-col items-center flex-grow group-hover:border-library-accent/25 dark:group-hover:border-library-accent/20 group-hover:shadow-xl group-hover:shadow-library-primary/10">
+      <div className="w-full bg-white/92 dark:bg-dark-surface/92 backdrop-blur-xl rounded-3xl pt-11 pb-5 px-5 border border-library-primary/[0.07] dark:border-white/[0.07] shadow-lg shadow-library-primary/[0.05] dark:shadow-black/40 transition-all duration-300 relative z-0 flex flex-col items-center flex-grow group-hover:border-library-accent/25 dark:group-hover:border-library-accent/20 group-hover:shadow-xl group-hover:shadow-library-primary/10">
         <h3 className="font-black text-library-primary dark:text-white text-center text-[15px] leading-snug mb-1 line-clamp-2 w-full min-h-[2.5rem]">
           {book.title}
         </h3>
@@ -239,7 +239,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="rounded-2xl bg-library-primary dark:bg-[#0c1628] p-6 border border-white/10 text-white shadow-xl relative overflow-hidden group ring-1 ring-white/10">
+            <div className="rounded-2xl bg-library-primary dark:bg-dark-bg p-6 border border-white/10 text-white shadow-xl relative overflow-hidden group ring-1 ring-white/10">
               <div className="absolute start-6 top-0 h-1 w-14 rounded-b-md bg-library-accent" aria-hidden />
               <div className="absolute -right-10 -top-10 w-36 h-36 bg-library-accent/25 blur-3xl rounded-full group-hover:bg-library-accent/35 transition-all duration-500" />
               <div className="absolute -left-8 bottom-0 w-24 h-24 bg-white/5 blur-2xl rounded-full" />

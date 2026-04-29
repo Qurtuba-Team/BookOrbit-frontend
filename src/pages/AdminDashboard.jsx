@@ -11,20 +11,29 @@ import {
   TrendingUp,
   BookMarked,
   CheckCircle2,
-  AlertCircle,
   Shield,
   Search,
-  Menu,
   Loader2,
   X,
   UserX,
   UserPlus,
-  Mail
+  Mail,
+  Trash2,
+  Check,
+  XCircle,
+  MessageCircle,
+  Eye,
+  ArrowLeftRight,
+  CalendarDays,
+  Calendar,
+  RefreshCw,
+  Copy,
+  Save
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
 import Navbar from "../components/common/Navbar";
-import { EditBookModal } from "../components/admin/EditBookModal";
+
 import { 
   studentsApi, 
   booksApi, 
@@ -32,59 +41,87 @@ import {
   borrowingApi,
   bookCopiesApi
 } from "../services/api";
-import { getStudentImageUrl, getBookImageUrl, tokenStore, STUDENT_STATE_LABELS } from "../utils/constants";
+import { getStudentImageUrl, getBookImageUrl, tokenStore, STUDENT_STATE_LABELS, BOOK_COPY_CONDITION_LABELS, BOOK_COPY_STATE_LABELS } from "../utils/constants";
 import { useAuth } from "../context/AuthContext";
 
-const StatCard = ({ title, value, change, icon: Icon, color, trend = "up", onClick }) => (
-  <motion.div 
-    initial={{ opacity: 0, scale: 0.9 }}
-    animate={{ opacity: 1, scale: 1 }}
-    whileHover={{ y: -3, scale: 1.01 }}
-    onClick={onClick}
-    className={`bg-white/80 dark:bg-dark-surface/80 backdrop-blur-xl p-4 rounded-2xl border border-white dark:border-white/5 shadow-sm hover:shadow-lg transition-all relative overflow-hidden group ${onClick ? 'cursor-pointer' : ''}`}
-  >
-    <div className={`absolute -right-4 -top-4 w-20 h-20 bg-${color}-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700`} />
-    
-    <div className="flex justify-between items-center mb-3 relative z-10">
-      <div className={`p-2.5 rounded-lg bg-gradient-to-br from-${color}-500/20 to-${color}-500/5 text-${color}-600 dark:text-${color}-400`}>
-        <Icon size={18} />
+const StatCard = ({ title, value, change, icon: Icon, color, trend = "up", onClick }) => {
+  const colorMap = {
+    indigo: { bg: 'from-indigo-600 to-indigo-700', light: 'bg-indigo-500/10', text: 'text-indigo-600 dark:text-indigo-400', glow: 'shadow-indigo-500/20' },
+    emerald: { bg: 'from-emerald-600 to-teal-700', light: 'bg-emerald-500/10', text: 'text-emerald-600 dark:text-emerald-400', glow: 'shadow-emerald-500/20' },
+    amber: { bg: 'from-amber-500 to-orange-600', light: 'bg-amber-500/10', text: 'text-amber-600 dark:text-amber-400', glow: 'shadow-amber-500/20' },
+    rose: { bg: 'from-rose-500 to-pink-600', light: 'bg-rose-500/10', text: 'text-rose-600 dark:text-rose-400', glow: 'shadow-rose-500/20' },
+    blue: { bg: 'from-blue-600 to-blue-700', light: 'bg-blue-500/10', text: 'text-blue-600 dark:text-blue-400', glow: 'shadow-blue-500/20' },
+  };
+  const c = colorMap[color] || colorMap.indigo;
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -4, scale: 1.02 }}
+      onClick={onClick}
+      className={`rounded-2xl p-5 border border-gray-100 dark:border-white/[0.06] bg-white dark:bg-dark-surface shadow-sm hover:shadow-xl ${c.glow} transition-all relative overflow-hidden group ${onClick ? 'cursor-pointer' : ''}`}
+    >
+      <div className={`absolute -right-8 -top-8 w-28 h-28 bg-gradient-to-br ${c.bg} rounded-full opacity-[0.07] group-hover:opacity-[0.12] group-hover:scale-125 transition-all duration-700`} />
+      <div className="flex items-start justify-between mb-4 relative z-10">
+        <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${c.bg} flex items-center justify-center text-white shadow-lg ${c.glow}`}>
+          <Icon size={20} strokeWidth={2} />
+        </div>
+        <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-black ${trend === "up" ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10" : "bg-rose-50 text-rose-600 dark:bg-rose-500/10"}`}>
+          {trend === "up" ? <TrendingUp size={10} /> : <TrendingUp size={10} className="rotate-180" />}
+          {change}
+        </div>
       </div>
-      <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[8px] font-black ${trend === "up" ? "bg-emerald-500/10 text-emerald-600" : "bg-rose-500/10 text-rose-600"}`}>
-        {trend === "up" ? <TrendingUp size={9} /> : <TrendingUp size={9} className="rotate-180" />}
-        {change}
+      <div className="relative z-10">
+        <h3 className="text-2xl font-black text-library-primary dark:text-white tracking-tight tabular-nums mb-1">{value}</h3>
+        <p className="text-gray-400 dark:text-gray-500 text-[10px] font-bold">{title}</p>
       </div>
-    </div>
-    
-    <div className="relative z-10">
-      <p className="text-gray-400 dark:text-gray-500 text-[9px] font-black uppercase tracking-wider mb-0.5">{title}</p>
-      <h3 className="text-xl font-black text-library-primary dark:text-white tracking-tight tabular-nums">{value}</h3>
-    </div>
-  </motion.div>
-);
+    </motion.div>
+  );
+};
 
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
   if (totalPages <= 1) return null;
+  const pages = [];
+  for (let i = 1; i <= Math.min(totalPages, 5); i++) pages.push(i);
   return (
-    <div className="flex items-center justify-center gap-2 mt-8 py-4 border-t border-gray-100 dark:border-white/5 flex-wrap">
+    <div className="flex items-center justify-center gap-1.5 mt-6 pt-5 border-t border-gray-100 dark:border-white/5">
       <button 
         disabled={currentPage === 1}
         onClick={() => onPageChange(currentPage - 1)}
-        className="px-4 py-2 rounded-xl bg-white dark:bg-white/5 border border-gray-100 dark:border-white/5 text-xs font-black text-gray-500 hover:text-library-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+        className="px-3.5 py-2 rounded-lg text-xs font-black text-gray-400 hover:text-library-primary hover:bg-gray-50 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
       >
         السابق
       </button>
-      <div className="px-4 py-2 rounded-xl bg-library-primary/5 text-library-primary text-xs font-black">
-        صفحة {currentPage} من {totalPages}
-      </div>
+      {pages.map(p => (
+        <button
+          key={p}
+          onClick={() => onPageChange(p)}
+          className={`w-9 h-9 rounded-lg text-xs font-black transition-all ${
+            currentPage === p
+              ? "bg-library-primary text-white shadow-md shadow-library-primary/25"
+              : "text-gray-400 hover:text-library-primary hover:bg-gray-50 dark:hover:bg-white/5"
+          }`}
+        >
+          {p}
+        </button>
+      ))}
+      {totalPages > 5 && <span className="text-gray-300 text-xs px-1">...</span>}
       <button 
         disabled={currentPage === totalPages}
         onClick={() => onPageChange(currentPage + 1)}
-        className="px-4 py-2 rounded-xl bg-white dark:bg-white/5 border border-gray-100 dark:border-white/5 text-xs font-black text-gray-500 hover:text-library-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+        className="px-3.5 py-2 rounded-lg text-xs font-black text-gray-400 hover:text-library-primary hover:bg-gray-50 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
       >
         التالي
       </button>
     </div>
   );
+};
+
+const normalizeConditionToNumber = (val) => {
+  if (val === null || val === undefined) return 0;
+  if (typeof val === "number") return val;
+  const strMap = { "new": 0, "likenew": 1, "acceptable": 2, "poor": 3 };
+  return strMap[String(val).toLowerCase()] ?? 0;
 };
 
 const AdminDashboard = () => {
@@ -129,6 +166,13 @@ const AdminDashboard = () => {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [selectedBook, setSelectedBook] = React.useState(null);
   const [isBookModalOpen, setIsBookModalOpen] = React.useState(false);
+  const [selectedLending, setSelectedLending] = React.useState(null);
+  const [isLendingModalOpen, setIsLendingModalOpen] = React.useState(false);
+  const [loadingLendingDetail, setLoadingLendingDetail] = React.useState(false);
+  const [selectedCopy, setSelectedCopy] = React.useState(null);
+  const [isCopyModalOpen, setIsCopyModalOpen] = React.useState(false);
+  const [currentCopiesPage, setCurrentCopiesPage] = React.useState(1);
+  const [totalCopiesPages, setTotalCopiesPages] = React.useState(1);
   
   const imageObjectUrlsRef = React.useRef(new Set());
   const attemptedStudentImageIdsRef = React.useRef(new Set());
@@ -192,11 +236,10 @@ const AdminDashboard = () => {
       let params = { pageSize: 20, page: currentBookPage }; // Fetch slightly more to allow for filtering if API is missing states param
       if (bookSearchQuery) params.searchTerm = bookSearchQuery;
       
-      // Use client-side filtering since the backend doesn't support State filtering yet in apis.json
       const res = await booksApi.getAll(params);
       let items = res.items || res.data || [];
-      
-      // Client-side filtering as a fallback and to ensure correctness
+
+      // Use frontend filtering if backend doesn't support the specific status filter yet
       if (subTab === "pending") {
         items = items.filter((b) => {
           const state = String(b?.state ?? "").toLowerCase();
@@ -258,18 +301,19 @@ const AdminDashboard = () => {
     setLoadingAdminCopies(true);
     try {
       const res = await bookCopiesApi.getAll({
-        page: 1,
-        pageSize: 8,
+        page: currentCopiesPage,
+        pageSize: 10,
         sortColumn: "updatedAt",
         sortDirection: "desc",
       });
       const items = res?.items || res?.data || [];
       const safeItems = Array.isArray(items) ? items : [];
       setAdminCopies(safeItems);
+      setTotalCopiesPages(res?.totalPages || 1);
       const drafts = {};
       safeItems.forEach((copy) => {
         const id = copy?.id || copy?.Id;
-        drafts[id] = copy?.condition ?? copy?.Condition ?? 0;
+        drafts[id] = normalizeConditionToNumber(copy?.condition ?? copy?.Condition);
       });
       setCopyConditionDrafts(drafts);
     } catch (err) {
@@ -278,7 +322,7 @@ const AdminDashboard = () => {
     } finally {
       setLoadingAdminCopies(false);
     }
-  }, []);
+  }, [currentCopiesPage]);
 
   React.useEffect(() => {
     const fetchData = async () => {
@@ -426,9 +470,9 @@ const AdminDashboard = () => {
         setBookImageMap((prev) => ({ ...prev, ...nextMap }));
       }
     };
-
     preloadBookImages();
-  }, [books, fetchProtectedImageSrc, bookImageMap]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [books, fetchProtectedImageSrc]);
 
   React.useEffect(() => {
     const objectUrls = imageObjectUrlsRef.current;
@@ -440,12 +484,10 @@ const AdminDashboard = () => {
 
   React.useEffect(() => {
     if (activeTab === "students") fetchStudents();
-    if (activeTab === "books") {
-      fetchBooks();
-      fetchAdminCopies();
-    }
+    if (activeTab === "books") fetchBooks();
+    if (activeTab === "copies") fetchAdminCopies();
     if (activeTab === "lending") fetchLendings();
-  }, [activeTab, subTab, fetchStudents, fetchBooks, fetchLendings, fetchAdminCopies]);
+  }, [activeTab, subTab, fetchStudents, fetchBooks, fetchLendings, fetchAdminCopies, currentCopiesPage]);
 
   const handleStudentAction = async (id, action) => {
     try {
@@ -461,8 +503,8 @@ const AdminDashboard = () => {
       toast.success("تم تنفيذ الإجراء بنجاح");
       fetchStudents();
     } catch (error) {
-      toast.error("فشل تنفيذ الإجراء");
       toast.dismiss();
+      toast.error("فشل تنفيذ الإجراء");
     }
   };
 
@@ -484,138 +526,159 @@ const AdminDashboard = () => {
 
   const renderStudentsList = () => {
     if (loadingStudents) return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <Loader2 className="animate-spin text-library-accent mb-4" size={32} />
-        <p className="text-[10px] font-black text-gray-400">جاري تحميل قائمة الطلاب...</p>
+      <div className="flex flex-col items-center justify-center py-32 bg-white/40 dark:bg-dark-surface/40 rounded-3xl border border-gray-100 dark:border-white/5">
+        <div className="relative w-16 h-16 mb-4">
+          <div className="absolute inset-0 border-4 border-library-accent/20 rounded-full"></div>
+          <div className="absolute inset-0 border-4 border-library-accent border-t-transparent rounded-full animate-spin"></div>
+        </div>
+        <p className="text-[11px] font-black text-library-primary/60 dark:text-gray-400">جاري تحميل قائمة الطلاب...</p>
       </div>
     );
 
     if (students.length === 0) return (
-      <div className="text-center py-20 bg-gray-50/50 dark:bg-white/[0.02] rounded-2xl border border-dashed border-gray-200 dark:border-white/10">
-        <Users className="mx-auto text-gray-300 mb-2" size={40} />
-        <p className="text-gray-400 text-xs font-black">لا يوجد طلاب في هذا القسم حالياً</p>
+      <div className="flex flex-col items-center justify-center py-32 bg-white/40 dark:bg-dark-surface/40 rounded-3xl border border-gray-100 dark:border-white/5 text-center">
+        <div className="w-20 h-20 bg-gray-50 dark:bg-white/[0.02] rounded-full flex items-center justify-center mb-4">
+          <Users className="text-gray-300 dark:text-white/20" size={32} />
+        </div>
+        <h3 className="text-sm font-black text-library-primary dark:text-white mb-1">لا يوجد طلاب</h3>
+        <p className="text-gray-400 text-[11px] font-bold">لم يتم العثور على طلاب يطابقون بحثك أو في هذا القسم حالياً</p>
       </div>
     );
 
     return (
       <div className="space-y-6">
-        {/* Search Bar for Students */}
-        <div className="bg-white/60 dark:bg-[#121214]/60 backdrop-blur-xl rounded-2xl p-4 border border-white dark:border-white/5 shadow-sm">
-          <div className="relative">
-            <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-            <input 
-              type="text" 
-              placeholder="ابحث عن طالب بالاسم، البريد، أو التخصص..." 
-              value={studentSearchInput}
-              onChange={(e) => setStudentSearchInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  setStudentSearchQuery(studentSearchInput);
-                }
+        {/* Premium Search Bar */}
+        <div className="bg-white dark:bg-dark-surface rounded-2xl p-2.5 border border-gray-100 dark:border-white/[0.06] shadow-sm flex items-center relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-1 h-full bg-library-accent opacity-0 group-focus-within:opacity-100 transition-opacity"></div>
+          <div className="pl-3 pr-4 flex items-center justify-center text-gray-400 group-focus-within:text-library-accent transition-colors">
+            <Search size={18} strokeWidth={2.5} />
+          </div>
+          <input 
+            type="text" 
+            placeholder="ابحث عن طالب بالاسم، البريد، أو التخصص..." 
+            value={studentSearchInput}
+            onChange={(e) => setStudentSearchInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                setStudentSearchQuery(studentSearchInput);
+              }
+            }}
+            className="flex-grow bg-transparent border-none py-2 text-xs font-bold focus:outline-none text-library-primary dark:text-white placeholder:text-gray-400"
+          />
+          {(studentSearchInput || studentSearchQuery) && (
+            <button 
+              onClick={() => {
+                setStudentSearchInput("");
+                setStudentSearchQuery("");
               }}
-              className="w-full bg-white dark:bg-[#08080a] border border-gray-100 dark:border-white/5 rounded-xl pr-12 pl-4 py-3 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-library-primary/20 focus:border-library-primary transition-all text-library-primary dark:text-white"
-            />
-            {(studentSearchInput || studentSearchQuery) && (
-              <button 
+              className="w-8 h-8 flex items-center justify-center rounded-lg bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors mr-2"
+            >
+              <X size={14} strokeWidth={3} />
+            </button>
+          )}
+        </div>
+
+        {/* Premium List Design */}
+        <div className="bg-white dark:bg-dark-surface rounded-2xl border border-gray-100 dark:border-white/[0.06] shadow-sm overflow-hidden">
+          <div className="hidden md:grid grid-cols-12 gap-4 p-4 bg-gray-50/80 dark:bg-white/[0.02] border-b border-gray-100 dark:border-white/[0.06] text-[10px] font-black text-gray-400 tracking-wider">
+            <div className="col-span-5">الطالب</div>
+            <div className="col-span-4">التفاصيل الأكاديمية</div>
+            <div className="col-span-3 text-center">الإجراءات</div>
+          </div>
+          
+          <div className="divide-y divide-gray-100 dark:divide-white/[0.06]">
+            {students.map((student) => (
+              <motion.div 
+                layout
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                key={student.id} 
+                className="group relative p-4 hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors flex flex-col md:grid md:grid-cols-12 md:items-center gap-4 cursor-pointer"
                 onClick={() => {
-                  setStudentSearchInput("");
-                  setStudentSearchQuery("");
+                  setSelectedStudent(student);
+                  setIsModalOpen(true);
                 }}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-rose-500 transition-colors"
               >
-                <X size={14} />
-              </button>
-            )}
+                {/* Student Info */}
+                <div className="col-span-5 flex items-center gap-4">
+                  <div className="relative">
+                    <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-white/5 overflow-hidden border border-gray-200 dark:border-white/10 group-hover:border-library-accent/50 transition-colors shadow-sm">
+                      {student.id && studentImageMap[student.id] ? (
+                        <img 
+                          src={studentImageMap[student.id]} 
+                          className="w-full h-full object-cover" 
+                          alt="" 
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.parentElement.innerHTML = `<div class="w-full h-full flex items-center justify-center text-library-primary/20 dark:text-white/20 text-sm font-black">${student.fullName?.charAt(0)}</div>`;
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-library-primary/20 dark:text-white/20 text-sm font-black">
+                          {student.fullName?.charAt(0)}
+                        </div>
+                      )}
+                    </div>
+                    {/* Status Indicator Dot */}
+                    <div className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-[#121214] ${
+                      student.status === 'active' ? 'bg-emerald-500' :
+                      student.status === 'approved' ? 'bg-blue-500' :
+                      student.status === 'pending' ? 'bg-amber-500' :
+                      'bg-rose-500'
+                    }`} />
+                  </div>
+                  <div>
+                    <h3 className="text-[13px] font-black text-library-primary dark:text-white group-hover:text-library-accent transition-colors">{student.fullName}</h3>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 font-bold mt-0.5">{student.universityMailAddress}</p>
+                  </div>
+                </div>
+
+                {/* Academic Details */}
+                <div className="col-span-4 hidden md:block">
+                  <p className="text-[11px] font-bold text-library-primary dark:text-gray-300">{student.major || "تخصص غير محدد"}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[9px] font-black text-gray-400 bg-gray-100 dark:bg-white/5 px-2 py-0.5 rounded-md">ID: {student.id}</span>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="col-span-3 flex items-center justify-end gap-2 w-full md:w-auto" onClick={(e) => e.stopPropagation()}>
+                  {subTab === "pending" ? (
+                    <>
+                      <button 
+                        onClick={() => handleStudentAction(student.id, "approve")}
+                        className="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 text-[10px] font-black hover:bg-emerald-500 hover:text-white transition-all border border-emerald-500/10 hover:shadow-md hover:shadow-emerald-500/20"
+                      >
+                        قبول
+                      </button>
+                      <button 
+                        onClick={() => handleStudentAction(student.id, "reject")}
+                        className="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400 text-[10px] font-black hover:bg-rose-500 hover:text-white transition-all border border-rose-500/10"
+                      >
+                        رفض
+                      </button>
+                    </>
+                  ) : subTab === "banned" ? (
+                    <button 
+                      onClick={() => handleStudentAction(student.id, "unban")}
+                      className="px-4 py-1.5 rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400 text-[10px] font-black hover:bg-amber-500 hover:text-white transition-all border border-amber-500/10 hover:shadow-md hover:shadow-amber-500/20"
+                    >
+                      فك الحظر
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={() => handleStudentAction(student.id, "ban")}
+                      className="px-3 py-1.5 rounded-lg bg-gray-50 text-gray-500 dark:bg-white/5 dark:text-gray-400 text-[10px] font-black hover:bg-rose-500 hover:text-white hover:border-rose-500 transition-all border border-gray-200 dark:border-white/10"
+                    >
+                      حظر الطالب
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
-
-        <div className="space-y-3">
-          {students.map((student) => (
-          <motion.div 
-            layout
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            key={student.id} 
-            className="bg-white/80 dark:bg-[#121214]/80 backdrop-blur-xl rounded-xl p-4 border border-white dark:border-white/5 shadow-sm group hover:border-library-primary/30 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
-          >
-            <div 
-              className="flex items-center gap-3 cursor-pointer flex-grow w-full"
-              onClick={() => {
-                setSelectedStudent(student);
-                setIsModalOpen(true);
-              }}
-            >
-              <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-white/5 overflow-hidden border border-gray-100 dark:border-white/10 group-hover:scale-105 transition-transform duration-500 shadow-inner">
-                {student.id && studentImageMap[student.id] ? (
-                  <img 
-                    src={studentImageMap[student.id]} 
-                    className="w-full h-full object-cover" 
-                    alt="" 
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.parentElement.innerHTML = `<div class="w-full h-full flex items-center justify-center text-library-primary/20 dark:text-white/20 text-sm font-black">${student.fullName?.charAt(0)}</div>`;
-                    }}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-library-primary/20 dark:text-white/20 text-sm font-black">
-                    {student.fullName?.charAt(0)}
-                  </div>
-                )}
-              </div>
-              <div>
-                <h3 className="text-base md:text-sm font-black text-library-primary dark:text-white group-hover:text-library-accent transition-colors">{student.fullName}</h3>
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-xs md:text-[10px] text-gray-400 font-bold break-all">{student.universityMailAddress}</p>
-                  <span className="w-1 h-1 rounded-full bg-gray-300" />
-                  <p className="text-xs md:text-[10px] text-library-accent font-black">{student.major || "تخصص غير محدد"}</p>
-                  <span className="w-1 h-1 rounded-full bg-gray-300" />
-                  <span className={`text-[10px] md:text-[8px] font-black px-2 py-0.5 rounded-full ${
-                    student.status === 'active' ? 'bg-emerald-500/10 text-emerald-600' :
-                    student.status === 'approved' ? 'bg-blue-500/10 text-blue-600' :
-                    student.status === 'pending' ? 'bg-amber-500/10 text-amber-600' :
-                    'bg-gray-500/10 text-gray-600'
-                  }`}>
-                    {STUDENT_STATE_LABELS[student.status?.charAt(0).toUpperCase() + student.status?.slice(1)] || student.status}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 w-full md:w-auto">
-              {subTab === "pending" ? (
-                <>
-                  <button 
-                    onClick={() => handleStudentAction(student.id, "approve")}
-                    className="flex-grow md:flex-initial px-4 py-2.5 rounded-lg bg-emerald-500 text-white text-xs md:text-[9px] font-black hover:bg-emerald-600 transition-all shadow-md shadow-emerald-500/20"
-                  >
-                    توثيق
-                  </button>
-                  <button 
-                    onClick={() => handleStudentAction(student.id, "reject")}
-                    className="flex-grow md:flex-initial px-4 py-2.5 rounded-lg bg-rose-500/10 text-rose-600 text-xs md:text-[9px] font-black hover:bg-rose-500 hover:text-white transition-all border border-rose-500/20"
-                  >
-                    رفض التوثيق
-                  </button>
-                </>
-              ) : subTab === "banned" ? (
-                <button 
-                  onClick={() => handleStudentAction(student.id, "unban")}
-                  className="flex-grow md:flex-initial px-4 py-2.5 rounded-lg bg-amber-500 text-white text-xs md:text-[9px] font-black hover:bg-amber-600 transition-all shadow-md shadow-amber-500/20"
-                >
-                  فك الحظر
-                </button>
-              ) : (
-                <button 
-                  onClick={() => handleStudentAction(student.id, "ban")}
-                  className="flex-grow md:flex-initial px-4 py-2.5 rounded-lg bg-rose-500/10 text-rose-600 text-xs md:text-[9px] font-black hover:bg-rose-500 hover:text-white transition-all border border-rose-500/20"
-                >
-                  حظر الطالب
-                </button>
-              )}
-            </div>
-          </motion.div>
-        ))}
-        </div>
+        
         <Pagination 
           currentPage={currentStudentPage} 
           totalPages={totalStudentPages} 
@@ -638,7 +701,7 @@ const AdminDashboard = () => {
         <motion.div 
           initial={{ scale: 0.9, y: 20 }}
           animate={{ scale: 1, y: 0 }}
-          className="bg-white dark:bg-[#0c0c0e] w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl relative z-10 border border-white/10"
+          className="bg-white dark:bg-dark-surface w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl relative z-10 border border-white/10"
           dir="rtl"
         >
           <div className="h-24 bg-gradient-to-r from-library-primary to-indigo-600 relative">
@@ -652,7 +715,7 @@ const AdminDashboard = () => {
           
           <div className="px-8 pb-8">
             <div className="relative -mt-12 mb-6">
-              <div className="w-24 h-24 rounded-3xl bg-white dark:bg-[#121214] p-1.5 shadow-xl mx-auto">
+              <div className="w-24 h-24 rounded-3xl bg-white dark:bg-dark-surface p-1.5 shadow-xl mx-auto">
                 <div className="w-full h-full rounded-2xl overflow-hidden bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 shadow-inner">
                   {selectedStudent.id && studentImageMap[selectedStudent.id] ? (
                     <img 
@@ -688,8 +751,18 @@ const AdminDashboard = () => {
                   <p className="text-[11px] font-bold text-library-primary dark:text-gray-200">{selectedStudent.phoneNumber || "—"}</p>
                 </div>
                 <div>
-                  <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">الجامعة</p>
-                  <p className="text-[11px] font-bold text-library-primary dark:text-gray-200">{selectedStudent.university || "جامعة المنصورة"}</p>
+                  <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">تيليجرام</p>
+                  <p className="text-[11px] font-bold text-library-primary dark:text-gray-200 flex items-center gap-1.5">
+                    {selectedStudent.telegramUserId ? (
+                      <><MessageCircle size={11} className="text-blue-500" />{selectedStudent.telegramUserId}</>
+                    ) : "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">النقاط</p>
+                  <p className="text-[11px] font-bold text-library-primary dark:text-gray-200">
+                    <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 font-black text-[10px]">⭐ {selectedStudent.points ?? 0}</span>
+                  </p>
                 </div>
               </div>
               <div className="space-y-4">
@@ -780,133 +853,120 @@ const AdminDashboard = () => {
   const renderBooksList = () => {
     return (
       <div className="space-y-6">
-        {/* Search Bar for Books */}
-        <div className="bg-white/60 dark:bg-[#121214]/60 backdrop-blur-xl rounded-2xl p-4 border border-white dark:border-white/5 shadow-sm">
-          <div className="relative">
-            <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-            <input 
-              type="text" 
-              placeholder="ابحث عن كتاب بالاسم أو المؤلف أو الرقم المسلسل..." 
-              value={bookSearchInput}
-              onChange={(e) => setBookSearchInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  setBookSearchQuery(bookSearchInput);
-                }
-              }}
-              className="w-full bg-white dark:bg-[#08080a] border border-gray-100 dark:border-white/5 rounded-xl pr-12 pl-4 py-3 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-library-primary dark:text-white"
-            />
-            {(bookSearchInput || bookSearchQuery) && (
-              <button 
-                onClick={() => {
-                  setBookSearchInput("");
-                  setBookSearchQuery("");
-                }}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-rose-500 transition-colors"
-              >
-                <X size={14} />
-              </button>
-            )}
+        {/* Premium Search Bar */}
+        <div className="bg-white dark:bg-dark-surface rounded-2xl p-2.5 border border-gray-100 dark:border-white/[0.06] shadow-sm flex items-center relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-1 h-full bg-emerald-500 opacity-0 group-focus-within:opacity-100 transition-opacity"></div>
+          <div className="pl-3 pr-4 flex items-center justify-center text-gray-400 group-focus-within:text-emerald-500 transition-colors">
+            <Search size={18} strokeWidth={2.5} />
           </div>
+          <input 
+            type="text" 
+            placeholder="ابحث عن كتاب بالاسم أو المؤلف أو الرقم المسلسل..." 
+            value={bookSearchInput}
+            onChange={(e) => setBookSearchInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                setBookSearchQuery(bookSearchInput);
+              }
+            }}
+            className="flex-grow bg-transparent border-none py-2 text-xs font-bold focus:outline-none text-library-primary dark:text-white placeholder:text-gray-400"
+          />
+          {(bookSearchInput || bookSearchQuery) && (
+            <button 
+              onClick={() => {
+                setBookSearchInput("");
+                setBookSearchQuery("");
+              }}
+              className="w-8 h-8 flex items-center justify-center rounded-lg bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors mr-2"
+            >
+              <X size={14} strokeWidth={3} />
+            </button>
+          )}
         </div>
 
         {loadingBooks ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="animate-spin text-emerald-500 mb-4" size={32} />
-            <p className="text-[10px] font-black text-gray-400">جاري تحميل المكتبة...</p>
+          <div className="flex flex-col items-center justify-center py-32 bg-white/40 dark:bg-dark-surface/40 rounded-3xl border border-gray-100 dark:border-white/5">
+            <div className="relative w-16 h-16 mb-4">
+              <div className="absolute inset-0 border-4 border-emerald-500/20 rounded-full"></div>
+              <div className="absolute inset-0 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+            <p className="text-[11px] font-black text-library-primary/60 dark:text-gray-400">جاري تحميل المكتبة...</p>
           </div>
         ) : books.length === 0 ? (
-          <div className="text-center py-20 bg-gray-50/50 dark:bg-white/[0.02] rounded-2xl border border-dashed border-gray-200 dark:border-white/10">
-            <BookOpen className="mx-auto text-gray-300 mb-2" size={40} />
-            <p className="text-gray-400 text-xs font-black">
+          <div className="flex flex-col items-center justify-center py-32 bg-white/40 dark:bg-dark-surface/40 rounded-3xl border border-gray-100 dark:border-white/5 text-center">
+            <div className="w-20 h-20 bg-gray-50 dark:bg-white/[0.02] rounded-full flex items-center justify-center mb-4">
+              <BookOpen className="text-gray-300 dark:text-white/20" size={32} />
+            </div>
+            <h3 className="text-sm font-black text-library-primary dark:text-white mb-1">لا توجد كتب</h3>
+            <p className="text-gray-400 text-[11px] font-bold">
               {bookSearchQuery ? "لم يتم العثور على نتائج للبحث" : "لا توجد كتب متاحة حالياً"}
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {books.map((book) => (
-              <motion.div 
-                layout
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                key={book.id} 
-                className="bg-white/80 dark:bg-[#121214]/80 backdrop-blur-xl rounded-xl p-4 border border-white dark:border-white/5 shadow-sm group hover:border-emerald-500/30 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
-              >
-                <div 
-                  className="flex items-center gap-3 cursor-pointer flex-grow w-full"
+          <div className="bg-white dark:bg-dark-surface rounded-2xl border border-gray-100 dark:border-white/[0.06] shadow-sm overflow-hidden">
+            <div className="hidden md:grid grid-cols-12 gap-4 p-4 bg-gray-50/80 dark:bg-white/[0.02] border-b border-gray-100 dark:border-white/[0.06] text-[10px] font-black text-gray-400 tracking-wider">
+              <div className="col-span-5">الكتاب</div>
+              <div className="col-span-4">التصنيف والحالة</div>
+              <div className="col-span-3 text-center">الإجراءات</div>
+            </div>
+            
+            <div className="divide-y divide-gray-100 dark:divide-white/[0.06]">
+              {books.map((book) => (
+                <motion.div 
+                  layout
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  key={book.id} 
+                  className="group relative p-4 hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors flex flex-col md:grid md:grid-cols-12 md:items-center gap-4 cursor-pointer"
                   onClick={() => {
                     setSelectedBook(book);
                     setIsBookModalOpen(true);
                   }}
                 >
-                  <div className="w-12 h-16 rounded-lg bg-gray-100 dark:bg-white/5 overflow-hidden border border-gray-100 dark:border-white/10 group-hover:scale-105 transition-transform duration-500 shadow-inner">
-                    {(book.bookCoverImageUrl || bookImageMap[book.id]) ? (
-                      <img 
-                        src={book.bookCoverImageUrl || bookImageMap[book.id]} 
-                        className="w-full h-full object-cover" 
-                        alt={book.title}
-                        loading="lazy"
-                        decoding="async"
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.parentElement.innerHTML = `<div class="w-full h-full flex items-center justify-center text-emerald-500/20 dark:text-white/20 text-xs font-black">B</div>`;
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-emerald-500/20 dark:text-white/20 text-xs font-black">
-                        B
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-grow">
-                    <h4 className="text-sm md:text-[11px] font-black text-library-primary dark:text-white mb-1 group-hover:text-emerald-500 transition-colors">{book.title}</h4>
-                    <div className="flex items-center gap-2">
-                      <p className="text-xs md:text-[9px] text-gray-500 font-bold">{book.authorName || book.author}</p>
-                      <span className="w-1 h-1 rounded-full bg-gray-300" />
-                      <p className="text-xs md:text-[9px] text-library-accent font-black">{book.category || "عام"}</p>
-                      
+                  {/* Book Info */}
+                  <div className="col-span-5 flex items-center gap-4">
+                    <div className="w-12 h-16 rounded-lg bg-gray-100 dark:bg-white/5 overflow-hidden border border-gray-200 dark:border-white/10 group-hover:border-emerald-500/50 transition-colors shadow-sm shrink-0">
+                      {(book.bookCoverImageUrl || bookImageMap[book.id]) ? (
+                        <img 
+                          src={book.bookCoverImageUrl || bookImageMap[book.id]} 
+                          className="w-full h-full object-cover" 
+                          alt={book.title}
+                          loading="lazy"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.parentElement.innerHTML = `<div class="w-full h-full flex items-center justify-center text-emerald-500/20 dark:text-white/20 text-xs font-black">B</div>`;
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-emerald-500/20 dark:text-white/20 text-xs font-black">
+                          B
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-[13px] font-black text-library-primary dark:text-white group-hover:text-emerald-500 transition-colors truncate">{book.title}</h3>
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400 font-bold mt-0.5 truncate">{book.authorName || book.author}</p>
                     </div>
                   </div>
-                </div>
 
-                <div className="flex items-center justify-between gap-3 w-full md:w-auto">
-                  <div className="flex items-center gap-1">
+                  {/* Status & Category */}
+                  <div className="col-span-4 hidden md:flex items-center gap-3">
+                    <span className="text-[11px] font-bold text-library-primary dark:text-gray-300">{book.category || "عام"}</span>
+                    <div className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
                     {subTab === "pending" ? (
-                      <>
-                        <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                        <span className="text-xs md:text-[10px] font-black text-amber-700 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/15">
-                          بانتظار المراجعة
-                        </span>
-                      </>
+                      <span className="text-[9px] font-black text-amber-600 bg-amber-50 dark:bg-amber-500/10 dark:text-amber-400 px-2 py-0.5 rounded-md border border-amber-500/10">بانتظار المراجعة</span>
+                    ) : String(book?.status || "").toLowerCase() === "rejected" ? (
+                      <span className="text-[9px] font-black text-rose-600 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400 px-2 py-0.5 rounded-md border border-rose-500/10">مرفوض</span>
+                    ) : String(book?.status || "").toLowerCase() === "pending" ? (
+                      <span className="text-[9px] font-black text-amber-600 bg-amber-50 dark:bg-amber-500/10 dark:text-amber-400 px-2 py-0.5 rounded-md border border-amber-500/10">بانتظار المراجعة</span>
                     ) : (
-                      <>
-                        {String(book?.status || "").toLowerCase() === "rejected" ? (
-                          <>
-                            <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                            <span className="text-xs md:text-[10px] font-black text-rose-700 bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-500/15">
-                              مرفوض
-                            </span>
-                          </>
-                        ) : String(book?.status || "").toLowerCase() === "pending" ? (
-                          <>
-                            <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                            <span className="text-xs md:text-[10px] font-black text-amber-700 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/15">
-                              بانتظار المراجعة
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                            <span className="text-xs md:text-[10px] font-black text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-                              معتمد
-                            </span>
-                          </>
-                        )}
-                      </>
+                      <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400 px-2 py-0.5 rounded-md border border-emerald-500/10">معتمد</span>
                     )}
                   </div>
-                  <div className="flex items-center gap-1">
-                    {subTab === "pending" && (
+
+                  {/* Actions */}
+                  <div className="col-span-3 flex items-center justify-end gap-2 w-full md:w-auto" onClick={(e) => e.stopPropagation()}>
+                    {subTab === "pending" ? (
                       <>
                         <button
                           onClick={(e) => {
@@ -914,7 +974,7 @@ const AdminDashboard = () => {
                             handleBookAction(book.id, "approve");
                           }}
                           disabled={processingBookId === book.id}
-                          className="px-2.5 py-1.5 rounded-lg bg-emerald-500 text-white text-[10px] font-black hover:bg-emerald-600 transition-all disabled:opacity-50"
+                          className="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 text-[10px] font-black hover:bg-emerald-500 hover:text-white transition-all border border-emerald-500/10 disabled:opacity-50"
                         >
                           {processingBookId === book.id ? "..." : "قبول"}
                         </button>
@@ -924,13 +984,12 @@ const AdminDashboard = () => {
                             handleBookAction(book.id, "reject");
                           }}
                           disabled={processingBookId === book.id}
-                          className="px-2.5 py-1.5 rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-600 text-[10px] font-black hover:bg-rose-500 hover:text-white transition-all disabled:opacity-50"
+                          className="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400 text-[10px] font-black hover:bg-rose-500 hover:text-white transition-all border border-rose-500/10 disabled:opacity-50"
                         >
                           {processingBookId === book.id ? "..." : "رفض"}
                         </button>
                       </>
-                    )}
-                    {subTab !== "pending" && (
+                    ) : (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -938,92 +997,32 @@ const AdminDashboard = () => {
                           handleBookAction(book.id, "delete");
                         }}
                         disabled={processingBookId === book.id}
-                        className="px-2.5 py-1.5 rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-600 text-[10px] font-black hover:bg-rose-500 hover:text-white transition-all disabled:opacity-50"
+                        className="px-3 py-1.5 rounded-lg bg-gray-50 text-gray-500 dark:bg-white/5 dark:text-gray-400 text-[10px] font-black hover:bg-rose-500 hover:text-white hover:border-rose-500 transition-all border border-gray-200 dark:border-white/10 disabled:opacity-50"
                       >
                         {processingBookId === book.id ? "..." : "حذف"}
                       </button>
                     )}
                     <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
+                      onClick={() => {
                         setSelectedBook(book);
                         setIsBookModalOpen(true);
                       }}
-                      className="p-1.5 rounded-lg bg-gray-50 dark:bg-white/5 text-gray-400 hover:text-emerald-500 hover:bg-emerald-500/10 transition-all"
+                      className="p-1.5 rounded-lg bg-gray-50 dark:bg-white/5 text-gray-400 hover:text-emerald-500 transition-colors border border-transparent hover:border-emerald-500/20"
                     >
                       <ArrowUpRight size={14} />
                     </button>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              ))}
+            </div>
           </div>
         )}
+        
         <Pagination 
           currentPage={currentBookPage} 
           totalPages={totalBookPages} 
           onPageChange={setCurrentBookPage} 
         />
-        <div className="bg-white/80 dark:bg-[#121214]/80 backdrop-blur-xl rounded-2xl p-4 border border-white dark:border-white/5 shadow-sm">
-          <div className="flex items-center justify-between mb-3">
-            <h4 className="text-sm font-black text-library-primary dark:text-white">إدارة النسخ (Admin)</h4>
-            <button
-              type="button"
-              onClick={fetchAdminCopies}
-              className="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-white/5 text-[10px] font-black text-library-primary dark:text-white"
-            >
-              تحديث
-            </button>
-          </div>
-          {loadingAdminCopies ? (
-            <div className="flex items-center gap-2 text-xs font-black text-gray-400">
-              <Loader2 size={14} className="animate-spin" />
-              جاري تحميل النسخ...
-            </div>
-          ) : adminCopies.length === 0 ? (
-            <p className="text-xs font-black text-gray-400">لا توجد نسخ لعرضها</p>
-          ) : (
-            <div className="space-y-2">
-              {adminCopies.map((copy) => {
-                const id = copy?.id || copy?.Id;
-                const title = copy?.bookTitle || copy?.BookTitle || copy?.book?.title || "كتاب";
-                const owner = copy?.ownerName || copy?.studentName || copy?.OwnerName || "طالب";
-                return (
-                  <div
-                    key={id}
-                    className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 rounded-xl border border-gray-100 dark:border-white/10 bg-white/60 dark:bg-white/[0.03] p-3"
-                  >
-                    <div className="text-xs font-bold text-gray-600 dark:text-gray-300">
-                      <span className="font-mono">#{id}</span> - {title} - {owner}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <select
-                        value={copyConditionDrafts[id] ?? 0}
-                        onChange={(e) =>
-                          setCopyConditionDrafts((prev) => ({ ...prev, [id]: Number(e.target.value) }))
-                        }
-                        className="rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#08080a] px-2 py-1.5 text-xs font-black text-library-primary dark:text-white"
-                      >
-                        <option value={0}>جديد</option>
-                        <option value={1}>جيد جداً</option>
-                        <option value={2}>مقبول</option>
-                        <option value={3}>مهترئ</option>
-                      </select>
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateCopyCondition(id)}
-                        disabled={updatingCopyId === id}
-                        className="px-3 py-1.5 rounded-lg bg-emerald-500 text-white text-[10px] font-black disabled:opacity-50"
-                      >
-                        {updatingCopyId === id ? "..." : "تحديث"}
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
       </div>
     );
   };
@@ -1041,7 +1040,7 @@ const AdminDashboard = () => {
         <motion.div 
           initial={{ scale: 0.9, y: 20 }}
           animate={{ scale: 1, y: 0 }}
-          className="bg-white dark:bg-[#0c0c0e] w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl relative z-10 border border-white/10"
+          className="bg-white dark:bg-dark-surface w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl relative z-10 border border-white/10"
           dir="rtl"
         >
           <div className="h-24 bg-gradient-to-r from-emerald-600 to-teal-600 relative">
@@ -1055,7 +1054,7 @@ const AdminDashboard = () => {
           
           <div className="px-8 pb-8">
             <div className="relative -mt-12 mb-6">
-              <div className="w-24 h-32 rounded-2xl bg-white dark:bg-[#121214] p-1.5 shadow-xl mx-auto">
+              <div className="w-24 h-32 rounded-2xl bg-white dark:bg-dark-surface p-1.5 shadow-xl mx-auto">
                 <div className="w-full h-full rounded-xl overflow-hidden bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 shadow-inner">
                   {(selectedBook.bookCoverImageUrl || bookImageMap[selectedBook.id]) ? (
                     <img 
@@ -1155,69 +1154,612 @@ const AdminDashboard = () => {
     );
   };
 
+  const CONDITION_NUM_MAP = { 0: "New", 1: "LikeNew", 2: "Acceptable", 3: "Poor" };
+  const CONDITION_STR_MAP = { "new": "New", "likenew": "LikeNew", "acceptable": "Acceptable", "poor": "Poor" };
+  const CONDITION_COLORS_BY_KEY = {
+    "New": { bg: "bg-emerald-50 dark:bg-emerald-500/10", text: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-500/15", dot: "bg-emerald-500" },
+    "LikeNew": { bg: "bg-blue-50 dark:bg-blue-500/10", text: "text-blue-600 dark:text-blue-400", border: "border-blue-500/15", dot: "bg-blue-500" },
+    "Acceptable": { bg: "bg-amber-50 dark:bg-amber-500/10", text: "text-amber-600 dark:text-amber-400", border: "border-amber-500/15", dot: "bg-amber-500" },
+    "Poor": { bg: "bg-rose-50 dark:bg-rose-500/10", text: "text-rose-600 dark:text-rose-400", border: "border-rose-500/15", dot: "bg-rose-500" },
+  };
+  const DEFAULT_COND_COLOR = CONDITION_COLORS_BY_KEY["New"];
 
-  const renderLendingList = () => {
-    if (loadingLendings) return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <Loader2 className="animate-spin text-amber-500 mb-4" size={32} />
-        <p className="text-[10px] font-black text-gray-400">جاري تحميل الإعارات...</p>
+  const normalizeConditionKey = (val) => {
+    if (val === null || val === undefined) return "New";
+    if (typeof val === "number") return CONDITION_NUM_MAP[val] || "New";
+    return CONDITION_STR_MAP[String(val).toLowerCase()] || "New";
+  };
+  const getConditionLabel = (val) => BOOK_COPY_CONDITION_LABELS[normalizeConditionKey(val)] || "غير محدد";
+  const getConditionColor = (val) => CONDITION_COLORS_BY_KEY[normalizeConditionKey(val)] || DEFAULT_COND_COLOR;
+
+  const STATE_NUM_MAP = { 0: "Available", 1: "Borrowed", 2: "Reserved", 3: "Lost", 4: "Damaged", 5: "UnAvailable" };
+  const STATE_STR_MAP = { "available": "Available", "borrowed": "Borrowed", "reserved": "Reserved", "lost": "Lost", "damaged": "Damaged", "unavailable": "UnAvailable" };
+
+  const getStateLabel = (copy) => {
+    const s = copy?.state ?? copy?.State;
+    if (s === null || s === undefined) return "غير محدد";
+    let key;
+    if (typeof s === "number") {
+      key = STATE_NUM_MAP[s];
+    } else {
+      key = STATE_STR_MAP[String(s).toLowerCase()];
+    }
+    return BOOK_COPY_STATE_LABELS[key] || String(s) || "غير محدد";
+  };
+
+  const renderCopyModal = () => {
+    if (!isCopyModalOpen || !selectedCopy) return null;
+    const copy = selectedCopy;
+    const id = copy?.id || copy?.Id;
+    const title = copy?.title || copy?.bookTitle || copy?.BookTitle || copy?.book?.title || "كتاب";
+    const owner = copy?.ownerName || copy?.studentName || copy?.OwnerName || "طالب";
+    const condVal = copyConditionDrafts[id] ?? normalizeConditionToNumber(copy?.condition);
+    const condColor = getConditionColor(condVal);
+
+    return (
+      <motion.div 
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6"
+      >
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsCopyModalOpen(false)} />
+        <motion.div 
+          initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}
+          className="bg-white dark:bg-dark-surface w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl relative z-10 border border-white/10"
+          dir="rtl"
+        >
+          <div className="h-24 bg-gradient-to-r from-teal-600 to-emerald-600 relative">
+            <button 
+              onClick={() => setIsCopyModalOpen(false)}
+              className="absolute top-4 left-4 w-8 h-8 rounded-full bg-white/10 backdrop-blur-md text-white flex items-center justify-center hover:bg-white/20 transition-all"
+            >
+              <X size={16} />
+            </button>
+            <div className="absolute bottom-4 right-6 flex items-center gap-2">
+              <Copy className="text-white/90" size={18} />
+              <h3 className="text-white font-black text-base drop-shadow-sm">تفاصيل النسخة</h3>
+            </div>
+          </div>
+          
+          <div className="px-8 pb-8">
+            <div className="relative -mt-10 mb-6">
+              <div className="w-20 h-20 rounded-2xl bg-white dark:bg-dark-surface p-1.5 shadow-xl mx-auto">
+                <div className="w-full h-full rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-500/10 dark:to-emerald-500/10 border border-teal-500/10 flex items-center justify-center">
+                  <BookOpen size={28} className="text-teal-500/50" />
+                </div>
+              </div>
+              <div className="mt-4 text-center">
+                <h3 className="text-lg font-black text-library-primary dark:text-white">{title}</h3>
+                <p className="text-[10px] text-library-accent font-black tracking-widest uppercase mt-1">نسخة #{id}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div>
+                <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">المالك</p>
+                <p className="text-[11px] font-bold text-library-primary dark:text-gray-200">{owner}</p>
+              </div>
+              <div>
+                <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">حالة التوفر</p>
+                <p className="text-[11px] font-bold text-library-primary dark:text-gray-200">{getStateLabel(copy)}</p>
+              </div>
+              <div>
+                <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">معرف الكتاب</p>
+                <p className="text-[11px] font-bold text-library-primary dark:text-gray-200">{copy?.bookId || "—"}</p>
+              </div>
+              <div>
+                <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">الحالة الفعلية الحالية</p>
+                <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-black border ${condColor.bg} ${condColor.text} ${condColor.border}`}>
+                  <div className={`w-1.5 h-1.5 rounded-full ${condColor.dot}`} />
+                  {getConditionLabel(copy?.condition ?? 0)}
+                </span>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5 mb-6">
+              <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                <Settings size={10} /> تعديل الحالة الفعلية
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {[0, 1, 2, 3].map((val) => {
+                  const c = getConditionColor(val);
+                  const isActive = (copyConditionDrafts[id] ?? 0) === val;
+                  return (
+                    <button
+                      key={val}
+                      onClick={() => setCopyConditionDrafts((prev) => ({ ...prev, [id]: val }))}
+                      className={`px-3 py-2.5 rounded-xl text-[10px] font-black border transition-all flex items-center justify-center gap-1.5 ${
+                        isActive 
+                          ? `${c.bg} ${c.text} ${c.border} ring-2 ring-offset-1 ring-current/20 scale-[1.02]` 
+                          : "bg-white dark:bg-white/5 text-gray-500 border-gray-100 dark:border-white/10 hover:border-gray-300"
+                      }`}
+                    >
+                      <div className={`w-1.5 h-1.5 rounded-full ${c.dot} ${isActive ? "" : "opacity-40"}`} />
+                      {getConditionLabel(val)}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={async () => {
+                  await handleUpdateCopyCondition(id);
+                  setIsCopyModalOpen(false);
+                }}
+                disabled={updatingCopyId === id}
+                className="w-full py-3 rounded-xl bg-emerald-500 text-white text-[11px] font-black hover:bg-emerald-600 transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
+              >
+                <Save size={14} />
+                {updatingCopyId === id ? "جاري الحفظ..." : "حفظ التعديلات"}
+              </button>
+              <button 
+                onClick={() => setIsCopyModalOpen(false)}
+                className="w-full py-3 rounded-xl bg-gray-100 dark:bg-white/5 text-library-primary dark:text-white text-[11px] font-black hover:bg-gray-200 dark:hover:bg-white/10 transition-all"
+              >
+                إغلاق النافذة
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    );
+  };
+
+  const renderCopiesList = () => {
+    if (loadingAdminCopies) return (
+      <div className="flex flex-col items-center justify-center py-32 bg-white/40 dark:bg-dark-surface/40 rounded-3xl border border-gray-100 dark:border-white/5">
+        <div className="relative w-16 h-16 mb-4">
+          <div className="absolute inset-0 border-4 border-teal-500/20 rounded-full"></div>
+          <div className="absolute inset-0 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+        <p className="text-[11px] font-black text-library-primary/60 dark:text-gray-400">جاري تحميل النسخ...</p>
       </div>
     );
 
-    if (lendings.length === 0) return (
-      <div className="text-center py-20 bg-gray-50/50 dark:bg-white/[0.02] rounded-2xl border border-dashed border-gray-200 dark:border-white/10">
-        <Clock className="mx-auto text-gray-300 mb-2" size={40} />
-        <p className="text-gray-400 text-xs font-black">لا يوجد عمليات إعارة حالياً</p>
+    if (adminCopies.length === 0) return (
+      <div className="flex flex-col items-center justify-center py-32 bg-white/40 dark:bg-dark-surface/40 rounded-3xl border border-gray-100 dark:border-white/5 text-center">
+        <div className="w-20 h-20 bg-gray-50 dark:bg-white/[0.02] rounded-full flex items-center justify-center mb-4">
+          <Copy className="text-gray-300 dark:text-white/20" size={32} />
+        </div>
+        <h3 className="text-sm font-black text-library-primary dark:text-white mb-1">لا توجد نسخ</h3>
+        <p className="text-gray-400 text-[11px] font-bold">لا توجد نسخ مسجلة في النظام حالياً</p>
       </div>
     );
 
     return (
-      <div className="space-y-3">
-        {lendings.map((lend) => (
-          <motion.div 
-            layout
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            key={lend.id} 
-            className="bg-white/80 dark:bg-[#121214]/80 backdrop-blur-xl rounded-xl p-4 border border-white dark:border-white/5 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4 group hover:border-amber-500/30 transition-all"
+      <div className="space-y-4">
+        <div className="flex items-center justify-between mb-2">
+          <button
+            type="button"
+            onClick={fetchAdminCopies}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white dark:bg-dark-surface border border-gray-100 dark:border-white/[0.06] text-[11px] font-black text-gray-500 hover:text-teal-600 hover:border-teal-500/30 transition-all shadow-sm"
           >
-            <div className="flex items-center gap-3 flex-grow">
-              <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-600 font-black text-xs">
-                {(lend.studentName || lend.ownerName || "S").charAt(0)}
-              </div>
-              <div>
-                <h4 className="text-sm md:text-[11px] font-black text-library-primary dark:text-white">{lend.studentName || lend.ownerName || "طالب"}</h4>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <BookMarked size={10} className="text-gray-400" />
-                  <p className="text-xs md:text-[9px] text-gray-500 font-bold">{lend.bookTitle || lend.title || "كتاب غير مسجل"}</p>
+            <RefreshCw size={13} className={loadingAdminCopies ? "animate-spin" : ""} />
+            تحديث القائمة
+          </button>
+        </div>
+
+        <div className="hidden md:grid grid-cols-12 gap-4 p-4 bg-white/80 dark:bg-dark-surface/80 rounded-2xl border border-gray-100 dark:border-white/[0.06] text-[10px] font-black text-gray-400 tracking-wider shadow-sm">
+          <div className="col-span-4">الكتاب</div>
+          <div className="col-span-3 text-center">الحالة الفعلية</div>
+          <div className="col-span-3 text-center">حالة التوفر</div>
+          <div className="col-span-2 text-left">الإجراءات</div>
+        </div>
+
+        <div className="space-y-3">
+          {adminCopies.map((copy) => {
+            const id = copy?.id || copy?.Id;
+            const title = copy?.title || copy?.bookTitle || copy?.BookTitle || copy?.book?.title || "كتاب";
+            const owner = copy?.ownerName || copy?.studentName || copy?.OwnerName || "طالب";
+            const condVal = normalizeConditionToNumber(copy?.condition ?? copy?.Condition);
+            const condColor = getConditionColor(condVal);
+
+            return (
+              <motion.div 
+                layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                key={id} 
+                className="bg-white dark:bg-dark-surface rounded-2xl p-4 border border-gray-100 dark:border-white/[0.06] shadow-sm flex flex-col md:grid md:grid-cols-12 md:items-center gap-4 group hover:border-teal-500/30 transition-all"
+              >
+                <div className="col-span-4 flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-500/10 dark:to-emerald-500/5 flex items-center justify-center border border-teal-500/10 shadow-sm shrink-0">
+                    <BookOpen size={18} className="text-teal-500/60" />
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="text-[13px] font-black text-library-primary dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors truncate">{title}</h4>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="font-mono text-[9px] text-library-accent font-black">#{id}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="col-span-3 flex items-center justify-center">
+                  <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black border ${condColor.bg} ${condColor.text} ${condColor.border}`}>
+                    <div className={`w-1.5 h-1.5 rounded-full ${condColor.dot}`} />
+                    {getConditionLabel(condVal)}
+                  </span>
+                </div>
+
+                <div className="col-span-3 flex items-center justify-center">
+                  <span className="px-3 py-1.5 rounded-lg text-[10px] font-black border bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-white/10">
+                    {getStateLabel(copy)}
+                  </span>
+                </div>
+                
+                <div className="col-span-2 flex items-center justify-end">
+                  <button 
+                    onClick={() => { setSelectedCopy(copy); setCopyConditionDrafts(prev => ({ ...prev, [id]: condVal })); setIsCopyModalOpen(true); }}
+                    className="w-full md:w-auto px-4 py-2 rounded-xl bg-gray-50 dark:bg-white/5 text-library-primary dark:text-white text-[11px] font-black hover:bg-teal-500 hover:text-white dark:hover:bg-teal-500/20 transition-all flex items-center justify-center gap-2 border border-gray-100 dark:border-white/10 shadow-sm"
+                  >
+                    <Eye size={14} />
+                    عرض
+                  </button>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+        <Pagination 
+          currentPage={currentCopiesPage} 
+          totalPages={totalCopiesPages} 
+          onPageChange={setCurrentCopiesPage} 
+        />
+      </div>
+    );
+  };
+
+
+  const handleViewLendingDetail = async (lend) => {
+    setSelectedLending(lend);
+    setIsLendingModalOpen(true);
+    setLoadingLendingDetail(true);
+    
+    try {
+      // Try to get full details from borrowing API first, then lending API
+      let detail;
+      if (subTab !== "active" && lend.id) {
+        detail = await borrowingApi.getById(lend.id);
+      } else if (lend.id) {
+        detail = await lendingApi.getById(lend.id);
+      }
+      
+      if (detail) {
+        setSelectedLending(prev => ({ ...prev, ...detail }));
+      }
+
+      // Try to load images
+      const ownerStudentId = detail?.ownerStudentId || detail?.ownerId || lend.ownerStudentId || lend.ownerId;
+      const borrowerStudentId = detail?.borrowingStudentId || detail?.studentId || lend.borrowingStudentId || lend.studentId;
+      const bookId = detail?.bookId || lend.bookId;
+
+      const imgPromises = [];
+      if (ownerStudentId && !studentImageMap[ownerStudentId]) {
+        imgPromises.push(
+          fetchProtectedImageSrc(getStudentImageUrl(ownerStudentId))
+            .then(src => src && setStudentImageMap(prev => ({ ...prev, [ownerStudentId]: src })))
+            .catch(() => {})
+        );
+      }
+      if (borrowerStudentId && !studentImageMap[borrowerStudentId]) {
+        imgPromises.push(
+          fetchProtectedImageSrc(getStudentImageUrl(borrowerStudentId))
+            .then(src => src && setStudentImageMap(prev => ({ ...prev, [borrowerStudentId]: src })))
+            .catch(() => {})
+        );
+      }
+      if (bookId && !bookImageMap[bookId]) {
+        imgPromises.push(
+          fetchProtectedImageSrc(getBookImageUrl(bookId))
+            .then(src => src && setBookImageMap(prev => ({ ...prev, [bookId]: src })))
+            .catch(() => {})
+        );
+      }
+      await Promise.allSettled(imgPromises);
+    } catch (err) {
+      console.error("Failed to load lending details:", err);
+    } finally {
+      setLoadingLendingDetail(false);
+    }
+  };
+
+  const renderLendingDetailModal = () => {
+    if (!isLendingModalOpen || !selectedLending) return null;
+
+    const lend = selectedLending;
+    const ownerStudentId = lend.ownerStudentId || lend.ownerId;
+    const borrowerStudentId = lend.borrowingStudentId || lend.studentId;
+    const bookId = lend.bookId;
+    
+    const ownerName = lend.ownerName || lend.ownerStudentName || "صاحب النسخة";
+    const borrowerName = lend.borrowingStudentName || lend.studentName || "الطالب المستعير";
+    const bookTitle = lend.bookTitle || lend.title || "كتاب";
+    const bookAuthor = lend.bookAuthor || lend.author || "";
+    const bookIsbn = lend.isbn || lend.bookIsbn || "";
+    
+    const requestDate = lend.requestDate || lend.createdAtUtc || lend.createdAt;
+    const returnDate = lend.expectedReturnDate || lend.expirationDateUtc || lend.expirationDate || lend.returnDate;
+    const borrowingDuration = lend.borrowingDurationInDays || lend.durationInDays;
+    
+    const stateValue = lend.state ?? lend.status;
+    const stateLabel = 
+      stateValue === 0 || stateValue === "Pending" ? "بانتظار الموافقة" :
+      stateValue === 1 || stateValue === "Approved" ? "تمت الموافقة" :
+      stateValue === 2 || stateValue === "Rejected" ? "مرفوض" :
+      stateValue === 3 || stateValue === "Expired" ? "منتهي" :
+      stateValue === 4 || stateValue === "Completed" ? "مكتمل" : 
+      subTab === "active" ? "نشطة" : "غير معروف";
+    const stateColor = 
+      stateValue === 0 || stateValue === "Pending" ? "amber" :
+      stateValue === 1 || stateValue === "Approved" ? "blue" :
+      stateValue === 2 || stateValue === "Rejected" ? "rose" :
+      stateValue === 4 || stateValue === "Completed" ? "emerald" : 
+      subTab === "active" ? "emerald" : "gray";
+
+    const formatDate = (d) => {
+      if (!d) return "—";
+      return new Date(d).toLocaleDateString('ar-EG', { 
+        year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit'
+      });
+    };
+
+    return (
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6"
+      >
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsLendingModalOpen(false)} />
+        <motion.div 
+          initial={{ scale: 0.9, y: 20 }}
+          animate={{ scale: 1, y: 0 }}
+          className="bg-white dark:bg-dark-surface w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl relative z-10 border border-white/10 flex flex-col max-h-[90vh]"
+          dir="rtl"
+        >
+          {/* Header */}
+          <div className="h-24 shrink-0 bg-gradient-to-r from-library-primary to-indigo-600 relative">
+            <button 
+              onClick={() => setIsLendingModalOpen(false)}
+              className="absolute top-4 left-4 w-8 h-8 rounded-full bg-white/10 backdrop-blur-md text-white flex items-center justify-center hover:bg-white/20 transition-all z-10"
+            >
+              <X size={16} />
+            </button>
+            <div className="absolute bottom-4 right-6 flex items-center gap-2">
+              <ArrowLeftRight className="text-white/90" size={20} />
+              <h3 className="text-white font-black text-base drop-shadow-sm">تفاصيل عملية الإعارة</h3>
+            </div>
+            <span className={`absolute bottom-4 left-6 px-3 py-1 rounded-full text-[10px] font-black border bg-${stateColor}-500/20 text-white border-white/30 backdrop-blur-sm`}>
+              {stateLabel}
+            </span>
+          </div>
+
+          {loadingLendingDetail ? (
+            <div className="flex flex-col items-center justify-center py-20 flex-grow">
+              <Loader2 className="animate-spin text-amber-500 mb-3" size={32} />
+              <p className="text-xs font-black text-gray-400">جاري تحميل التفاصيل...</p>
+            </div>
+          ) : (
+            <div className="px-6 py-6 space-y-6 overflow-y-auto flex-grow scrollbar-thin">
+              
+              {/* Book Section */}
+              <div className="flex items-start gap-4 p-4 rounded-2xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5">
+                <div className="w-14 h-20 rounded-xl bg-gray-100 dark:bg-white/5 overflow-hidden border border-gray-100 dark:border-white/10 shadow-inner shrink-0">
+                  {(lend.bookCoverImageUrl || bookImageMap[bookId]) ? (
+                    <img src={lend.bookCoverImageUrl || bookImageMap[bookId]} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-white/20">
+                      <BookOpen size={20} />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-grow min-w-0">
+                  <p className="text-[9px] text-amber-500 font-black mb-1 uppercase tracking-widest">الكتاب</p>
+                  <h4 className="text-sm font-black text-library-primary dark:text-white leading-snug truncate">{bookTitle}</h4>
+                  {bookAuthor && <p className="text-[11px] text-gray-500 dark:text-gray-400 font-bold mt-0.5">{bookAuthor}</p>}
+                  {bookIsbn && <p className="text-[9px] text-gray-400 mt-1 font-mono">ISBN: {bookIsbn}</p>}
+                  {bookId && <p className="text-[9px] text-gray-400 mt-0.5">معرف الكتاب: #{bookId}</p>}
                 </div>
               </div>
-            </div>
 
-            <div className="flex items-center justify-between w-full md:w-auto gap-4">
-              <div className="hidden sm:block text-right">
-                <p className="text-[7px] text-gray-400 font-black uppercase mb-0.5">
+              {/* Owner & Borrower — Side by Side */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* Owner */}
+                <div className="p-4 rounded-2xl bg-emerald-500/[0.04] dark:bg-emerald-500/[0.06] border border-emerald-500/10">
+                  <p className="text-[9px] text-emerald-600 dark:text-emerald-400 font-black mb-3 uppercase tracking-widest flex items-center gap-1.5">
+                    <Shield size={10} /> صاحب النسخة
+                  </p>
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-white dark:bg-white/10 overflow-hidden border border-emerald-500/15 shadow-sm shrink-0">
+                      {(ownerStudentId && studentImageMap[ownerStudentId]) ? (
+                        <img src={studentImageMap[ownerStudentId]} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-emerald-500/40">
+                          <Users size={14} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-black text-library-primary dark:text-white truncate">{ownerName}</p>
+                      {ownerStudentId && <p className="text-[8px] text-gray-400 mt-0.5">#{ownerStudentId}</p>}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Borrower */}
+                <div className="p-4 rounded-2xl bg-indigo-500/[0.04] dark:bg-indigo-500/[0.06] border border-indigo-500/10">
+                  <p className="text-[9px] text-indigo-600 dark:text-indigo-400 font-black mb-3 uppercase tracking-widest flex items-center gap-1.5">
+                    <Users size={10} /> المستعير
+                  </p>
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-white dark:bg-white/10 overflow-hidden border border-indigo-500/15 shadow-sm shrink-0">
+                      {(borrowerStudentId && studentImageMap[borrowerStudentId]) ? (
+                        <img src={studentImageMap[borrowerStudentId]} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-indigo-500/40">
+                          <Users size={14} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-black text-library-primary dark:text-white truncate">{borrowerName}</p>
+                      {borrowerStudentId && <p className="text-[8px] text-gray-400 mt-0.5">#{borrowerStudentId}</p>}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Timeline / Dates */}
+              <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5 space-y-3">
+                <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest flex items-center gap-1.5">
+                  <CalendarDays size={10} /> التواريخ والمدة
+                </p>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-[8px] text-gray-400 font-black mb-0.5">تاريخ الطلب</p>
+                    <p className="text-[11px] font-black text-library-primary dark:text-white">{formatDate(requestDate)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[8px] text-gray-400 font-black mb-0.5">تاريخ الإرجاع المتوقع</p>
+                    <p className={`text-[11px] font-black ${lend.isOverdue ? 'text-rose-500' : 'text-library-primary dark:text-white'}`}>{formatDate(returnDate)}</p>
+                  </div>
+                </div>
+
+                {borrowingDuration && (
+                  <div className="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-white/5">
+                    <Clock size={12} className="text-gray-400" />
+                    <p className="text-[10px] font-black text-gray-500">مدة الإعارة: <span className="text-library-primary dark:text-white">{borrowingDuration} يوم</span></p>
+                  </div>
+                )}
+
+                {lend.isOverdue && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-rose-500/5 border border-rose-500/10">
+                    <ShieldAlert size={12} className="text-rose-500" />
+                    <p className="text-[10px] font-black text-rose-500">تأخر في الإرجاع!</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Additional Details (if any IDs available) */}
+              {(lend.bookCopyId || lend.lendingRecordId || lend.id) && (
+                <div className="flex items-center gap-3 flex-wrap text-[8px] font-mono text-gray-400 px-1">
+                  {lend.id && <span>طلب: #{lend.id}</span>}
+                  {lend.lendingRecordId && <span>• سجل: #{lend.lendingRecordId}</span>}
+                  {lend.bookCopyId && <span>• نسخة: #{lend.bookCopyId}</span>}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Footer */}
+          <div className="px-6 pb-5">
+            <button 
+              onClick={() => setIsLendingModalOpen(false)}
+              className="w-full py-3 rounded-xl bg-gray-100 dark:bg-white/5 text-library-primary dark:text-white text-[11px] font-black hover:bg-gray-200 dark:hover:bg-white/10 transition-all"
+            >
+              إغلاق النافذة
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    );
+  };
+
+
+  const renderLendingList = () => {
+    if (loadingLendings) return (
+      <div className="flex flex-col items-center justify-center py-32 bg-white/40 dark:bg-dark-surface/40 rounded-3xl border border-gray-100 dark:border-white/5">
+        <div className="relative w-16 h-16 mb-4">
+          <div className="absolute inset-0 border-4 border-amber-500/20 rounded-full"></div>
+          <div className="absolute inset-0 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+        <p className="text-[11px] font-black text-library-primary/60 dark:text-gray-400">جاري تحميل الإعارات...</p>
+      </div>
+    );
+
+    if (lendings.length === 0) return (
+      <div className="flex flex-col items-center justify-center py-32 bg-white/40 dark:bg-dark-surface/40 rounded-3xl border border-gray-100 dark:border-white/5 text-center">
+        <div className="w-20 h-20 bg-gray-50 dark:bg-white/[0.02] rounded-full flex items-center justify-center mb-4">
+          <Clock className="text-gray-300 dark:text-white/20" size={32} />
+        </div>
+        <h3 className="text-sm font-black text-library-primary dark:text-white mb-1">لا يوجد إعارات</h3>
+        <p className="text-gray-400 text-[11px] font-bold">لا يوجد عمليات إعارة حالياً في هذا القسم</p>
+      </div>
+    );
+
+    return (
+      <div className="space-y-4">
+        <div className="hidden md:grid grid-cols-12 gap-4 p-4 bg-white/80 dark:bg-dark-surface/80 rounded-2xl border border-gray-100 dark:border-white/[0.06] text-[10px] font-black text-gray-400 tracking-wider shadow-sm">
+          <div className="col-span-4">المستعير والكتاب</div>
+          <div className="col-span-3 text-center">التاريخ</div>
+          <div className="col-span-3 text-center">الحالة</div>
+          <div className="col-span-2 text-left">الإجراءات</div>
+        </div>
+
+        <div className="space-y-3">
+          {lendings.map((lend) => (
+            <motion.div 
+              layout
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              key={lend.id} 
+              className="bg-white dark:bg-dark-surface rounded-2xl p-4 border border-gray-100 dark:border-white/[0.06] shadow-sm flex flex-col md:grid md:grid-cols-12 md:items-center gap-4 group hover:border-amber-500/30 transition-all"
+            >
+              <div className="col-span-4 flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-500/10 dark:to-amber-500/5 flex items-center justify-center text-amber-600 dark:text-amber-500 font-black text-sm border border-amber-500/10 shadow-sm shrink-0">
+                  {(lend.studentName || lend.ownerName || "S").charAt(0)}
+                </div>
+                <div className="min-w-0">
+                  <h4 className="text-[13px] font-black text-library-primary dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-500 transition-colors truncate">
+                    {lend.studentName || lend.ownerName || "طالب"}
+                  </h4>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <BookMarked size={10} className="text-gray-400 shrink-0" />
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 font-bold truncate">
+                      {lend.bookTitle || lend.title || "كتاب غير مسجل"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="col-span-3 flex flex-row md:flex-col items-center md:items-center justify-between md:justify-center border-t md:border-none border-gray-100 dark:border-white/5 pt-3 md:pt-0 gap-2">
+                <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest">
                   {subTab === "active" ? "تاريخ الإرجاع" : "تاريخ الطلب"}
                 </p>
-                <p className={`text-[10px] font-black ${lend.isOverdue ? 'text-rose-500' : 'text-library-primary dark:text-white'}`}>
-                  {new Date(lend.expectedReturnDate || lend.returnDate || lend.requestDate || lend.createdAt || new Date()).toLocaleDateString('ar-EG', { day: '2-digit', month: 'short' })}
-                </p>
+                <div className="flex items-center gap-1.5">
+                  <Calendar size={12} className={lend.isOverdue ? 'text-rose-500' : 'text-gray-400'} />
+                  <p className={`text-[11px] font-black ${lend.isOverdue ? 'text-rose-500' : 'text-library-primary dark:text-white'}`}>
+                    {new Date(lend.expectedReturnDate || lend.returnDate || lend.requestDate || lend.createdAt || new Date()).toLocaleDateString('ar-EG', { day: '2-digit', month: 'short' })}
+                  </p>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className={`px-2.5 py-1 rounded-full text-[10px] md:text-[8px] font-black border ${subTab === "active" ? 'bg-emerald-500/5 text-emerald-600 border-emerald-500/10' : (subTab === "pending_owner" ? 'bg-amber-500/5 text-amber-600 border-amber-500/10' : 'bg-blue-500/5 text-blue-600 border-blue-500/10')}`}>
+
+              <div className="col-span-3 flex items-center justify-center">
+                <span className={`px-3 py-1.5 rounded-lg text-[10px] font-black border flex items-center gap-1.5 ${
+                  subTab === "active" ? 'bg-emerald-50 text-emerald-600 border-emerald-500/10 dark:bg-emerald-500/10 dark:text-emerald-400' : 
+                  (subTab === "pending_owner" ? 'bg-amber-50 text-amber-600 border-amber-500/10 dark:bg-amber-500/10 dark:text-amber-400' : 
+                  'bg-blue-50 text-blue-600 border-blue-500/10 dark:bg-blue-500/10 dark:text-blue-400')
+                }`}>
+                  <div className={`w-1.5 h-1.5 rounded-full ${
+                    subTab === "active" ? 'bg-emerald-500' : 
+                    (subTab === "pending_owner" ? 'bg-amber-500' : 'bg-blue-500')
+                  }`} />
                   {subTab === "active" ? 'نشطة' : (subTab === "pending_owner" ? 'بانتظار المالك' : 'بانتظار التسليم')}
                 </span>
-                
+              </div>
+              
+              <div className="col-span-2 flex items-center justify-end">
                 <button 
-                  onClick={() => toast("سيتم عرض التفاصيل قريباً")}
-                  className="px-3 py-2 rounded-lg bg-gray-100 dark:bg-white/5 text-library-primary dark:text-white text-xs md:text-[9px] font-black hover:bg-gray-200 dark:hover:bg-white/10 transition-all"
+                  onClick={() => handleViewLendingDetail(lend)}
+                  className="w-full md:w-auto px-4 py-2 rounded-xl bg-gray-50 dark:bg-white/5 text-library-primary dark:text-white text-[11px] font-black hover:bg-library-primary hover:text-white dark:hover:bg-white/10 transition-all flex items-center justify-center gap-2 border border-gray-100 dark:border-white/10 shadow-sm"
                 >
-                  عرض التفاصيل
+                  <Eye size={14} />
+                  التفاصيل
                 </button>
               </div>
-            </div>
-          </motion.div>
-        ))}
+            </motion.div>
+          ))}
+        </div>
         <Pagination 
           currentPage={currentLendingPage} 
           totalPages={totalLendingPages} 
@@ -1249,7 +1791,7 @@ const AdminDashboard = () => {
       <div className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Lending Efficiency Chart */}
-          <div className="bg-white/60 dark:bg-[#121214]/60 backdrop-blur-xl rounded-2xl p-6 border border-white dark:border-white/5 shadow-sm">
+          <div className="bg-white/60 dark:bg-dark-surface/60 backdrop-blur-xl rounded-2xl p-6 border border-white dark:border-white/5 shadow-sm">
             <h3 className="text-sm font-black text-library-primary dark:text-white mb-6 flex items-center gap-2">
               <BookOpen className="text-emerald-500" size={16} />
               معدل تداول الكتب الفعلي
@@ -1282,7 +1824,7 @@ const AdminDashboard = () => {
           </div>
 
           {/* Student Engagement */}
-          <div className="bg-white/60 dark:bg-[#121214]/60 backdrop-blur-xl rounded-2xl p-6 border border-white dark:border-white/5 shadow-sm">
+          <div className="bg-white/60 dark:bg-dark-surface/60 backdrop-blur-xl rounded-2xl p-6 border border-white dark:border-white/5 shadow-sm">
             <h3 className="text-sm font-black text-library-primary dark:text-white mb-6 flex items-center gap-2">
               <Users className="text-indigo-500" size={16} />
               تحليل تفاعل المستخدمين
@@ -1366,9 +1908,9 @@ const AdminDashboard = () => {
       subTabs: [
         { id: "verified", title: "الموثقون", icon: CheckCircle2 },
         { id: "all", title: "كل الطلاب", icon: Users },
-        { id: "pending_approval", title: "في انتظار الموافقة", icon: Clock },
-        { id: "pending_verification", title: "في انتظار التوثيق", icon: UserPlus },
-        { id: "unconfirmed", title: "حسابات غير مؤكدة", icon: Mail },
+        { id: "pending_approval", title: "انتظار الموافقة", icon: Clock },
+        { id: "pending_verification", title: "انتظار التوثيق", icon: UserPlus },
+        { id: "unconfirmed", title: "غير مؤكدة", icon: Mail },
         { id: "banned", title: "المحظورون", icon: UserX }
       ]
     },
@@ -1378,19 +1920,23 @@ const AdminDashboard = () => {
       icon: BookOpen, 
       color: "emerald",
       subTabs: [
-        { id: "all", title: "الكل", icon: BookOpen },
-        { id: "pending", title: "قيد المراجعة", icon: Clock }
+        { id: "all", title: "المتاحة", icon: BookOpen },
+        { id: "pending", title: "قيد المراجعة", icon: Clock },
+        { id: "rejected", title: "المرفوضة", icon: XCircle }
       ]
     },
+    { id: "copies", title: "إدارة النسخ", icon: Copy, color: "teal" },
     { 
       id: "lending", 
       title: "الإعارات", 
-      icon: Clock, 
+      icon: BookMarked, 
       color: "amber",
       subTabs: [
         { id: "active", title: "نشطة", icon: CheckCircle2 },
-        { id: "pending_owner", title: "بانتظار موافقة المالك", icon: Clock },
-        { id: "pending_handover", title: "بانتظار التسليم", icon: AlertCircle }
+        { id: "pending_owner", title: "بانتظار القبول", icon: Clock },
+        { id: "pending_handover", title: "تم القبول", icon: Check },
+        { id: "rejected", title: "مرفوضة", icon: XCircle },
+        { id: "completed", title: "مكتملة", icon: CheckCircle2 }
       ]
     }
   ];
@@ -1400,30 +1946,30 @@ const AdminDashboard = () => {
     if (!currentItem?.subTabs) return null;
 
     return (
-      <div className="flex items-center gap-2 mb-6 overflow-x-auto no-scrollbar pb-1">
+      <div className="flex items-center gap-2 mb-8 overflow-x-auto no-scrollbar pb-2">
         {currentItem.subTabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setSubTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black transition-all whitespace-nowrap border relative ${
+            className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-[11px] font-black transition-all whitespace-nowrap border relative group ${
               subTab === tab.id
-                ? "bg-library-primary text-white border-library-primary shadow-md"
-                : "bg-white dark:bg-white/5 text-gray-500 border-gray-100 dark:border-white/5 hover:border-library-accent/30"
+                ? "bg-library-primary text-white border-library-primary shadow-lg shadow-library-primary/20 scale-[1.02]"
+                : "bg-white dark:bg-dark-surface text-gray-500 border-gray-100 dark:border-white/5 hover:border-library-accent/30 hover:text-library-primary dark:hover:text-white"
             }`}
           >
             <div className="relative">
-              <tab.icon size={14} />
+              <tab.icon size={15} className={subTab === tab.id ? "text-library-accent" : "text-gray-400 group-hover:text-library-accent transition-colors"} strokeWidth={subTab === tab.id ? 2.5 : 2} />
               {activeTab === "students" && tab.id === "pending" && parseInt(statsData.requests.value) > 0 && (
-                <span className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-rose-500 rounded-full border border-white dark:border-[#121214] animate-pulse" />
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-rose-500 rounded-full border border-white dark:border-[#121214] animate-pulse" />
               )}
               {activeTab === "books" && tab.id === "pending" && (statsData.pendingBooksCount || 0) > 0 && (
-                <span className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-rose-500 rounded-full border border-white dark:border-[#121214] animate-pulse" />
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-rose-500 rounded-full border border-white dark:border-[#121214] animate-pulse" />
               )}
             </div>
             {tab.title}
             {activeTab === "students" && tab.id === "pending" && parseInt(statsData.requests.value) > 0 && (
-              <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-sm ml-1 ${
-                subTab === tab.id ? "bg-white/20 text-white" : "bg-rose-500/10 text-rose-500"
+              <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md ml-1 ${
+                subTab === tab.id ? "bg-white/20 text-white" : "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400"
               }`}>
                 {statsData.requests.value}
               </span>
@@ -1436,74 +1982,91 @@ const AdminDashboard = () => {
 
   const renderContent = () => {
     if (loading) return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="w-12 h-12 border-4 border-library-accent border-t-transparent rounded-full animate-spin"></div>
+      <div className="flex flex-col items-center justify-center min-h-[400px]">
+        <div className="relative w-16 h-16">
+          <div className="absolute inset-0 border-4 border-library-accent/20 rounded-full"></div>
+          <div className="absolute inset-0 border-4 border-library-accent border-t-transparent rounded-full animate-spin"></div>
+        </div>
+        <p className="mt-4 text-xs font-black text-library-primary/60 dark:text-gray-400">جاري تحميل البيانات...</p>
       </div>
     );
 
-    if (activeTab === "students") {
-      return (
-        <div className="space-y-6">
-          {renderSubNav()}
-          {renderStudentsList()}
-        </div>
-      );
-    }
-
-    if (activeTab === "books") {
-      return (
-        <div className="space-y-6">
-          {renderSubNav()}
-          {renderBooksList()}
-        </div>
-      );
-    }
-
-    if (activeTab === "lending") {
-      return (
-        <div className="space-y-6">
-          {renderSubNav()}
-          {renderLendingList()}
-        </div>
-      );
-    }
-
+    if (activeTab === "students") return <div className="space-y-6"><motion.div initial={{opacity:0, y:-10}} animate={{opacity:1, y:0}}>{renderSubNav()}</motion.div>{renderStudentsList()}</div>;
+    if (activeTab === "books") return <div className="space-y-6"><motion.div initial={{opacity:0, y:-10}} animate={{opacity:1, y:0}}>{renderSubNav()}</motion.div>{renderBooksList()}</div>;
+    if (activeTab === "copies") return <div className="space-y-6"><motion.div initial={{opacity:0, y:-10}} animate={{opacity:1, y:0}}></motion.div>{renderCopiesList()}</div>;
+    if (activeTab === "lending") return <div className="space-y-6"><motion.div initial={{opacity:0, y:-10}} animate={{opacity:1, y:0}}>{renderSubNav()}</motion.div>{renderLendingList()}</div>;
 
     return (
-      <div className="space-y-6">
+      <motion.div initial={{opacity:0}} animate={{opacity:1}} className="space-y-8">
         {activeTab !== "overview" && renderSubNav()}
         
         {activeTab === "overview" ? (
-          <div className="space-y-6">
-            {/* Actionable Tasks Summary (Simplified) */}
+          <div className="space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {recentRequests.length > 0 && (
-                <div className="bg-white/60 dark:bg-[#121214]/60 backdrop-blur-xl rounded-2xl p-5 border border-white dark:border-white/5 shadow-sm">
-                  <h3 className="text-sm font-black text-library-primary dark:text-white mb-4 flex items-center gap-2">
-                    <Clock className="text-amber-500" size={16} />
-                    طلبات استعارة عاجلة
-                  </h3>
-                  <div className="space-y-2">
+                <div className="bg-white dark:bg-dark-surface rounded-2xl p-6 border border-gray-100 dark:border-white/[0.06] shadow-sm relative overflow-hidden group">
+                  <div className="absolute -left-10 -top-10 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl group-hover:bg-amber-500/10 transition-colors"></div>
+                  <div className="flex items-center justify-between mb-6 relative z-10">
+                    <h3 className="text-sm font-black text-library-primary dark:text-white flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                        <Clock size={16} strokeWidth={2} />
+                      </div>
+                      طلبات استعارة عاجلة
+                    </h3>
+                    <button onClick={() => { setActiveTab("lending"); setSubTab("pending_owner"); }} className="text-[10px] font-black text-amber-600 bg-amber-50 dark:bg-amber-500/10 px-3 py-1.5 rounded-lg hover:bg-amber-100 transition-colors">عرض الكل</button>
+                  </div>
+                  <div className="space-y-3 relative z-10">
                     {recentRequests.slice(0, 3).map((req) => (
-                      <div key={req.id} className="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-white/5">
-                        <p className="text-[10px] font-black text-library-primary dark:text-white">{req.studentName}</p>
-                        <p className="text-[9px] text-gray-400 font-bold truncate max-w-[100px]">{req.bookTitle}</p>
+                      <div key={req.id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50/80 dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.05] hover:border-amber-500/20 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-white dark:bg-dark-bg border border-gray-100 dark:border-white/5 flex items-center justify-center text-[10px] font-black text-library-primary">
+                            {(req.studentName || "ط").charAt(0)}
+                          </div>
+                          <div>
+                            <p className="text-[11px] font-black text-library-primary dark:text-white">{req.studentName}</p>
+                            <p className="text-[9px] text-gray-400 font-bold flex items-center gap-1 mt-0.5"><BookMarked size={10} /> {req.bookTitle}</p>
+                          </div>
+                        </div>
+                        <span className="text-[9px] font-black text-amber-600 bg-amber-500/10 px-2 py-1 rounded-md border border-amber-500/10">بانتظار الموافقة</span>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
+              
               {recentStudents.length > 0 && (
-                <div className="bg-white/60 dark:bg-[#121214]/60 backdrop-blur-xl rounded-2xl p-5 border border-white dark:border-white/5 shadow-sm">
-                  <h3 className="text-sm font-black text-library-primary dark:text-white mb-4 flex items-center gap-2">
-                    <ShieldAlert className="text-rose-500" size={16} />
-                    طلاب بانتظار التوثيق
-                  </h3>
-                  <div className="space-y-2">
+                <div className="bg-white dark:bg-dark-surface rounded-2xl p-6 border border-gray-100 dark:border-white/[0.06] shadow-sm relative overflow-hidden group">
+                  <div className="absolute -left-10 -top-10 w-32 h-32 bg-rose-500/5 rounded-full blur-2xl group-hover:bg-rose-500/10 transition-colors"></div>
+                  <div className="flex items-center justify-between mb-6 relative z-10">
+                    <h3 className="text-sm font-black text-library-primary dark:text-white flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500 flex items-center justify-center">
+                        <ShieldAlert size={16} strokeWidth={2} />
+                      </div>
+                      طلاب بانتظار التوثيق
+                    </h3>
+                    <button onClick={() => { setActiveTab("students"); setSubTab("pending_approval"); }} className="text-[10px] font-black text-rose-600 bg-rose-50 dark:bg-rose-500/10 px-3 py-1.5 rounded-lg hover:bg-rose-100 transition-colors">مراجعة الطلبات</button>
+                  </div>
+                  <div className="space-y-3 relative z-10">
                     {recentStudents.slice(0, 3).map((student) => (
-                      <div key={student.id} className="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-white/5">
-                        <p className="text-[10px] font-black text-library-primary dark:text-white">{student.fullName}</p>
-                        <button onClick={() => { setSelectedStudent(student); setIsModalOpen(true); }} className="text-[8px] font-black text-library-accent">عرض</button>
+                      <div key={student.id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50/80 dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.05] hover:border-rose-500/20 transition-colors group/item">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg overflow-hidden border border-gray-200 dark:border-white/10">
+                            {student.profileImageUrl ? (
+                              <img src={student.profileImageUrl} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full bg-rose-500/10 flex items-center justify-center text-[10px] font-black text-rose-500">
+                                {student.fullName.charAt(0)}
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-[11px] font-black text-library-primary dark:text-white">{student.fullName}</p>
+                            <p className="text-[9px] text-gray-400 font-bold">{student.universityId}</p>
+                          </div>
+                        </div>
+                        <button onClick={() => { setSelectedStudent(student); setIsModalOpen(true); }} className="w-7 h-7 rounded-lg bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 flex items-center justify-center text-gray-400 hover:text-rose-500 hover:border-rose-500/30 transition-all shadow-sm group-hover/item:bg-rose-500 group-hover/item:text-white group-hover/item:border-rose-500">
+                          <ArrowLeftRight size={12} className="rotate-45" />
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -1511,33 +2074,28 @@ const AdminDashboard = () => {
               )}
             </div>
 
-            {/* Integrated Reports Content */}
             {renderReports()}
           </div>
         ) : (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white/60 dark:bg-[#121214]/60 backdrop-blur-xl rounded-2xl p-12 flex flex-col items-center justify-center border border-white dark:border-white/5 min-h-[400px] text-center"
-          >
-            <div className="w-20 h-20 rounded-full bg-gray-50 dark:bg-white/5 flex items-center justify-center mb-6 relative">
-              <div className="absolute inset-0 bg-library-accent/20 blur-xl rounded-full animate-pulse" />
-              <Settings className="text-library-primary/20 dark:text-white/20 animate-spin-slow relative z-10" size={40} />
+          <div className="bg-white dark:bg-dark-surface rounded-3xl p-16 flex flex-col items-center justify-center border border-gray-100 dark:border-white/[0.06] shadow-sm text-center relative overflow-hidden">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(199,163,95,0.05),transparent_50%)]"></div>
+            <div className="w-24 h-24 rounded-2xl bg-gray-50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/5 flex items-center justify-center mb-6 relative z-10 shadow-inner">
+              <div className="absolute inset-0 bg-library-accent/20 blur-2xl rounded-full animate-pulse" />
+              <Settings className="text-library-accent animate-spin-slow relative z-10" size={40} strokeWidth={1.5} />
             </div>
-            <h2 className="text-xl font-black text-library-primary dark:text-white mb-2">قسم {menuItems.find(i => i.id === activeTab)?.title}</h2>
-            <p className="text-gray-500 dark:text-gray-400 font-bold max-w-sm mb-2 leading-relaxed text-xs">
-              أنت الآن في تبويب: <span className="text-library-accent">{menuItems.find(i => i.id === activeTab)?.subTabs?.find(s => s.id === subTab)?.title || subTab}</span>
+            <h2 className="text-2xl font-black text-library-primary dark:text-white mb-2 relative z-10 tracking-tight">قسم {menuItems.find(i => i.id === activeTab)?.title}</h2>
+            <p className="text-gray-500 dark:text-gray-400 font-bold max-w-sm mb-8 leading-relaxed text-sm relative z-10">
+              أنت الآن في تبويب: <span className="text-library-accent px-2 py-1 rounded-md bg-library-accent/10 ml-1">{menuItems.find(i => i.id === activeTab)?.subTabs?.find(s => s.id === subTab)?.title || subTab}</span>
             </p>
-            <p className="text-gray-400 text-[10px] font-bold mb-8">جاري العمل على ربط البيانات التفصيلية لهذا القسم من الـ API.</p>
             <button 
               onClick={() => setActiveTab("overview")}
-              className="bg-library-primary dark:bg-white text-white dark:text-library-primary px-8 py-3 rounded-xl text-xs font-black shadow-lg hover:-translate-y-1 transition-all active:scale-95"
+              className="bg-library-primary dark:bg-white text-white dark:text-library-primary px-8 py-3.5 rounded-xl text-xs font-black shadow-lg shadow-library-primary/20 dark:shadow-white/10 hover:-translate-y-1 transition-all active:scale-95 relative z-10"
             >
               الرجوع للرئيسية
             </button>
-          </motion.div>
+          </div>
         )}
-      </div>
+      </motion.div>
     );
   };
 
@@ -1546,78 +2104,79 @@ const AdminDashboard = () => {
   return (
     <>
       <Navbar />
-      <div className="h-screen bg-gray-50/50 dark:bg-[#08080a] pt-16 lg:pt-[68px] flex flex-col lg:flex-row gap-0 overflow-hidden" style={{ direction: "rtl" }}>
+      <div className="h-screen bg-library-paper dark:bg-dark-bg pt-16 lg:pt-[68px] flex flex-col lg:flex-row gap-0 overflow-hidden" style={{ direction: "rtl" }}>
         
-        {/* New Leaner Glass Sidebar - Hidden on mobile */}
-        <div className="hidden lg:block lg:w-[272px] h-full pr-0 pl-3 pb-0">
-          <div className="bg-white/80 dark:bg-[#121214]/80 backdrop-blur-2xl h-full rounded-l-2xl rounded-r-none p-5 border border-white dark:border-white/5 shadow-sm flex flex-col relative overflow-hidden">
-            <div className="absolute -left-20 -bottom-20 w-40 h-40 bg-library-accent/10 rounded-full blur-[80px]" />
+        {/* Premium Dark Sidebar */}
+        <div className="hidden lg:block lg:w-[260px] h-full shrink-0">
+          <div className="bg-library-primary dark:bg-[#0c1220] h-full p-5 flex flex-col relative overflow-hidden">
+            <div className="absolute -left-20 bottom-20 w-40 h-40 bg-library-accent/15 rounded-full blur-[100px]" />
+            <div className="absolute right-0 top-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-[80px]" />
             
-            <div className="mb-6 px-1 pt-1">
-              <div className="flex items-center gap-3 mb-1">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-library-primary to-indigo-600 flex items-center justify-center text-library-accent shadow-md">
-                  <Shield size={18} />
+            <div className="mb-8 px-1 pt-2 relative z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center text-library-accent border border-white/10">
+                  <Shield size={18} strokeWidth={2} />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-library-primary dark:text-white tracking-tight">BookOrbit</h2>
-                  <p className="text-[9px] text-library-accent font-black uppercase tracking-widest">Admin Panel</p>
+                  <h2 className="text-[15px] font-black text-white tracking-tight">BookOrbit</h2>
+                  <p className="text-[8px] text-library-accent font-black uppercase tracking-[0.2em]">لوحة الإدارة</p>
                 </div>
               </div>
             </div>
 
-            <nav className="flex-grow space-y-2">
+            <nav className="flex-grow space-y-1 relative z-10">
               {menuItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-black text-xs transition-all relative group overflow-hidden border ${
+                  className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl font-bold text-[12px] transition-all relative group ${
                     activeTab === item.id 
-                      ? "bg-library-primary text-white shadow-sm border-library-primary" 
-                      : "text-gray-500 border-transparent hover:text-library-primary dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5 hover:border-library-primary/10"
+                      ? "bg-white/[0.12] text-white" 
+                      : "text-white/50 hover:text-white/80 hover:bg-white/[0.05]"
                   }`}
                 >
+                  {activeTab === item.id && (
+                    <motion.div layoutId="sidebar-indicator" className="absolute right-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-library-accent rounded-l-full" />
+                  )}
                   <div className="flex items-center gap-3 relative z-10">
                     <div className="relative">
-                      <item.icon size={16} className={activeTab === item.id ? "text-library-accent" : "group-hover:scale-110 transition-transform"} />
+                      <item.icon size={16} strokeWidth={activeTab === item.id ? 2.5 : 2} className={activeTab === item.id ? "text-library-accent" : ""} />
                       {(item.id === "students" && parseInt(statsData.requests.value) > 0) || 
                        (item.id === "books" && (statsData.pendingBooksCount || 0) > 0) ? (
-                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-rose-500 rounded-full border border-white dark:border-[#121214] animate-pulse" />
+                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-rose-500 rounded-full border-2 border-library-primary animate-pulse" />
                       ) : null}
                     </div>
-                    <span className="tracking-tight">{item.title}</span>
+                    <span>{item.title}</span>
                   </div>
-                  {activeTab === item.id ? (
-                    <motion.div layoutId="nav-line" className="w-1 h-4 bg-library-accent rounded-full relative z-10" />
-                  ) : (
+                  {activeTab !== item.id && (
                     <div className="flex items-center gap-1">
                       {(item.id === "students" || item.id === "requests") && parseInt(statsData.requests.value) > 0 && (
-                        <span className="text-[9px] font-black text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded-md">{statsData.requests.value}</span>
+                        <span className="text-[8px] font-black text-rose-400 bg-rose-500/20 px-1.5 py-0.5 rounded-md">{statsData.requests.value}</span>
                       )}
-                      <ArrowUpRight size={14} className="opacity-0 group-hover:opacity-40 transition-all -translate-x-1 group-hover:translate-x-0" />
                     </div>
                   )}
                 </button>
               ))}
             </nav>
 
-            <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/5">
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-l from-library-primary/5 to-transparent dark:from-white/10 dark:to-transparent group cursor-pointer transition-all hover:bg-gray-100 dark:hover:bg-white/10 border border-library-primary/10 dark:border-white/10">
-                <div className="w-10 h-10 rounded-lg overflow-hidden bg-white dark:bg-dark-bg p-0.5 border border-gray-100 dark:border-white/10 shadow-sm relative">
+            <div className="mt-4 pt-4 border-t border-white/10 relative z-10">
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.06] border border-white/[0.08]">
+                <div className="w-9 h-9 rounded-lg overflow-hidden bg-white/10 flex items-center justify-center shrink-0">
                   {user?.image ? (
-                    <img src={user.image} alt="" className="w-full h-full object-cover rounded-md" />
+                    <img src={user.image} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full rounded-md bg-library-primary flex items-center justify-center text-library-accent font-black text-[10px]">
+                    <div className="w-full h-full bg-library-accent/20 flex items-center justify-center text-library-accent font-black text-xs">
                       {user?.fullName?.charAt(0) || "A"}
                     </div>
                   )}
                 </div>
-                <div className="flex-grow">
-                  <p className="text-[11px] font-black text-library-primary dark:text-white truncate max-w-[120px]">
-              {user?.fullName || "مدير النظام"}
+                <div className="flex-grow min-w-0">
+                  <p className="text-[11px] font-black text-white truncate max-w-[120px]">
+                    {user?.fullName || "مدير النظام"}
                   </p>
-                  <div className="flex items-center gap-1 mt-0.5">
-                    <span className="w-0.5 h-0.5 rounded-full bg-emerald-500" />
-                    <p className="text-[9px] text-emerald-600 font-black uppercase">Admin Online</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]" />
+                    <p className="text-[8px] text-emerald-400/80 font-bold uppercase tracking-wider">متصل الآن</p>
                   </div>
                 </div>
               </div>
@@ -1625,59 +2184,59 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Main Content with Custom Scroll */}
-        <div className="flex-grow px-3 lg:pr-1 lg:pl-6 h-full overflow-y-auto custom-scrollbar pb-6 pt-2">
-          {/* Desktop Structure */}
-          <div className="hidden lg:block">
-            <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        {/* Main Content */}
+        <div className="flex-grow h-full overflow-y-auto custom-scrollbar pb-8">
+          {/* Desktop */}
+          <div className="hidden lg:block px-8 pt-6">
+            <header className="mb-8 flex items-center justify-between">
               <div>
-                <div className="flex items-center gap-1.5 text-[8px] font-black text-gray-400 uppercase tracking-widest mb-2 bg-white/50 dark:bg-white/5 w-fit px-2.5 py-1 rounded-full border border-gray-100 dark:border-white/5">
+                <div className="flex items-center gap-2 text-[9px] font-bold text-gray-400 mb-2">
                   <Link to="/admin" className="hover:text-library-accent transition-colors">لوحة الإدارة</Link>
-                  <span className="opacity-20">/</span>
-                  <span className="text-library-primary dark:text-white">{menuItems.find(i => i.id === activeTab)?.title}</span>
+                  <span className="opacity-30">/</span>
+                  <span className="text-library-primary dark:text-white font-black">{menuItems.find(i => i.id === activeTab)?.title}</span>
                 </div>
-                <h1 className="text-2xl font-black text-library-primary dark:text-white tracking-tighter flex items-center gap-2.5">
+                <h1 className="text-2xl font-black text-library-primary dark:text-white tracking-tight">
                   {menuItems.find(i => i.id === activeTab)?.title}
                 </h1>
               </div>
             </header>
 
             {activeTab === "overview" && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-                <StatCard title="الطلاب" value={statsData.students.value} change={statsData.students.change} icon={Users} color="indigo" onClick={() => { setActiveTab("students"); setSubTab("all"); }} />
-                <StatCard title="الكتب" value={statsData.books.value} change={statsData.books.change} icon={BookOpen} color="emerald" onClick={() => { setActiveTab("books"); setSubTab("all"); }} />
-                <StatCard title="الإعارات" value={statsData.lendings.value} change={statsData.lendings.change} icon={BookMarked} color="amber" onClick={() => { setActiveTab("lending"); setSubTab("active"); }} />
-                <StatCard title="طلبات توثيق" value={statsData.requests.value} change={statsData.requests.change} icon={UserPlus} color="rose" trend="down" onClick={() => { setActiveTab("students"); setSubTab("pending"); }} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <StatCard title="إجمالي الطلاب" value={statsData.students.value} change={statsData.students.change} icon={Users} color="indigo" onClick={() => { setActiveTab("students"); setSubTab("all"); }} />
+                <StatCard title="الكتب المعتمدة" value={statsData.books.value} change={statsData.books.change} icon={BookOpen} color="emerald" onClick={() => { setActiveTab("books"); setSubTab("all"); }} />
+                <StatCard title="الإعارات النشطة" value={statsData.lendings.value} change={statsData.lendings.change} icon={BookMarked} color="amber" onClick={() => { setActiveTab("lending"); setSubTab("active"); }} />
+                <StatCard title="بانتظار التوثيق" value={statsData.requests.value} change={statsData.requests.change} icon={UserPlus} color="rose" trend="down" onClick={() => { setActiveTab("students"); setSubTab("pending_approval"); }} />
               </div>
             )}
 
             {renderContent()}
           </div>
 
-          {/* Mobile Structure */}
-          <div className="lg:hidden space-y-4">
-            <div className="bg-white/80 dark:bg-[#121214]/80 border border-white dark:border-white/5 rounded-2xl p-4 shadow-sm">
-              <p className="text-[10px] font-black text-gray-400 mb-1">لوحة الإدارة</p>
-              <h1 className="text-lg font-black text-library-primary dark:text-white">
-                {menuItems.find(i => i.id === activeTab)?.title}
-              </h1>
+          {/* Mobile */}
+          <div className="lg:hidden px-4 pt-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[9px] font-bold text-gray-400 mb-0.5">لوحة الإدارة</p>
+                <h1 className="text-xl font-black text-library-primary dark:text-white">
+                  {menuItems.find(i => i.id === activeTab)?.title}
+                </h1>
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
               {menuItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`flex items-center justify-between gap-2 px-3 py-3 rounded-xl text-xs font-black border transition-all ${
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black border transition-all whitespace-nowrap shrink-0 ${
                     activeTab === item.id
                       ? "bg-library-primary text-white border-library-primary shadow-md shadow-library-primary/20"
-                      : "bg-white dark:bg-white/5 text-gray-600 border-gray-100 dark:border-white/5"
+                      : "bg-white dark:bg-dark-surface text-gray-500 border-gray-100 dark:border-white/[0.06]"
                   }`}
                 >
-                  <div className="flex items-center gap-2">
-                    <item.icon size={14} className={activeTab === item.id ? "text-library-accent" : ""} />
-                    <span>{item.title}</span>
-                  </div>
+                  <item.icon size={14} className={activeTab === item.id ? "text-library-accent" : ""} />
+                  <span>{item.title}</span>
                   {((item.id === "students" && parseInt(statsData.requests.value) > 0) ||
                     (item.id === "books" && (statsData.pendingBooksCount || 0) > 0)) && (
                     <span className="w-2 h-2 rounded-full bg-rose-500" />
@@ -1691,11 +2250,11 @@ const AdminDashboard = () => {
                 <StatCard title="الطلاب" value={statsData.students.value} change={statsData.students.change} icon={Users} color="indigo" onClick={() => { setActiveTab("students"); setSubTab("all"); }} />
                 <StatCard title="الكتب" value={statsData.books.value} change={statsData.books.change} icon={BookOpen} color="emerald" onClick={() => { setActiveTab("books"); setSubTab("all"); }} />
                 <StatCard title="الإعارات" value={statsData.lendings.value} change={statsData.lendings.change} icon={BookMarked} color="amber" onClick={() => { setActiveTab("lending"); setSubTab("active"); }} />
-                <StatCard title="طلبات توثيق" value={statsData.requests.value} change={statsData.requests.change} icon={UserPlus} color="rose" trend="down" onClick={() => { setActiveTab("students"); setSubTab("pending"); }} />
+                <StatCard title="طلبات توثيق" value={statsData.requests.value} change={statsData.requests.change} icon={UserPlus} color="rose" trend="down" onClick={() => { setActiveTab("students"); setSubTab("pending_approval"); }} />
               </div>
             )}
 
-            <div className="bg-white/70 dark:bg-[#121214]/70 rounded-2xl p-3 border border-white dark:border-white/5">
+            <div className="bg-white/70 dark:bg-dark-surface/70 rounded-2xl p-3 border border-white dark:border-white/5">
               {renderContent()}
             </div>
           </div>
@@ -1705,6 +2264,8 @@ const AdminDashboard = () => {
       <AnimatePresence>
         {isModalOpen && renderStudentModal()}
         {isBookModalOpen && renderBookModal()}
+        {isCopyModalOpen && renderCopyModal()}
+        {isLendingModalOpen && renderLendingDetailModal()}
       </AnimatePresence>
     </>
   );

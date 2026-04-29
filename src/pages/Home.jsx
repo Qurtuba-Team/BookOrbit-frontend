@@ -166,7 +166,7 @@ const BookGraphic = () => (
 
 // ─── Contact Section ────────────────────────────────────────────────────────
 const ContactSection = () => (
-  <section className="py-16 md:py-20 bg-library-primary dark:bg-[#04060a] relative overflow-hidden">
+  <section className="py-16 md:py-20 bg-library-primary dark:bg-dark-bg relative overflow-hidden">
     {/* Subtle radial glow */}
     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-library-accent/[0.03] rounded-full blur-[120px] pointer-events-none" />
 
@@ -363,7 +363,7 @@ const Home = () => {
               <SpringReveal delay={0.24}>
                 <Link
                   to="/register"
-                  className="group inline-flex items-center justify-center gap-3 text-library-paper bg-library-primary dark:bg-library-paper dark:text-library-primary px-8 py-4 rounded-full font-bold text-base shadow-xl shadow-library-primary/10 dark:shadow-black/20 hover:shadow-2xl hover:shadow-library-accent/15 transition-all duration-400 hover:-translate-y-0.5 active:scale-[0.97]"
+                  className="group inline-flex items-center justify-center gap-3 text-library-paper bg-library-primary dark:bg-library-paper dark:text-library-primary px-8 py-4 rounded-full font-bold text-base shadow-xl shadow-library-primary/10 dark:shadow-black/20 hover:shadow-2xl hover:shadow-library-accent/15 transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.97]"
                 >
                   ابدأ الآن
                   <ArrowUpLeft
@@ -428,7 +428,7 @@ const Home = () => {
         {/* ════════════════════ STICKY STORY (How it Works) ════════════════════ */}
         <section
           ref={storyRef}
-          className="relative py-20 md:py-32 bg-library-primary text-library-paper dark:bg-[#04060a]"
+          className="relative py-20 md:py-32 bg-library-primary text-library-paper dark:bg-dark-bg"
         >
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
             <div className="grid lg:grid-cols-2 gap-16 md:gap-24 relative">
@@ -573,8 +573,8 @@ const Home = () => {
                       </p>
                     </div>
                     {/* Hover Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/60 to-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-400 flex items-center justify-center z-20 backdrop-blur-[2px]">
-                      <span className="bg-library-accent text-library-primary px-6 py-3 rounded-full text-xs font-black shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-transform duration-400">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/60 to-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-20 backdrop-blur-[2px]">
+                      <span className="bg-library-accent text-library-primary px-6 py-3 rounded-full text-xs font-black shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
                         سجّل الدخول للتصفح
                       </span>
                     </div>

@@ -81,11 +81,11 @@ const StudentProfile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-library-paper dark:bg-[#08080a] pt-20 lg:pt-24 pb-12" dir="rtl">
+    <div className="min-h-screen bg-library-paper dark:bg-dark-bg pt-20 lg:pt-24 pb-12" dir="rtl">
       <Navbar />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <header className="mb-8 rounded-3xl bg-white/75 dark:bg-[#121214]/75 border border-white dark:border-white/5 p-5 sm:p-7 shadow-sm">
+        <header className="mb-8 rounded-3xl bg-white/75 dark:bg-dark-surface/75 border border-white dark:border-white/5 p-5 sm:p-7 shadow-sm">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div>
               <h1 className="text-2xl sm:text-3xl font-black text-library-primary dark:text-white tracking-tight flex items-center gap-2.5">
@@ -118,7 +118,7 @@ const StudentProfile = () => {
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white/80 dark:bg-[#121214]/80 backdrop-blur-xl rounded-2xl p-6 border border-white dark:border-white/5 shadow-sm text-center relative overflow-hidden"
+              className="bg-white/80 dark:bg-dark-surface/80 backdrop-blur-xl rounded-2xl p-6 border border-white dark:border-white/5 shadow-sm text-center relative overflow-hidden"
             >
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-library-primary via-indigo-500 to-library-accent" />
               
@@ -155,7 +155,7 @@ const StudentProfile = () => {
               )}
             </motion.div>
 
-            <div className="bg-white/70 dark:bg-[#121214]/70 rounded-2xl p-4 border border-white dark:border-white/5 shadow-sm">
+            <div className="bg-white/70 dark:bg-dark-surface/70 rounded-2xl p-4 border border-white dark:border-white/5 shadow-sm">
               <h3 className="text-sm font-black text-library-primary dark:text-white mb-3">مؤشرات سريعة</h3>
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between rounded-xl px-3 py-2 bg-gray-50 dark:bg-white/5">
@@ -186,7 +186,7 @@ const StudentProfile = () => {
                   exit={{ opacity: 0, x: -20 }}
                   className="space-y-6"
                 >
-                  <div className="bg-white/60 dark:bg-[#121214]/60 backdrop-blur-xl rounded-2xl p-6 border border-white dark:border-white/5 shadow-sm">
+                  <div className="bg-white/60 dark:bg-dark-surface/60 backdrop-blur-xl rounded-2xl p-6 border border-white dark:border-white/5 shadow-sm">
                     <h3 className="text-base font-black text-library-primary dark:text-white mb-5 flex items-center gap-2">
                       <ShieldCheck className="text-indigo-500" size={16} />
                       معلومات الحساب
@@ -280,7 +280,7 @@ const StudentProfile = () => {
                     )}
                   </div>
 
-                  <div className="bg-white/60 dark:bg-[#121214]/60 backdrop-blur-xl rounded-2xl p-6 border border-white dark:border-white/5 shadow-sm">
+                  <div className="bg-white/60 dark:bg-dark-surface/60 backdrop-blur-xl rounded-2xl p-6 border border-white dark:border-white/5 shadow-sm">
                     <h3 className="text-base font-black text-library-primary dark:text-white mb-5">النشاط الأخير</h3>
                     <div className="space-y-3">
                       <div className="flex items-center justify-between rounded-xl border border-gray-100 dark:border-white/5 p-3 bg-gray-50/60 dark:bg-white/[0.03]">
@@ -308,7 +308,7 @@ const StudentProfile = () => {
                   exit={{ opacity: 0, x: -20 }}
                   className="space-y-6"
                 >
-                  <div className="bg-white/60 dark:bg-[#121214]/60 backdrop-blur-xl rounded-2xl p-6 border border-white dark:border-white/5 shadow-sm">
+                  <div className="bg-white/60 dark:bg-dark-surface/60 backdrop-blur-xl rounded-2xl p-6 border border-white dark:border-white/5 shadow-sm">
                     <h3 className="text-base font-black text-library-primary dark:text-white mb-5 flex items-center gap-2">
                       <Lock className="text-rose-500" size={16} />
                       كلمة المرور
@@ -324,7 +324,7 @@ const StudentProfile = () => {
                     </div>
                   </div>
 
-                  <div className="bg-white/60 dark:bg-[#121214]/60 backdrop-blur-xl rounded-2xl p-6 border border-white dark:border-white/5 shadow-sm">
+                  <div className="bg-white/60 dark:bg-dark-surface/60 backdrop-blur-xl rounded-2xl p-6 border border-white dark:border-white/5 shadow-sm">
                     <h3 className="text-sm font-black text-rose-500 mb-5">منطقة الخطر</h3>
                     <button 
                       onClick={logout}

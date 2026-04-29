@@ -181,7 +181,7 @@ const BookDetail = () => {
         <motion.div 
           initial={{ scale: 0.9, y: 20 }}
           animate={{ scale: 1, y: 0 }}
-          className="bg-white dark:bg-[#0c0c0e] w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl relative z-10 border border-white/10 p-6"
+          className="bg-white dark:bg-dark-surface w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl relative z-10 border border-white/10 p-6"
           dir="rtl"
         >
           <div className="flex items-center gap-3 mb-4">
@@ -196,16 +196,25 @@ const BookDetail = () => {
           
           <div className="mb-6 space-y-2">
             <label className="text-xs font-black text-library-primary dark:text-white">حالة الكتاب</label>
-            <select
-              value={selectedCondition}
-              onChange={(e) => setSelectedCondition(e.target.value)}
-              className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-xs font-bold focus:ring-2 focus:ring-library-accent/20 focus:border-library-accent transition-all dark:text-white"
-            >
-              <option value="" disabled>اختر الحالة...</option>
-              {Object.entries(BOOK_COPY_CONDITIONS).map(([val, label]) => (
-                <option key={val} value={val}>{label}</option>
-              ))}
-            </select>
+            <div className="grid grid-cols-2 gap-2">
+              {Object.entries(BOOK_COPY_CONDITIONS).map(([val, label]) => {
+                const isActive = selectedCondition === val;
+                return (
+                  <button
+                    key={val}
+                    type="button"
+                    onClick={() => setSelectedCondition(val)}
+                    className={`px-3 py-3 rounded-xl text-[11px] font-black border transition-all flex items-center justify-center text-center ${
+                      isActive 
+                        ? "bg-library-accent/10 border-library-accent text-library-accent ring-2 ring-library-accent/20 ring-offset-1 dark:ring-offset-dark-surface scale-[1.02]" 
+                        : "bg-gray-50 dark:bg-white/5 text-gray-500 border-gray-100 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
           
           <div className="flex gap-2 justify-end">

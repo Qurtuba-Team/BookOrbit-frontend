@@ -280,7 +280,7 @@ const AuthPage = () => {
 
       {/* Desktop Sliding Overlay */}
       <motion.div
-        className="hidden lg:flex absolute top-0 bottom-0 w-1/2 bg-library-primary dark:bg-[#060a12] z-20 items-center justify-center p-12 overflow-hidden"
+        className="hidden lg:flex absolute top-0 bottom-0 w-1/2 bg-library-primary dark:bg-dark-bg z-20 items-center justify-center p-12 overflow-hidden"
         initial={false}
         animate={{ left: isLogin ? "0%" : "50%" }}
         transition={{ type: "spring", stiffness: 180, damping: 26, mass: 0.9 }}

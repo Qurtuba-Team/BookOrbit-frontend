@@ -107,17 +107,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, [buildAbsoluteUrl, fetchProtectedImageAsSrc]);
 
-  // Dark Mode Logic
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const isDark = localStorage.getItem("isDark") === "true";
-      if (isDark) {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
-    }
-  }, []);
+
 
   // Helper to fetch full user profile (Identity + Student info)
   const fetchFullProfile = useCallback(async () => {

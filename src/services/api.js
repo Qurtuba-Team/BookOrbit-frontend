@@ -66,6 +66,8 @@ export const normalizeStudent = (student = {}) => {
     name: student.name || student.Name || student.fullName,
     universityMailAddress: student.universityMailAddress || student.UniversityMailAddress || "",
     phoneNumber: student.phoneNumber || student.PhoneNumber || "",
+    telegramUserId: student.telegramUserId || student.TelegramUserId || "",
+    points: student.points ?? student.Points ?? 0,
     status: status,
     state: stateValue ?? status,
     creationDate: student.creationDate || student.joinDate || student.JoinDate,
@@ -294,6 +296,8 @@ async function apiRequest(path, options = {}) {
             const rememberMe = localStorage.getItem("refreshToken") !== null;
             tokenStore.set(newTokens, rememberMe);
             processQueue(null, newTokens.accessToken);
+            // Retry the original request that triggered the refresh
+            return apiRequest(path, options);
           } else {
             throw new Error("Session expired");
           }
@@ -544,11 +548,8 @@ export const booksApi = {
     apiRequest(`/books/${bookId}/available`, { method: "PATCH" }),
 
   /** PATCH /books/{bookId}/reject — Reject book (Admin only) */
-  reject: (bookId, rejectionReason) =>
-    apiRequest(`/books/${bookId}/reject`, {
-      method: "PATCH",
-      body: JSON.stringify({ reason: rejectionReason }),
-    }),
+  reject: (bookId) =>
+    apiRequest(`/books/${bookId}/reject`, { method: "PATCH" }),
 };
 
 // ─── 4. BOOK COPIES ──────────────────────────────────────────────────────────

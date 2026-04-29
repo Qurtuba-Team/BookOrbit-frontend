@@ -243,13 +243,22 @@ const Navbar = () => {
 
       <AnimatePresence>
         {mobileMenuOpen && (
-          <motion.div
-            initial={{ x: '-100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '-100%' }}
-            transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="fixed inset-y-0 left-0 z-[100] w-[85%] max-w-[360px] bg-white dark:bg-dark-bg shadow-2xl flex flex-col pt-16 px-6 lg:hidden overflow-hidden border-r border-library-primary/5 dark:border-white/5"
-          >
+          <>
+            {/* Backdrop overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileMenuOpen(false)}
+              className="fixed inset-0 z-[95] bg-black/40 backdrop-blur-sm lg:hidden"
+            />
+            <motion.div
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className="fixed inset-y-0 left-0 z-[100] w-[85%] max-w-[360px] bg-white dark:bg-dark-bg shadow-2xl flex flex-col pt-16 px-6 lg:hidden overflow-hidden border-r border-library-primary/5 dark:border-white/5"
+            >
             {/* Close Button Inside Drawer */}
             <button 
               onClick={(e) => {
@@ -401,6 +410,7 @@ const Navbar = () => {
               )}
             </div>
           </motion.div>
+          </>
         )}
       </AnimatePresence>
     </>
