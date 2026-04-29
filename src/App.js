@@ -111,7 +111,7 @@ function AppRoutes() {
               <Route path="/my-copies" element={<ProtectedRoute><MyCopies /></ProtectedRoute>} />
               <Route path="/lending/incoming" element={<ProtectedRoute><BorrowingIncomingRequests /></ProtectedRoute>} />
               <Route path="/lending/outgoing" element={<ProtectedRoute><BorrowingOutgoingRequests /></ProtectedRoute>} />
-              <Route path="/lending/transactions" element={<ProtectedRoute><BorrowingTransactions /></ProtectedRoute>} />
+              <Route path="/lending/transactions/:type" element={<ProtectedRoute><BorrowingTransactions /></ProtectedRoute>} />
               <Route path="/addbook" element={<ProtectedRoute><AddBook /></ProtectedRoute>} />
 
               {/* ── Admin Protected Routes (محمية) ── */}

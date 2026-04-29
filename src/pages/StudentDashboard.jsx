@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { User, BookOpen, Layers, Repeat, ArrowUpRight, Sparkles, Clock3 } from 'lucide-react';
+import { User, BookOpen, Layers, Repeat, ArrowUpRight, Sparkles, Clock3, ArrowDownToLine, ArrowUpToLine } from 'lucide-react';
 import Navbar from '../components/common/Navbar';
 import Aurora from '../components/effects/Aurora';
 import { useAuth } from '../context/AuthContext';
@@ -172,7 +172,8 @@ const StudentDashboard = () => {
             <DashboardCard title="نسخي الخاصة" desc="أضف كتبك الخاصة للمنصة، تحكم بحالتها، واجعلها متاحة لإفادة غيرك." icon={Layers} to="/my-copies" delay={0.3} />
             <DashboardCard title="الطلبات الواردة" desc="وافق أو ارفض طلبات الاستعارة المقدمة لك من زملائك على كتبك الخاصة." icon={Repeat} to="/lending/incoming" delay={0.4} badge="جديد" />
             <DashboardCard title="طلباتي الصادرة" desc="تابع حالة الكتب التي طلبت استعارتها من الآخرين وتاريخ استحقاقها." icon={Repeat} to="/lending/outgoing" delay={0.5} />
-            <DashboardCard title="معاملات الاستعارة" desc="أكّد إرجاعك للكتب التي استعرتها أو بلّغ عن فقدانها باستخدام رقم المعاملة." icon={Repeat} to="/lending/transactions" delay={0.6} />
+            <DashboardCard title="المعاملات الواردة" desc="تابع حالة الكتب التي أعرتها للآخرين وتأكد من استلامها عند الإرجاع." icon={ArrowDownToLine} to="/lending/transactions/in" delay={0.6} />
+            <DashboardCard title="المعاملات الصادرة" desc="تابع حالة الكتب التي استعرتها من زملائك، أكد إرجاعها أو بلّغ عن فقدانها." icon={ArrowUpToLine} to="/lending/transactions/out" delay={0.7} />
           </div>
 
           <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -191,8 +192,12 @@ const StudentDashboard = () => {
                   <span className="text-xs font-black text-library-primary dark:text-white">متابعة طلباتي الصادرة</span>
                   <ArrowUpRight size={14} className="text-library-accent" />
                 </Link>
-                <Link to="/lending/transactions" className="flex items-center justify-between rounded-xl px-3 py-2.5 bg-gray-50 dark:bg-white/5 hover:bg-library-accent/5 transition-all border border-transparent hover:border-library-accent/20">
-                  <span className="text-xs font-black text-library-primary dark:text-white">تأكيد الإرجاع (بواسطة المعاملة)</span>
+                <Link to="/lending/transactions/in" className="flex items-center justify-between rounded-xl px-3 py-2.5 bg-gray-50 dark:bg-white/5 hover:bg-library-accent/5 transition-all border border-transparent hover:border-library-accent/20">
+                  <span className="text-xs font-black text-library-primary dark:text-white">متابعة المعاملات الواردة (كتبي)</span>
+                  <ArrowUpRight size={14} className="text-library-accent" />
+                </Link>
+                <Link to="/lending/transactions/out" className="flex items-center justify-between rounded-xl px-3 py-2.5 bg-gray-50 dark:bg-white/5 hover:bg-library-accent/5 transition-all border border-transparent hover:border-library-accent/20">
+                  <span className="text-xs font-black text-library-primary dark:text-white">متابعة المعاملات الصادرة (استعاراتي)</span>
                   <ArrowUpRight size={14} className="text-library-accent" />
                 </Link>
                 <Link to="/lending" className="flex items-center justify-between rounded-xl px-3 py-2.5 bg-gray-50 dark:bg-white/5 hover:bg-library-accent/5 transition-all border border-transparent hover:border-library-accent/20">

@@ -766,6 +766,18 @@ export const borrowingTransactionsApi = {
   /** PATCH /borrowingtransactions/{id}/lost */
   markLost: (id) =>
     apiRequest(`/borrowingtransactions/${id}/lost`, { method: "PATCH" }),
+
+  /** GET /borrowingtransactions/me/in — Lender transactions */
+  getMeIn: (params = {}) => {
+    const query = buildQuery(params);
+    return apiRequest(`/borrowingtransactions/me/in?${query}`);
+  },
+
+  /** GET /borrowingtransactions/me/out — Borrower transactions */
+  getMeOut: (params = {}) => {
+    const query = buildQuery(params);
+    return apiRequest(`/borrowingtransactions/me/out?${query}`);
+  },
 };
 
 // ─── 8. IMAGES ───────────────────────────────────────────────────────────────

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import {
@@ -17,13 +17,14 @@ import {
   CheckCircle2,
   AlertTriangle,
   ArrowDownToLine,
-  Hash
+  Hash,
+  Repeat
 } from "lucide-react";
 import Navbar from "../components/common/Navbar";
 import Aurora from "../components/effects/Aurora";
 import { useAuth } from "../context/AuthContext";
-import { borrowingTransactionsApi } from "../services/api";
-import { BORROWING_TRANSACTION_STATE_LABELS, getLabel } from "../utils/constants";
+import { borrowingTransactionsApi, bookCopiesApi } from "../services/api";
+import { BORROWING_TRANSACTION_STATE_LABELS, getLabel, getBookImageUrl } from "../utils/constants";
 
 const PAGE_SIZE = 10;
 
@@ -57,23 +58,26 @@ const formatDate = (v) => {
 const PaginationBar = ({ page, totalPages, onChange, disabled }) => {
   if (totalPages <= 1) return null;
   return (
-    <div className="flex items-center justify-center gap-2 pt-6">
+    <div className="flex items-center justify-center gap-3 pt-8">
       <button
         type="button"
         disabled={disabled || page <= 1}
         onClick={() => onChange(page - 1)}
-        className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-library-primary transition-all hover:border-library-accent/40 disabled:opacity-40 dark:border-dark-border dark:bg-dark-surface dark:text-white"
+        className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-gray-200 bg-white text-library-primary transition-all hover:border-library-accent/40 hover:bg-gray-50 disabled:opacity-40 dark:border-white/10 dark:bg-dark-surface dark:text-white"
       >
         <ChevronRight className="h-5 w-5" />
       </button>
-      <span className="min-w-[100px] text-center text-xs font-black text-library-primary/70 dark:text-gray-400">
-        {page} / {totalPages}
-      </span>
+      <div className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white dark:bg-dark-surface border border-gray-100 dark:border-white/5 shadow-sm">
+        <span className="text-xs font-black text-library-primary/40 dark:text-gray-500">صفحة</span>
+        <span className="text-sm font-black text-library-primary dark:text-white">{page}</span>
+        <span className="text-xs font-black text-library-primary/40 dark:text-gray-500">من</span>
+        <span className="text-sm font-black text-library-primary dark:text-white">{totalPages}</span>
+      </div>
       <button
         type="button"
         disabled={disabled || page >= totalPages}
         onClick={() => onChange(page + 1)}
-        className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-library-primary transition-all hover:border-library-accent/40 disabled:opacity-40 dark:border-dark-border dark:bg-dark-surface dark:text-white"
+        className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-gray-200 bg-white text-library-primary transition-all hover:border-library-accent/40 hover:bg-gray-50 disabled:opacity-40 dark:border-white/10 dark:bg-dark-surface dark:text-white"
       >
         <ChevronLeft className="h-5 w-5" />
       </button>
@@ -87,6 +91,7 @@ const TransactionCard = ({ tx, isProcessing, onReturn, onLost, isAdminView }) =>
   const statusKey = typeof rawSt === "number" ? transactionNumToKey[rawSt] || "Borrowed" : rawSt || "Borrowed";
   const statusAr = getLabel(BORROWING_TRANSACTION_STATE_LABELS, statusKey);
   const title = tx.bookTitle || tx.BookTitle || "كتاب غير معروف";
+  const bookId = tx.bookId || tx.BookId;
   
   const borrowerName = tx.borrowerStudentName || tx.studentName || tx.borrowerName || "مستعير";
   const lenderName = tx.lenderStudentName || tx.ownerName || "المالك";
@@ -102,82 +107,124 @@ const TransactionCard = ({ tx, isProcessing, onReturn, onLost, isAdminView }) =>
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="group flex flex-col md:flex-row gap-5 md:items-center justify-between rounded-2xl border border-library-primary/10 bg-white/80 p-5 transition-all duration-300 hover:border-library-accent/30 hover:shadow-lg hover:shadow-library-primary/5 hover:-translate-y-0.5 dark:border-white/10 dark:bg-dark-surface/80 dark:hover:border-library-accent/30"
+      className="group relative overflow-hidden rounded-3xl border border-library-primary/10 bg-white/70 p-4 sm:p-5 transition-all duration-300 hover:border-library-accent/30 hover:shadow-xl hover:shadow-library-primary/5 hover:-translate-y-1 dark:border-white/10 dark:bg-dark-surface/70"
     >
-      <div className="min-w-0 flex-1">
-        <div className="mb-2 flex flex-wrap items-start gap-2">
-          <p className="text-sm font-black text-library-primary dark:text-white truncate">{title}</p>
-          <span className={`shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-black ${statusTone[statusKey] || statusTone.Borrowed}`}>
-            {statusAr}
-          </span>
-          <span className="shrink-0 rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[10px] font-mono font-bold text-gray-500 dark:border-white/10 dark:bg-white/5 dark:text-gray-400 flex items-center gap-1">
-            <Hash size={10} /> {id}
-          </span>
+      <div className="flex flex-col sm:flex-row gap-5">
+        {/* Book Cover Thumbnail */}
+        <div className="shrink-0">
+          <div className="relative h-28 w-20 sm:h-32 sm:w-24 overflow-hidden rounded-xl shadow-md border border-gray-100 dark:border-white/10">
+            <img 
+              src={getBookImageUrl(bookId)} 
+              alt={title}
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+              onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=200&auto=format&fit=crop"; }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+          </div>
         </div>
-        
-        <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold text-gray-500 dark:text-gray-400 mb-2">
-          {isAdminView && (
-            <div className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200/80 bg-white/80 px-2 py-1 dark:border-white/10 dark:bg-white/[0.03]">
-              <User size={12} className="text-amber-500" />
-              <span>المالك: <strong className="text-library-primary dark:text-white font-black">{lenderName}</strong></span>
+
+        <div className="min-w-0 flex-1">
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <h3 className="text-base font-black text-library-primary dark:text-white truncate max-w-[200px] sm:max-w-md">{title}</h3>
+            <span className={`shrink-0 rounded-lg border px-2.5 py-1 text-[10px] font-black uppercase tracking-wider ${statusTone[statusKey] || statusTone.Borrowed}`}>
+              {statusAr}
+            </span>
+            <span className="shrink-0 rounded-lg border border-gray-200 bg-white px-2 py-1 text-[10px] font-mono font-bold text-gray-400 dark:border-white/10 dark:bg-white/5 dark:text-gray-500 flex items-center gap-1 shadow-sm">
+              <Hash size={10} /> {id}
+            </span>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                  <User size={14} className="text-amber-600 dark:text-amber-400" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase">المالك</p>
+                  <p className="text-xs font-black text-library-primary dark:text-white truncate">{lenderName}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                  <User size={14} className="text-blue-600 dark:text-blue-400" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase">المستعير</p>
+                  <p className="text-xs font-black text-library-primary dark:text-white truncate">{borrowerName}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-library-primary/5 flex items-center justify-center shrink-0">
+                  <Clock3 size={14} className="text-library-primary/40 dark:text-gray-400" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase">موعد الإرجاع</p>
+                  <p className="text-xs font-black text-library-primary dark:text-white">{formatDate(expDate)}</p>
+                </div>
+              </div>
+              {actDate && (
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+                    <CalendarDays size={14} className="text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase">تم الإرجاع في</p>
+                    <p className="text-xs font-black text-emerald-600 dark:text-emerald-400">{formatDate(actDate)}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* الإجراءات */}
+          {!isAdminView && (statusKey === "Borrowed" || statusKey === "Overdue") && (
+            <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-library-primary/5 dark:border-white/5">
+              <button
+                type="button"
+                disabled={processing}
+                onClick={() => onReturn(id)}
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-xs font-black text-white shadow-md shadow-emerald-600/10 transition-all hover:bg-emerald-500 active:scale-95 disabled:opacity-50"
+              >
+                {processing ? <Loader2 size={14} className="animate-spin" /> : <ArrowDownToLine size={14} />}
+                إرجاع الكتاب
+              </button>
+              
+              <button
+                type="button"
+                disabled={processing}
+                onClick={() => onLost(id)}
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-6 py-2.5 text-xs font-black text-rose-700 transition-all hover:bg-rose-100 active:scale-95 disabled:opacity-50 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-300"
+              >
+                {processing ? <Loader2 size={14} className="animate-spin" /> : <BookX size={14} />}
+                الإبلاغ كفقدان
+              </button>
             </div>
           )}
-          <div className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200/80 bg-white/80 px-2 py-1 dark:border-white/10 dark:bg-white/[0.03]">
-            <User size={12} className="text-library-accent" />
-            <span>المستعير: <strong className="text-library-primary dark:text-white font-black">{borrowerName}</strong></span>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] font-bold text-gray-500 dark:text-gray-400 max-w-md">
-          <div className="flex items-center gap-1.5 rounded-lg border border-library-primary/5 bg-library-primary/[0.02] px-2.5 py-1.5 dark:border-white/10 dark:bg-white/[0.03]">
-            <Clock3 size={14} className="opacity-60" />
-            <span>الإرجاع المتوقع: {formatDate(expDate)}</span>
-          </div>
-          <div className="flex items-center gap-1.5 rounded-lg border border-library-primary/5 bg-library-primary/[0.02] px-2.5 py-1.5 dark:border-white/10 dark:bg-white/[0.03]">
-            <CalendarDays size={14} className="opacity-60" />
-            <span>تاريخ الإرجاع الفعلي: {formatDate(actDate)}</span>
-          </div>
         </div>
       </div>
-      
-      {/* الإجراءات - للطالب المستعير فقط */}
-      {!isAdminView && (statusKey === "Borrowed" || statusKey === "Overdue") && (
-        <div className="flex flex-wrap items-center gap-2.5 md:justify-end shrink-0 pt-4 border-t border-library-primary/10 dark:border-white/10 md:border-0 md:pt-0">
-          <button
-            type="button"
-            disabled={processing}
-            onClick={() => onReturn(id)}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-black text-white shadow-sm transition-all hover:bg-emerald-500 active:scale-95 disabled:opacity-50"
-          >
-            {processing ? <Loader2 size={14} className="animate-spin" /> : <ArrowDownToLine size={14} />}
-            إرجاع الكتاب
-          </button>
-          
-          <button
-            type="button"
-            disabled={processing}
-            onClick={() => onLost(id)}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-black text-rose-700 transition-all hover:bg-rose-100 hover:border-rose-300 active:scale-95 disabled:opacity-50 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/20"
-          >
-            {processing ? <Loader2 size={14} className="animate-spin" /> : <BookX size={14} />}
-            الإبلاغ كفقدان
-          </button>
-        </div>
-      )}
     </motion.li>
   );
 };
 
 const BorrowingTransactions = () => {
   const { user } = useAuth();
+  const { type: urlType } = useParams();
+  const navigate = useNavigate();
+  
   const isAdmin = user?.role?.toLowerCase() === "admin";
+  const currentTab = urlType === "in" ? "in" : "out";
+  const isIncoming = currentTab === "in";
 
-  // Admin states
+  // Shared list states
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [items, setItems] = useState([]);
   
-  // Student states
+  // Student search state
   const [searchId, setSearchId] = useState("");
   const [studentTx, setStudentTx] = useState(null);
   
@@ -185,15 +232,25 @@ const BorrowingTransactions = () => {
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState(null);
 
-  const fetchAdminTransactions = useCallback(async () => {
+  const fetchTransactions = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await borrowingTransactionsApi.getAll({
+      let res;
+      const params = {
         page,
         pageSize: PAGE_SIZE,
         sortColumn: "createdAt",
         sortDirection: "desc",
-      });
+      };
+
+      if (isAdmin) {
+        res = await borrowingTransactionsApi.getAll(params);
+      } else if (isIncoming) {
+        res = await borrowingTransactionsApi.getMeIn(params);
+      } else {
+        res = await borrowingTransactionsApi.getMeOut(params);
+      }
+
       const raw = res.items ?? res.data ?? [];
       setItems(raw);
       const total = res.totalCount ?? res.TotalCount ?? raw.length;
@@ -206,12 +263,13 @@ const BorrowingTransactions = () => {
     } finally {
       setLoading(false);
     }
-  }, [page]);
+  }, [page, isAdmin, isIncoming]);
 
   useEffect(() => {
-    if (isAdmin) fetchAdminTransactions();
-    else setLoading(false);
-  }, [fetchAdminTransactions, isAdmin]);
+    fetchTransactions();
+    setStudentTx(null);
+    setSearchId("");
+  }, [fetchTransactions, currentTab]);
 
   const handleStudentSearch = async (e) => {
     if (e) e.preventDefault();
@@ -243,12 +301,8 @@ const BorrowingTransactions = () => {
     try {
       await actionFn(id);
       toast.success(successMsg, { id: t });
-      
-      if (isAdmin) {
-        await fetchAdminTransactions();
-      } else {
-        await handleStudentSearch(); // Refresh the searched item
-      }
+      await fetchTransactions();
+      if (studentTx) await handleStudentSearch();
     } catch (err) {
       toast.error(err?.message || "حدث خطأ أثناء التنفيذ", { id: t });
     } finally {
@@ -267,129 +321,205 @@ const BorrowingTransactions = () => {
     );
   }
 
+  // Calculate quick stats from current page items
+  const activeCount = items.filter(tx => {
+    const st = tx.status ?? tx.state;
+    return st === 0 || st === "Borrowed" || st === "Overdue" || st === 2;
+  }).length;
+  
+  const returnedCount = items.filter(tx => {
+    const st = tx.status ?? tx.state;
+    return st === 1 || st === "Returned";
+  }).length;
+
   return (
-    <div className="min-h-screen bg-library-paper dark:bg-[#08080a] text-library-primary dark:text-library-paper transition-colors duration-500 overflow-hidden" dir="rtl">
+    <div className="min-h-screen bg-library-paper dark:bg-[#08080a] text-library-primary dark:text-library-paper transition-colors duration-500" dir="rtl">
       <Navbar />
 
-      <main className="relative z-10 pt-20 lg:pt-24 pb-12">
-        <div className="absolute inset-0 opacity-40 dark:opacity-20 pointer-events-none">
+      <main className="relative z-10 pt-24 pb-12">
+        <div className="absolute inset-0 opacity-40 dark:opacity-20 pointer-events-none overflow-hidden">
           <Aurora />
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <header className="mb-8 rounded-3xl bg-white/70 dark:bg-[#121214]/70 border border-library-primary/10 dark:border-white/10 p-5 sm:p-8 shadow-sm backdrop-blur-md">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          
+          {/* Header Dashboard Style */}
+          <header className="mb-10">
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5 }}
+                className="flex-1"
               >
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-[10px] font-bold text-blue-600 dark:text-blue-400 mb-4 uppercase tracking-widest">
-                  {isAdmin ? <Shield size={12} /> : <RefreshCcw size={12} />}
-                  {isAdmin ? "إدارة المعاملات" : "متابعة معاملاتي"}
+                <div className="flex items-center gap-3 mb-4">
+                   <div className="w-12 h-12 rounded-2xl bg-library-accent/10 flex items-center justify-center">
+                     <Repeat size={24} className="text-library-accent" />
+                   </div>
+                   <div>
+                     <h1 className="text-2xl font-black tracking-tight text-library-primary dark:text-white">
+                       {isAdmin ? "إدارة جميع المعاملات" : "لوحة معاملات الاستعارة"}
+                     </h1>
+                     <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                       Borrowing & Lending Records
+                     </p>
+                   </div>
                 </div>
-                <h1 className="text-2xl font-black tracking-tight text-library-primary dark:text-white sm:text-3xl mb-2">
-                  معاملات الاستعارة (Transactions)
-                </h1>
                 <p className="max-w-xl text-sm font-medium text-library-primary/60 dark:text-gray-400 leading-relaxed">
                   {isAdmin 
-                    ? "بصفتك مديراً للنظام، يمكنك تصفح ومراقبة جميع المعاملات الجارية والمنتهية بين الطلاب."
-                    : "هنا يمكنك متابعة المعاملات التي قمت باستعارتها. أدخل رقم المعاملة لإرجاع الكتاب أو التبليغ عن فقدانه."}
+                    ? "مراقبة وإدارة جميع عمليات تبادل الكتب بين الطلاب وضمان سير العملية بسلاسة."
+                    : "تابع حالة الكتب التي استعرتها أو أعرتها لزملائك، وقم بتأكيد الإرجاع بضغطة واحدة."}
                 </p>
               </motion.div>
+
+              {!isAdmin && (
+                <div className="flex p-1.5 rounded-2xl bg-white/50 dark:bg-white/5 border border-library-primary/10 dark:border-white/10 backdrop-blur-xl">
+                  <button
+                    onClick={() => navigate("/lending/transactions/out")}
+                    className={`px-6 py-2.5 rounded-xl text-xs font-black transition-all ${currentTab === "out" ? "bg-library-primary text-white shadow-lg" : "text-library-primary/60 dark:text-gray-400 hover:bg-white/50 dark:hover:bg-white/5"}`}
+                  >
+                    المعاملات الصادرة (استعاراتي)
+                  </button>
+                  <button
+                    onClick={() => navigate("/lending/transactions/in")}
+                    className={`px-6 py-2.5 rounded-xl text-xs font-black transition-all ${currentTab === "in" ? "bg-library-primary text-white shadow-lg" : "text-library-primary/60 dark:text-gray-400 hover:bg-white/50 dark:hover:bg-white/5"}`}
+                  >
+                    المعاملات الواردة (كتبي)
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Quick Stats Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">
+              <div className="p-5 rounded-3xl bg-white/70 dark:bg-[#121214]/70 border border-library-primary/5 dark:border-white/5 shadow-sm">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">إجمالي المعاملات</p>
+                <p className="text-2xl font-black text-library-primary dark:text-white">{items.length}</p>
+              </div>
+              <div className="p-5 rounded-3xl bg-blue-500/5 border border-blue-500/10 shadow-sm">
+                <p className="text-[10px] font-black text-blue-600/60 dark:text-blue-400/60 uppercase tracking-widest mb-1">نشطة حالياً</p>
+                <p className="text-2xl font-black text-blue-600 dark:text-blue-400">{activeCount}</p>
+              </div>
+              <div className="p-5 rounded-3xl bg-emerald-500/5 border border-emerald-500/10 shadow-sm">
+                <p className="text-[10px] font-black text-emerald-600/60 dark:text-emerald-400/60 uppercase tracking-widest mb-1">تم إرجاعها</p>
+                <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{returnedCount}</p>
+              </div>
+              <div className="p-5 rounded-3xl bg-orange-500/5 border border-orange-500/10 shadow-sm">
+                <p className="text-[10px] font-black text-orange-600/60 dark:text-orange-400/60 uppercase tracking-widest mb-1">متأخرة</p>
+                <p className="text-2xl font-black text-orange-600 dark:text-orange-400">{items.filter(x => (x.status??x.state) === "Overdue" || (x.status??x.state) === 2).length}</p>
+              </div>
             </div>
           </header>
 
-          <section className="rounded-3xl border border-library-primary/10 bg-white/70 p-5 shadow-sm dark:border-white/10 dark:bg-[#121214]/70 sm:p-8 backdrop-blur-md">
-            {isAdmin ? (
-              // ADMIN VIEW
-              <>
-                {loading ? (
-                  <div className="flex flex-col items-center justify-center py-20">
-                    <Loader2 className="mb-3 h-9 w-9 animate-spin text-library-accent" />
-                    <p className="text-xs font-black text-gray-400">جاري التحميل…</p>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* List View Section */}
+            <div className="lg:col-span-8 space-y-4">
+              <div className="flex items-center justify-between mb-4 px-2">
+                <h2 className="text-sm font-black text-library-primary dark:text-white flex items-center gap-2">
+                   <ListChecks size={18} className="text-library-accent" />
+                   قائمة المعاملات {isIncoming ? "(كتبي)" : "(استعاراتي)"}
+                </h2>
+                <button onClick={fetchTransactions} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/5 transition-colors text-gray-400">
+                  <RefreshCcw size={16} className={loading ? "animate-spin" : ""} />
+                </button>
+              </div>
+
+              {loading ? (
+                <div className="flex flex-col items-center justify-center py-24 rounded-3xl bg-white/50 dark:bg-white/5 border border-dashed border-gray-200 dark:border-white/10">
+                  <Loader2 className="mb-4 h-10 w-10 animate-spin text-library-accent" />
+                  <p className="text-sm font-bold text-gray-400 animate-pulse">جاري استرجاع السجلات…</p>
+                </div>
+              ) : items.length === 0 ? (
+                <div className="rounded-3xl border-2 border-dashed border-library-primary/10 py-24 text-center dark:border-white/5 bg-white/30 dark:bg-white/[0.02]">
+                  <div className="mx-auto w-20 h-20 bg-library-primary/5 dark:bg-white/5 rounded-full flex items-center justify-center mb-6">
+                    <ListChecks className="h-10 w-10 text-library-primary/20 dark:text-gray-600" />
                   </div>
-                ) : items.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-library-primary/20 py-20 text-center dark:border-white/10 bg-white/40 dark:bg-white/[0.02]">
-                    <div className="mx-auto w-16 h-16 bg-library-primary/5 dark:bg-white/5 rounded-full flex items-center justify-center mb-4">
-                      <ListChecks className="h-8 w-8 text-library-primary/30 dark:text-gray-500" />
-                    </div>
-                    <p className="text-base font-black text-library-primary dark:text-white">لا توجد معاملات استعارة حالياً</p>
+                  <p className="text-lg font-black text-library-primary/40 dark:text-gray-500">لا توجد معاملات في هذه القائمة حالياً</p>
+                </div>
+              ) : (
+                <ul className="space-y-4">
+                  {items.map((tx) => (
+                    <TransactionCard 
+                      key={tx.id || tx.Id} 
+                      tx={tx} 
+                      isProcessing={processingId}
+                      isAdminView={isAdmin || isIncoming}
+                      onReturn={(id) => handleAction(id, borrowingTransactionsApi.markReturned, "تم تسجيل إرجاع الكتاب بنجاح")}
+                      onLost={(id) => handleAction(id, borrowingTransactionsApi.markLost, "تم الإبلاغ عن فقدان الكتاب")}
+                    />
+                  ))}
+                </ul>
+              )}
+              <PaginationBar page={page} totalPages={totalPages} onChange={setPage} disabled={loading} />
+            </div>
+
+            {/* Side Tools Section */}
+            <aside className="lg:col-span-4 space-y-6">
+              {/* Search Utility */}
+              <div className="p-6 rounded-3xl bg-white/70 dark:bg-[#121214]/70 border border-library-primary/10 dark:border-white/10 shadow-sm backdrop-blur-md sticky top-24">
+                <div className="flex items-center gap-2 mb-6">
+                  <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+                    <Search size={16} className="text-indigo-600 dark:text-indigo-400" />
                   </div>
-                ) : (
-                  <ul className="space-y-3">
-                    {items.map((tx) => (
-                      <TransactionCard 
-                        key={tx.id || tx.Id} 
-                        tx={tx} 
-                        isProcessing={processingId}
-                        isAdminView={true}
-                        onReturn={() => {}}
-                        onLost={() => {}}
-                      />
-                    ))}
-                  </ul>
-                )}
-                <PaginationBar page={page} totalPages={totalPages} onChange={setPage} disabled={loading} />
-              </>
-            ) : (
-              // STUDENT VIEW
-              <div className="max-w-2xl mx-auto">
-                <form onSubmit={handleStudentSearch} className="mb-8">
-                  <label className="block text-sm font-black text-library-primary dark:text-white mb-2">
-                    البحث عن معاملة:
-                  </label>
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <Hash className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                      <input
-                        type="text"
-                        value={searchId}
-                        onChange={(e) => setSearchId(e.target.value)}
-                        placeholder="أدخل رقم المعاملة (مثال: 12345)"
-                        className="w-full rounded-2xl border border-gray-200 bg-white py-3.5 pl-4 pr-12 text-sm font-bold text-library-primary shadow-sm outline-none transition-all focus:border-library-accent focus:ring-2 focus:ring-library-accent/20 dark:border-white/10 dark:bg-dark-surface dark:text-white"
-                        dir="ltr"
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="inline-flex items-center justify-center rounded-2xl bg-library-primary px-6 py-3.5 text-sm font-black text-white shadow-md transition-all hover:bg-library-accent active:scale-95 disabled:opacity-50"
-                    >
-                      {loading ? <Loader2 size={18} className="animate-spin" /> : <Search size={18} />}
-                    </button>
+                  <h3 className="text-sm font-black text-library-primary dark:text-white">بحث سريع بالرقم</h3>
+                </div>
+
+                <form onSubmit={handleStudentSearch} className="space-y-4">
+                  <div className="relative">
+                    <Hash className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                    <input
+                      type="text"
+                      value={searchId}
+                      onChange={(e) => setSearchId(e.target.value)}
+                      placeholder="أدخل رقم المعاملة..."
+                      className="w-full rounded-2xl border border-gray-100 bg-gray-50/50 py-3.5 pl-4 pr-11 text-xs font-bold text-library-primary shadow-inner outline-none transition-all focus:border-library-accent focus:bg-white dark:border-white/5 dark:bg-white/5 dark:text-white dark:focus:border-library-accent"
+                      dir="ltr"
+                    />
                   </div>
-                  <div className="mt-3 flex items-start gap-2 rounded-xl bg-amber-50 p-3 border border-amber-100 dark:bg-amber-500/5 dark:border-amber-500/10 text-amber-700 dark:text-amber-200/80">
-                    <AlertTriangle size={16} className="shrink-0 mt-0.5" />
-                    <p className="text-xs font-bold leading-relaxed">
-                      يتم توليد رقم المعاملة وإرساله إليك بعد أن يقوم صاحب الكتاب بقبول طلبك وتأكيد تسليمه إياك. يمكنك إرجاع الكتاب لاحقاً من هنا بإدخال هذا الرقم.
-                    </p>
-                  </div>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full inline-flex items-center justify-center rounded-2xl bg-library-primary py-3.5 text-xs font-black text-white shadow-lg shadow-library-primary/20 transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
+                  >
+                    {loading ? <Loader2 size={16} className="animate-spin" /> : "ابدأ البحث"}
+                  </button>
                 </form>
 
-                <AnimatePresence mode="wait">
+                <div className="mt-6 p-4 rounded-2xl bg-amber-50 dark:bg-amber-500/5 border border-amber-100 dark:border-amber-500/10">
+                  <div className="flex gap-2 mb-2">
+                    <AlertTriangle size={14} className="text-amber-600 shrink-0 mt-0.5" />
+                    <p className="text-[10px] font-black text-amber-700 dark:text-amber-400 uppercase tracking-widest">تنبيه هام</p>
+                  </div>
+                  <p className="text-[11px] font-bold text-amber-800/70 dark:text-amber-200/60 leading-relaxed">
+                    رقم المعاملة هو الكود الفريد الذي يصلك بعد استلام الكتاب. استخدمه هنا للبحث السريع أو الإبلاغ عن الحالة.
+                  </p>
+                </div>
+
+                <AnimatePresence>
                   {studentTx && (
                     <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mt-8 pt-8 border-t border-library-primary/5 dark:border-white/5"
                     >
-                      <h3 className="text-lg font-black text-library-primary dark:text-white mb-4">نتيجة البحث:</h3>
-                      <ul className="space-y-3">
-                        <TransactionCard 
-                          tx={studentTx} 
-                          isProcessing={processingId}
-                          isAdminView={false}
-                          onReturn={(id) => handleAction(id, borrowingTransactionsApi.markReturned, "تم تسجيل إرجاع الكتاب بنجاح")}
-                          onLost={(id) => handleAction(id, borrowingTransactionsApi.markLost, "تم الإبلاغ عن فقدان الكتاب")}
-                        />
-                      </ul>
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="text-xs font-black text-library-primary dark:text-white">نتيجة البحث الحالية:</h4>
+                        <button onClick={() => setStudentTx(null)} className="text-[10px] font-bold text-rose-500">مسح</button>
+                      </div>
+                      <TransactionCard 
+                        tx={studentTx} 
+                        isProcessing={processingId}
+                        isAdminView={studentTx.ownerStudentId === user.id}
+                        onReturn={(id) => handleAction(id, borrowingTransactionsApi.markReturned, "تم تسجيل إرجاع الكتاب بنجاح")}
+                        onLost={(id) => handleAction(id, borrowingTransactionsApi.markLost, "تم الإبلاغ عن فقدان الكتاب")}
+                      />
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
-            )}
-          </section>
+            </aside>
+          </div>
         </div>
       </main>
     </div>
