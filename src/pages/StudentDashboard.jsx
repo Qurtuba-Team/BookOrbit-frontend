@@ -120,10 +120,6 @@ const StudentDashboard = () => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.8, ease: "easeOut" }}
                 >
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-library-accent/10 border border-library-accent/20 text-[10px] font-bold text-library-accent mb-6 uppercase tracking-widest">
-                    <Sparkles size={12} />
-                    بوابة الطالب الأكاديمية
-                  </div>
                   
                   <h1 className="text-2xl md:text-3xl lg:text-4xl font-black text-library-primary dark:text-white leading-[1.2] mb-4">
                     أهلاً <span className="text-library-accent">{firstName}</span>،
