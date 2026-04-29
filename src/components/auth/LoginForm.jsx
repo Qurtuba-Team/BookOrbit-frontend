@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Eye, EyeOff, Loader2, Mail } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Loader2, Mail, Send } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
 import { identityApi } from "../../services/api";
