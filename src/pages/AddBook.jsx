@@ -32,7 +32,7 @@ const AddBook = () => {
     author: '',
     isbn: '',
     publisher: '',
-    category: '',
+    categories: [],
   });
 
   const handleCoverUpload = (e) => {
@@ -79,6 +79,17 @@ const AddBook = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleCategoryToggle = (category) => {
+    setFormData((prev) => {
+      const current = prev.categories || [];
+      if (current.includes(category)) {
+        return { ...prev, categories: current.filter((c) => c !== category) };
+      } else {
+        return { ...prev, categories: [...current, category] };
+      }
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -107,9 +118,11 @@ const AddBook = () => {
         data.append('CoverImage', coverFile);
       }
       
-      if (formData.category) {
-        // Send enum name directly (backend enum binder supports names, case-insensitive).
-        data.append('Categories', formData.category);
+      if (formData.categories && formData.categories.length > 0) {
+        // Send each category as a separate 'Categories' entry
+        formData.categories.forEach(cat => {
+          data.append('Categories', cat);
+        });
       }
 
       await booksApi.create(data);
@@ -358,24 +371,31 @@ const AddBook = () => {
                       />
                     </div>
 
-                    {/* Category */}
-                    <div className="space-y-2">
+                    <div className="space-y-3 col-span-1 md:col-span-2">
                       <label className="text-xs font-black text-library-primary/60 dark:text-gray-300 flex items-center gap-2 transition-colors duration-300 mr-1">
-                        <BookOpen size={16} className="text-library-accent" /> التصنيف
+                        <BookOpen size={16} className="text-library-accent" /> التصنيفات (اختر واحدة أو أكثر)
                       </label>
-                      <select
-                        name="category"
-                        value={formData.category}
-                        onChange={handleChange}
-                        disabled={isSubmitting}
-                        className="w-full px-5 py-4 rounded-xl border-2 border-library-primary/5 dark:border-white/[0.05] focus:border-library-accent outline-none transition-all bg-white dark:bg-dark-surface focus:shadow-xl focus:shadow-library-accent/5 text-library-ink dark:text-white font-medium text-sm disabled:opacity-50 appearance-none"
-                        required
-                      >
-                        <option value="" disabled>اختر تصنيف الكتاب...</option>
-                        {Object.entries(BOOK_CATEGORY_LABELS).map(([key, label]) => (
-                          <option key={key} value={key}>{label}</option>
-                        ))}
-                      </select>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+                        {Object.entries(BOOK_CATEGORY_LABELS).map(([key, label]) => {
+                          const isSelected = formData.categories.includes(key);
+                          return (
+                            <button
+                              key={key}
+                              type="button"
+                              onClick={() => handleCategoryToggle(key)}
+                              disabled={isSubmitting}
+                              className={`px-3 py-2.5 rounded-xl text-[11px] font-black transition-all border-2 flex items-center justify-center text-center
+                                ${isSelected 
+                                  ? 'bg-library-primary text-white border-library-primary shadow-md shadow-library-primary/20 dark:bg-library-accent dark:border-library-accent' 
+                                  : 'bg-white dark:bg-white/5 text-library-primary/60 dark:text-gray-400 border-library-primary/5 dark:border-white/5 hover:border-library-accent/30'}
+                                ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                              `}
+                            >
+                              {label}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
 
