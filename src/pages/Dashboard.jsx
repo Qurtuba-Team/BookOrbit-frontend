@@ -297,7 +297,7 @@ const Dashboard = () => {
               <h3 className="font-black text-lg mb-2 relative z-10">مؤشر سريع</h3>
               <p className="text-white/75 text-sm mb-5 relative z-10 leading-relaxed">يوجد الآن {availableCount} كتاباً متاحاً للاستعارة في الأرشيف.</p>
               <Link
-                to="/lending"
+                to="/lending/outgoing"
                 className="inline-flex w-full items-center justify-center bg-library-accent text-library-primary font-black py-3 rounded-xl text-sm hover:bg-white transition-all relative z-10 shadow-md"
               >
                 متابعة طلباتك
