@@ -3,7 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { BookOpen, User, Building, Hash, CopyPlus, ArrowRight, Loader2, AlertCircle, CalendarDays, Coins, Repeat } from "lucide-react";
 import { booksApi, bookCopiesApi, lendingApi, borrowingApi } from "../services/api";
-import { mockLendingRecords, mockAvailableLendingBooks } from "../utils/mockData";
 import Navbar from "../components/common/Navbar";
 import toast from "react-hot-toast";
 
@@ -13,9 +12,20 @@ const BOOK_COPY_CONDITIONS = {
   2: "مقبول (Acceptable)",
   3: "قديم/مهترئ (Worn)"
 };
+const CONDITION_KEY_TO_LABEL = {
+  new: "جديد (New)",
+  likenew: "جيد جداً (Very Good)",
+  verygood: "جيد جداً (Very Good)",
+  acceptable: "مقبول (Acceptable)",
+  poor: "قديم/مهترئ (Worn)",
+  worn: "قديم/مهترئ (Worn)",
+};
 
 const LendingRecordCard = ({ record, isProcessing, onBorrow }) => {
-  const conditionLabel = BOOK_COPY_CONDITIONS[record.condition] || "غير محدد";
+  const conditionLabel =
+    BOOK_COPY_CONDITIONS[record.condition] ||
+    CONDITION_KEY_TO_LABEL[String(record.condition ?? "").toLowerCase()] ||
+    "غير محدد";
   
   return (
     <div className="bg-white/60 dark:bg-white/[0.02] border border-gray-100 dark:border-white/10 rounded-2xl p-5 hover:border-library-accent/30 transition-all flex flex-col justify-between shadow-sm">
@@ -73,20 +83,24 @@ const BookDetail = () => {
   const [isAddCopyModalOpen, setIsAddCopyModalOpen] = useState(false);
   const [selectedCondition, setSelectedCondition] = useState("");
   const [isAddingCopy, setIsAddingCopy] = useState(false);
+  const [bookCopiesCount, setBookCopiesCount] = useState(0);
 
   useEffect(() => {
     const fetchBookAndLending = async () => {
       try {
-        const bookData = await booksApi.getById(bookId);
+        const [bookData, copiesData] = await Promise.all([
+          booksApi.getById(bookId),
+          bookCopiesApi.getByBookId(bookId, { page: 1, pageSize: 1 }),
+        ]);
         setBook(bookData);
+        const total =
+          copiesData?.totalCount ??
+          copiesData?.TotalCount ??
+          (Array.isArray(copiesData?.items) ? copiesData.items.length : 0);
+        setBookCopiesCount(total);
       } catch (err) {
-        const mockBook = mockAvailableLendingBooks.find(b => String(b.id) === String(bookId));
-        if (mockBook) {
-          setBook(mockBook);
-        } else {
-          setError("تعذر تحميل تفاصيل الكتاب. قد يكون الكتاب غير موجود.");
-          toast.error("فشل تحميل بيانات الكتاب");
-        }
+        setError("تعذر تحميل تفاصيل الكتاب. قد يكون الكتاب غير موجود.");
+        toast.error(err?.message || "فشل تحميل بيانات الكتاب");
       } finally {
         setLoading(false);
       }
@@ -102,7 +116,7 @@ const BookDetail = () => {
         setLendingRecords(availableRecords);
       } catch (err) {
         console.error("Failed to fetch lending records", err);
-        setLendingRecords(mockLendingRecords.filter(r => String(r.bookId) === String(bookId)));
+        setLendingRecords([]);
       } finally {
         setLoadingLending(false);
       }
@@ -123,8 +137,16 @@ const BookDetail = () => {
       await bookCopiesApi.create(bookId, Number(selectedCondition));
       toast.success("تم تسجيل نسختك بنجاح! يمكن للطلاب الآخرين استعارتها الآن.", { id: toastId });
       setIsAddCopyModalOpen(false);
-      const updatedData = await booksApi.getById(bookId);
+      const [updatedData, copiesData] = await Promise.all([
+        booksApi.getById(bookId),
+        bookCopiesApi.getByBookId(bookId, { page: 1, pageSize: 1 }),
+      ]);
       setBook(updatedData);
+      const total =
+        copiesData?.totalCount ??
+        copiesData?.TotalCount ??
+        (Array.isArray(copiesData?.items) ? copiesData.items.length : 0);
+      setBookCopiesCount(total);
     } catch (err) {
       toast.error("فشل إضافة النسخة. تأكد من أنك لم تضف نسخة مسبقاً، أو حاول لاحقاً.", { id: toastId });
     } finally {
@@ -268,7 +290,7 @@ const BookDetail = () => {
                   {book.title}
                 </h1>
                 <span className="shrink-0 bg-emerald-500/10 text-emerald-600 px-3 py-1 rounded-full text-[10px] font-black border border-emerald-500/20">
-                  {book.copiesCount || 0} نسخة في النظام
+                  {bookCopiesCount || book.copiesCount || 0} نسخة في النظام
                 </span>
               </div>
               

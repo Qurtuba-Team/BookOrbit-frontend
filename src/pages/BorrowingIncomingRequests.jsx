@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import {
   Search,
@@ -22,8 +22,8 @@ import {
 import Navbar from "../components/common/Navbar";
 import Aurora from "../components/effects/Aurora";
 import { useAuth } from "../context/AuthContext";
-import { borrowingApi } from "../services/api";
-import { mockBorrowingRequests } from '../utils/mockData';
+import { borrowingApi, lendingApi } from "../services/api";
+import { showReadableAccessErrorToast } from "../utils/accessMessages";
 
 const PAGE_SIZE = 10;
 
@@ -105,6 +105,12 @@ const BorrowingIncomingRequests = () => {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [processingId, setProcessingId] = useState(null);
+  const [detailRequest, setDetailRequest] = useState(null);
+  const [loadingDetailId, setLoadingDetailId] = useState(null);
+  const [lendingRecordDetails, setLendingRecordDetails] = useState({});
+  const [contactInfoByRecord, setContactInfoByRecord] = useState({});
+  const [loadingContactRecordId, setLoadingContactRecordId] = useState(null);
+  const [closingRecordId, setClosingRecordId] = useState(null);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(searchInput.trim()), 350);
@@ -145,8 +151,9 @@ const BorrowingIncomingRequests = () => {
       const tp = res.totalPages ?? res.TotalPages ?? Math.max(1, Math.ceil(total / PAGE_SIZE));
       setTotalPages(tp);
     } catch (err) {
-      setItems(mockBorrowingRequests);
-      setTotalPages(Math.max(1, Math.ceil(mockBorrowingRequests.length / PAGE_SIZE)));
+      showReadableAccessErrorToast(err, user, "فشل تحميل الطلبات الواردة");
+      setItems([]);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
@@ -164,9 +171,57 @@ const BorrowingIncomingRequests = () => {
       toast.success(successMsg, { id: t });
       await fetchRequests();
     } catch (err) {
-      toast.error(err?.message || "حدث خطأ أثناء التنفيذ", { id: t });
+      showReadableAccessErrorToast(err, user, "حدث خطأ أثناء التنفيذ", { id: t });
     } finally {
       setProcessingId(null);
+    }
+  };
+
+  const handleViewDetails = async (id) => {
+    setLoadingDetailId(id);
+    try {
+      const res = await borrowingApi.getById(id);
+      setDetailRequest(res || null);
+      const rid = res?.lendingRecordId || res?.LendingRecordId;
+      if (rid && !lendingRecordDetails[rid]) {
+        const lendingRes = await lendingApi.getById(rid);
+        setLendingRecordDetails((prev) => ({ ...prev, [rid]: lendingRes || {} }));
+      }
+    } catch (err) {
+      showReadableAccessErrorToast(err, user, "تعذر تحميل تفاصيل الطلب");
+    } finally {
+      setLoadingDetailId(null);
+    }
+  };
+
+  const handleLoadContactInfo = async (lendingRecordId) => {
+    if (!lendingRecordId) return;
+    if (contactInfoByRecord[lendingRecordId]) return;
+    setLoadingContactRecordId(lendingRecordId);
+    try {
+      const res = await lendingApi.getContactInfo(lendingRecordId);
+      setContactInfoByRecord((prev) => ({ ...prev, [lendingRecordId]: res || {} }));
+      toast.success("تم تحميل بيانات التواصل");
+    } catch (err) {
+      showReadableAccessErrorToast(err, user, "تعذر تحميل بيانات التواصل");
+    } finally {
+      setLoadingContactRecordId(null);
+    }
+  };
+
+  const handleCloseListing = async (lendingRecordId) => {
+    if (!lendingRecordId) return;
+    if (!window.confirm("هل تريد إغلاق هذا العرض ومنع طلبات جديدة عليه؟")) return;
+    setClosingRecordId(lendingRecordId);
+    const t = toast.loading("جاري إغلاق العرض...");
+    try {
+      await lendingApi.close(lendingRecordId);
+      toast.success("تم إغلاق العرض بنجاح", { id: t });
+      await fetchRequests();
+    } catch (err) {
+      showReadableAccessErrorToast(err, user, "تعذر إغلاق العرض", { id: t });
+    } finally {
+      setClosingRecordId(null);
     }
   };
 
@@ -367,15 +422,35 @@ const BorrowingIncomingRequests = () => {
                       )}
 
                       {statusKey === "Accepted" && (
-                        <button
-                          type="button"
-                          disabled={isProcessing}
-                          onClick={() => handleAction(id, borrowingApi.deliver, "تم تسجيل تسليم الكتاب للطالب بنجاح.")}
-                          className="inline-flex items-center gap-1.5 rounded-xl bg-library-accent px-4 py-2 text-xs font-black text-white shadow-sm transition-all hover:bg-library-primary active:scale-95 disabled:opacity-50"
-                        >
-                          {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <Truck size={14} />}
-                          تأكيد تسليم الكتاب
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            disabled={isProcessing}
+                            onClick={() => handleAction(id, borrowingApi.deliver, "تم تسجيل تسليم الكتاب للطالب بنجاح.")}
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-library-accent px-4 py-2 text-xs font-black text-white shadow-sm transition-all hover:bg-library-primary active:scale-95 disabled:opacity-50"
+                          >
+                            {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <Truck size={14} />}
+                            تأكيد تسليم الكتاب
+                          </button>
+                          <button
+                            type="button"
+                            disabled={loadingContactRecordId === rid || !rid}
+                            onClick={() => handleLoadContactInfo(rid)}
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-black text-indigo-700 transition-all hover:bg-indigo-100 disabled:opacity-50 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-300"
+                          >
+                            {loadingContactRecordId === rid ? <Loader2 size={14} className="animate-spin" /> : <User size={14} />}
+                            بيانات التواصل
+                          </button>
+                          <button
+                            type="button"
+                            disabled={closingRecordId === rid || !rid}
+                            onClick={() => handleCloseListing(rid)}
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-black text-amber-700 transition-all hover:bg-amber-100 disabled:opacity-50 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-300"
+                          >
+                            {closingRecordId === rid ? <Loader2 size={14} className="animate-spin" /> : <CircleX size={14} />}
+                            إغلاق العرض
+                          </button>
+                        </>
                       )}
 
                       {statusKey !== "Pending" && statusKey !== "Accepted" && (
@@ -387,6 +462,15 @@ const BorrowingIncomingRequests = () => {
                           لا يوجد إجراء متاح
                         </span>
                       )}
+                      <button
+                        type="button"
+                        disabled={loadingDetailId === id}
+                        onClick={() => handleViewDetails(id)}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-library-primary/20 bg-library-primary/5 px-4 py-2 text-xs font-black text-library-primary transition-all hover:bg-library-primary hover:text-white active:scale-95 disabled:opacity-50"
+                      >
+                        {loadingDetailId === id ? <Loader2 size={14} className="animate-spin" /> : null}
+                        تفاصيل
+                      </button>
                     </div>
                   </motion.li>
                 );
@@ -398,6 +482,67 @@ const BorrowingIncomingRequests = () => {
         </section>
         </div>
       </main>
+
+      <AnimatePresence>
+        {detailRequest && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[120] flex items-center justify-center p-4"
+          >
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setDetailRequest(null)} />
+            <motion.div
+              initial={{ scale: 0.96, y: 12 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.96, y: 12 }}
+              className="relative w-full max-w-md rounded-2xl border border-white/10 bg-white p-5 dark:bg-[#121214]"
+            >
+              <h3 className="mb-3 text-base font-black text-library-primary dark:text-white">تفاصيل الطلب</h3>
+              <div className="space-y-2 text-xs font-bold text-gray-600 dark:text-gray-300">
+                <p>رقم الطلب: <span className="font-mono">#{detailRequest.id || detailRequest.Id}</span></p>
+                <p>رقم العرض: <span className="font-mono">#{detailRequest.lendingRecordId || detailRequest.LendingRecordId}</span></p>
+                <p>الحالة: {String(detailRequest.status || detailRequest.state || "—")}</p>
+                <p>تاريخ الإنشاء: {formatDate(detailRequest.requestDate || detailRequest.createdAtUtc || detailRequest.createdAt)}</p>
+                <p>تاريخ الانتهاء: {formatDate(detailRequest.expirationDateUtc || detailRequest.expectedReturnDate)}</p>
+                {lendingRecordDetails[detailRequest.lendingRecordId || detailRequest.LendingRecordId] ? (
+                  <p>
+                    حالة سجل الإعارة:{" "}
+                    {String(
+                      lendingRecordDetails[detailRequest.lendingRecordId || detailRequest.LendingRecordId]?.state ??
+                        lendingRecordDetails[detailRequest.lendingRecordId || detailRequest.LendingRecordId]?.State ??
+                        "—"
+                    )}
+                  </p>
+                ) : null}
+                {contactInfoByRecord[detailRequest.lendingRecordId || detailRequest.LendingRecordId] ? (
+                  <div className="mt-2 rounded-lg border border-indigo-200 bg-indigo-50 p-2 dark:border-indigo-500/30 dark:bg-indigo-500/10">
+                    <p>
+                      الهاتف:{" "}
+                      {contactInfoByRecord[detailRequest.lendingRecordId || detailRequest.LendingRecordId]?.phoneNumber ||
+                        contactInfoByRecord[detailRequest.lendingRecordId || detailRequest.LendingRecordId]?.PhoneNumber ||
+                        "غير متاح"}
+                    </p>
+                    <p>
+                      تيليجرام:{" "}
+                      {contactInfoByRecord[detailRequest.lendingRecordId || detailRequest.LendingRecordId]?.telegramUserId ||
+                        contactInfoByRecord[detailRequest.lendingRecordId || detailRequest.LendingRecordId]?.TelegramUserId ||
+                        "غير متاح"}
+                    </p>
+                  </div>
+                ) : null}
+              </div>
+              <button
+                type="button"
+                onClick={() => setDetailRequest(null)}
+                className="mt-4 w-full rounded-xl bg-library-primary py-2.5 text-xs font-black text-white"
+              >
+                إغلاق
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

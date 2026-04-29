@@ -108,18 +108,14 @@ const AddBook = () => {
       }
       
       if (formData.category) {
-        const categoryIndex = Object.keys(BOOK_CATEGORY_LABELS).indexOf(formData.category);
-        if (categoryIndex !== -1) {
-          // Add as 'Categories' and force it to be a Number (FormData will stringify it, but ASP.NET will parse it correctly)
-          // Some backends expect 'Categories' to be sent multiple times for an array
-          data.append('Categories', Number(categoryIndex));
-        }
+        // Send enum name directly (backend enum binder supports names, case-insensitive).
+        data.append('Categories', formData.category);
       }
 
       await booksApi.create(data);
       
       toast.dismiss(loadingToast);
-      toast.success('تمت إضافة الكتاب بنجاح إلى الكتالوج!');
+      toast.success('تمت إضافة الكتاب بنجاح، وهو الآن بانتظار موافقة الإدارة.');
       
       navigate('/app', { replace: true });
     } catch (error) {
@@ -127,10 +123,12 @@ const AddBook = () => {
       if (error.status === 403) {
         toast.error('عذراً، لا تمتلك الصلاحيات الكافية لإضافة كتاب. يجب أن يكون حسابك موثقاً (Active).');
       } else if (error.status === 409) {        toast.error('هذا الكتاب (أو الرقم الدولي ISBN) موجود بالفعل في الكتالوج.');
-      } else if (error.data?.errors) {
+      } else if (error.errors) {
         // Detailed validation errors from backend
-        const firstError = Object.values(error.data.errors)[0]?.[0];
-        toast.error(firstError || 'يرجى التحقق من البيانات المدخلة');
+        const firstError = Array.isArray(error.errors)
+          ? error.errors[0]
+          : Object.values(error.errors)[0]?.[0] || Object.values(error.errors)[0];
+        toast.error(firstError || error.detail || 'يرجى التحقق من البيانات المدخلة');
       } else {
         toast.error(error.message || 'فشل في إضافة الكتاب');
       }

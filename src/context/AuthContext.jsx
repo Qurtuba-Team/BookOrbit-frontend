@@ -10,6 +10,7 @@ export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const AUTO_REFRESH_INTERVAL_MS = 9 * 60 * 1000;
 
   const buildAbsoluteUrl = useCallback((value) => {
     if (!value) return null;
@@ -110,7 +111,6 @@ export const AuthProvider = ({ children }) => {
 
   // Helper to fetch full user profile (Identity + Student info)
   const fetchFullProfile = useCallback(async () => {
-
     try {
       const identityData = await identityApi.getMe();
       
@@ -223,7 +223,17 @@ export const AuthProvider = ({ children }) => {
     return null;
   }, [fetchFullProfile]);
 
-
+  const refreshSessionToken = useCallback(async () => {
+    const { accessToken, refreshToken } = tokenStore.get();
+    if (!accessToken || !refreshToken) return;
+    try {
+      const newTokens = await identityApi.refreshToken(refreshToken, accessToken);
+      const rememberMe = localStorage.getItem("refreshToken") !== null;
+      tokenStore.set(newTokens, rememberMe);
+    } catch {
+      window.dispatchEvent(new CustomEvent("auth:logout"));
+    }
+  }, []);
 
   const login = async (email, password, rememberMe = true) => {
     try {
@@ -325,6 +335,14 @@ export const AuthProvider = ({ children }) => {
     window.addEventListener("auth:logout", handleLogout);
     return () => window.removeEventListener("auth:logout", handleLogout);
   }, [navigate]);
+
+  useEffect(() => {
+    if (!user) return;
+    const timer = setInterval(() => {
+      refreshSessionToken();
+    }, AUTO_REFRESH_INTERVAL_MS);
+    return () => clearInterval(timer);
+  }, [user, refreshSessionToken]);
 
   return (
     <AuthContext.Provider

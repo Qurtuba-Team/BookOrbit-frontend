@@ -36,21 +36,17 @@ const ProfileField = ({ icon: Icon, label, value, color = "indigo" }) => (
 const StudentProfile = () => {
   const { user, logout, refreshProfile } = useAuth();
   const [activeSection, setActiveSection] = useState("info"); // info | security
-  const profileCompletion = user?.phoneNumber && user?.major ? 92 : 72;
+  const profileCompletion = user?.phoneNumber ? 92 : 72;
   const isAdmin = user?.role?.toLowerCase() === "admin";
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     fullName: "",
-    phoneNumber: "",
-    major: "",
   });
 
   useEffect(() => {
     setForm({
       fullName: user?.fullName || user?.Name || "",
-      phoneNumber: user?.phoneNumber || user?.PhoneNumber || "",
-      major: user?.major || user?.Major || "",
     });
   }, [user]);
 
@@ -68,17 +64,11 @@ const StudentProfile = () => {
       toast.error("الاسم الكامل مطلوب");
       return;
     }
-    if (form.phoneNumber && !/^\+?[0-9\s\-()]{8,20}$/.test(form.phoneNumber.trim())) {
-      toast.error("صيغة رقم الهاتف غير صحيحة");
-      return;
-    }
     setSaving(true);
     const t = toast.loading("جاري حفظ البيانات...");
     try {
       const data = new FormData();
       data.append("Name", form.fullName.trim());
-      data.append("PhoneNumber", form.phoneNumber.trim());
-      data.append("Major", form.major.trim());
       await studentsApi.update(user.studentId, data);
       await refreshProfile?.();
       setEditing(false);
@@ -229,8 +219,6 @@ const StudentProfile = () => {
                                 setEditing(false);
                                 setForm({
                                   fullName: user?.fullName || user?.Name || "",
-                                  phoneNumber: user?.phoneNumber || user?.PhoneNumber || "",
-                                  major: user?.major || user?.Major || "",
                                 });
                               }}
                               className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs font-black text-gray-600 transition-all hover:bg-gray-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-300"
@@ -283,29 +271,9 @@ const StudentProfile = () => {
                             className="w-full rounded-xl border border-library-primary/10 bg-white px-4 py-3 text-sm font-bold text-library-primary outline-none transition-all focus:border-library-accent/40 focus:ring-2 focus:ring-library-accent/20 dark:border-white/10 dark:bg-dark-surface dark:text-white"
                           />
                         </div>
-                        <div className="space-y-1.5">
-                          <label className="text-[11px] font-black text-library-primary/60 dark:text-gray-300">رقم الهاتف</label>
-                          <input
-                            name="phoneNumber"
-                            value={form.phoneNumber}
-                            onChange={handleEditChange}
-                            placeholder="مثال: 01012345678"
-                            className="w-full rounded-xl border border-library-primary/10 bg-white px-4 py-3 text-sm font-bold text-library-primary outline-none transition-all focus:border-library-accent/40 focus:ring-2 focus:ring-library-accent/20 dark:border-white/10 dark:bg-dark-surface dark:text-white"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-[11px] font-black text-library-primary/60 dark:text-gray-300">التخصص الأكاديمي</label>
-                          <input
-                            name="major"
-                            value={form.major}
-                            onChange={handleEditChange}
-                            placeholder="مثال: هندسة برمجيات"
-                            className="w-full rounded-xl border border-library-primary/10 bg-white px-4 py-3 text-sm font-bold text-library-primary outline-none transition-all focus:border-library-accent/40 focus:ring-2 focus:ring-library-accent/20 dark:border-white/10 dark:bg-dark-surface dark:text-white"
-                          />
-                        </div>
                         <div className="md:col-span-2 rounded-xl border border-library-accent/20 bg-library-accent/5 px-3 py-2">
                           <p className="text-[11px] font-bold text-library-primary/70 dark:text-gray-300">
-                            البريد الإلكتروني لا يمكن تعديله من هذه الصفحة.
+                            المتاح حالياً من هذه الصفحة هو تعديل الاسم فقط حسب عقد الـ API الحالي.
                           </p>
                         </div>
                       </motion.div>

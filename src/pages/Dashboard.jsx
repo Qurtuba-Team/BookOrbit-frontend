@@ -1,11 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import toast from 'react-hot-toast';
 import {
   BookMarked,
   ArrowUpLeft,
-  User,
   ShieldCheck,
   Sparkles,
   Star,
@@ -17,7 +15,7 @@ import Navbar from '../components/common/Navbar';
 import { useAuth } from '../context/AuthContext';
 import { booksApi } from '../services/api';
 import { getBookImageUrl } from '../utils/constants';
-import { mockAvailableLendingBooks } from '../utils/mockData';
+import { showReadableAccessErrorToast } from "../utils/accessMessages";
 import { useNavigate } from 'react-router-dom';
 
 const fadeUp = {
@@ -39,29 +37,6 @@ const bookCardItem = {
     y: 0,
     transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] },
   },
-};
-
-const LENDING_STATE_KEYS = ['Available', 'Reserved', 'Borrowed', 'Expired', 'Closed'];
-
-const lendingStateToIndex = (raw) => {
-  if (typeof raw === 'number' && raw >= 0 && raw < LENDING_STATE_KEYS.length) return raw;
-  const s = String(raw ?? '').replace(/\s/g, '').toLowerCase();
-  const i = LENDING_STATE_KEYS.findIndex((k) => k.toLowerCase() === s);
-  return i >= 0 ? i : 0;
-};
-
-const normalizeLendingRow = (row = {}) => {
-  const idx = lendingStateToIndex(row.state ?? row.State);
-  const stateKey = LENDING_STATE_KEYS[idx];
-  return {
-    id: row.id ?? row.Id,
-    bookId: row.bookId ?? row.BookId,
-    title: row.bookTitle ?? row.title ?? row.Title ?? 'كتاب',
-    author: row.bookAuthor ?? row.author ?? row.Author ?? '—',
-    owner: row.studentName ?? row.ownerName ?? row.OwnerName ?? '—',
-    status: stateKey === 'Available' ? 'متاح' : 'غير متاح',
-    stateKey,
-  };
 };
 
 const BookCard3D = ({ book }) => {
@@ -152,8 +127,6 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [requestingId, setRequestingId] = useState(null);
-
   // Prioritize fullName from the student profile
   const rawName = user?.fullName || user?.Name || user?.name || user?.userName || user?.email?.split('@')[0] || "يا بطل";
   const firstName = rawName.split(' ')[0];
@@ -174,14 +147,25 @@ const Dashboard = () => {
         searchTerm: debouncedSearch || undefined,
       });
       const rows = res.items ?? res.data ?? [];
-      setBooksData(rows.length ? rows : mockAvailableLendingBooks);
+      const approvedOnly = rows.filter((book) => {
+        const status = String(book?.status ?? "").toLowerCase();
+        const state = book?.state;
+        return (
+          book?.isApproved === true ||
+          status === "active" ||
+          status === "available" ||
+          state === 1 ||
+          String(state).toLowerCase() === "available"
+        );
+      });
+      setBooksData(approvedOnly);
     } catch (e) {
-      toast.error(e?.message || 'تعذر تحميل الكتب المتاحة للإعارة');
-      setBooksData(mockAvailableLendingBooks);
+      showReadableAccessErrorToast(e, user, "تعذر تحميل الكتب المتاحة للإعارة");
+      setBooksData([]);
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch]);
+  }, [debouncedSearch, user]);
 
   useEffect(() => {
     fetchAvailable();

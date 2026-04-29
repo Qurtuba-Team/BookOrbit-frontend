@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, BookOpen, User, Building, Hash, Loader2 } from 'lucide-react';
 import { booksApi } from '../../services/api';
 import toast from 'react-hot-toast';
-import { BOOK_CATEGORY_LABELS } from '../../utils/constants';
 
 export const EditBookModal = ({ isOpen, onClose, book, onBookUpdated }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -124,14 +123,9 @@ export const EditBookModal = ({ isOpen, onClose, book, onBookUpdated }) => {
                     <User size={12} className="text-library-accent" />
                     اسم المؤلف
                   </label>
-                  <input
-                    type="text"
-                    name="author"
-                    value={formData.author}
-                    onChange={handleChange}
-                    placeholder="اسم مؤلف الكتاب"
-                    className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-xs font-bold focus:ring-2 focus:ring-library-accent/20 focus:border-library-accent transition-all dark:text-white"
-                  />
+                  <div className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-xs font-bold text-library-primary dark:text-white">
+                    {formData.author || "—"}
+                  </div>
                 </div>
 
                 <div className="space-y-1.5">
@@ -139,17 +133,9 @@ export const EditBookModal = ({ isOpen, onClose, book, onBookUpdated }) => {
                     <Hash size={12} className="text-library-accent" />
                     التصنيف (القسم)
                   </label>
-                  <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleChange}
-                    className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-xs font-bold focus:ring-2 focus:ring-library-accent/20 focus:border-library-accent transition-all appearance-none dark:text-white"
-                  >
-                    <option value="">اختر التصنيف...</option>
-                    {Object.values(BOOK_CATEGORY_LABELS).map((label) => (
-                      <option key={label} value={label}>{label}</option>
-                    ))}
-                  </select>
+                  <div className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-xs font-bold text-library-primary dark:text-white">
+                    {formData.category || "—"}
+                  </div>
                 </div>
 
                 <div className="space-y-1.5">
@@ -157,14 +143,9 @@ export const EditBookModal = ({ isOpen, onClose, book, onBookUpdated }) => {
                     <Building size={12} className="text-library-accent" />
                     دار النشر
                   </label>
-                  <input
-                    type="text"
-                    name="publisher"
-                    value={formData.publisher}
-                    onChange={handleChange}
-                    placeholder="اسم دار النشر"
-                    className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-xs font-bold focus:ring-2 focus:ring-library-accent/20 focus:border-library-accent transition-all dark:text-white"
-                  />
+                  <div className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-xs font-bold text-library-primary dark:text-white">
+                    {formData.publisher || "—"}
+                  </div>
                 </div>
 
                 <div className="space-y-1.5">
@@ -172,15 +153,15 @@ export const EditBookModal = ({ isOpen, onClose, book, onBookUpdated }) => {
                     <Hash size={12} className="text-library-accent" />
                     الرقم الدولي (ISBN)
                   </label>
-                  <input
-                    type="text"
-                    name="isbn"
-                    value={formData.isbn}
-                    onChange={handleChange}
-                    placeholder="الرقم المعياري (اختياري)"
-                    className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-xs font-bold focus:ring-2 focus:ring-library-accent/20 focus:border-library-accent transition-all dark:text-white"
-                  />
+                  <div className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-xs font-bold text-library-primary dark:text-white">
+                    {formData.isbn || "—"}
+                  </div>
                 </div>
+              </div>
+              <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-3 py-2">
+                <p className="text-[11px] font-bold text-amber-700 dark:text-amber-300">
+                  حسب عقد الـ API الحالي، التعديل المتاح هنا هو عنوان الكتاب فقط.
+                </p>
               </div>
 
             </form>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Eye, EyeOff, Loader2, Mail, Send } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Loader2, Mail } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
 import { identityApi } from "../../services/api";
@@ -171,8 +171,6 @@ const LoginForm = ({ onForgotPassword, onUnconfirmed }) => {
     }
   };
 
-
-
   const getInputClass = (name) =>
     `w-full px-4 py-3.5 bg-white dark:bg-dark-surface border-2 ${
       errors[name]
@@ -267,7 +265,7 @@ const LoginForm = ({ onForgotPassword, onUnconfirmed }) => {
           />
         </div>
 
-        <div className="space-y-2 mt-2">
+        <div className="mt-2">
           <button
             type="submit"
             disabled={isLoading}

@@ -23,7 +23,6 @@ import Navbar from "../components/common/Navbar";
 import Aurora from "../components/effects/Aurora";
 import { useAuth } from "../context/AuthContext";
 import { borrowingTransactionsApi } from "../services/api";
-import { mockTransactions } from "../utils/mockData";
 
 const PAGE_SIZE = 10;
 
@@ -205,8 +204,9 @@ const BorrowingTransactions = () => {
       const tp = res.totalPages ?? res.TotalPages ?? Math.max(1, Math.ceil(total / PAGE_SIZE));
       setTotalPages(tp);
     } catch (err) {
-      setItems(mockTransactions);
-      setTotalPages(Math.max(1, Math.ceil(mockTransactions.length / PAGE_SIZE)));
+      toast.error(err?.message || "فشل تحميل معاملات الاستعارة");
+      setItems([]);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
@@ -234,10 +234,8 @@ const BorrowingTransactions = () => {
         toast.error("لم يتم العثور على معاملة بهذا الرقم، أو لا تملك صلاحية الوصول لها.");
       }
     } catch (err) {
-      setStudentTx(mockTransactions.find(t => String(t.id) === String(searchId.trim())) || null);
-      if (!mockTransactions.find(t => String(t.id) === String(searchId.trim()))) {
-         toast.error(err?.message || "لم يتم العثور على المعاملة");
-      }
+      setStudentTx(null);
+      toast.error(err?.message || "لم يتم العثور على المعاملة");
     } finally {
       setLoading(false);
     }

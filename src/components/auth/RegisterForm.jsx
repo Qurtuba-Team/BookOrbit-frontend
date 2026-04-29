@@ -25,7 +25,7 @@ const RegisterForm = ({ switchMode, onSuccess }) => {
     useState(false);
 
   const validateEmail = (email) => {
-    const universityEmailRegex = /^[^\s@]+@(std\.mans\.edu\.eg|mans\.edu\.eg|bookorbit\.com)$/;
+    const universityEmailRegex = /^[^\s@]+@std\.mans\.edu\.eg$/;
     return universityEmailRegex.test(email);
   };
 
@@ -69,9 +69,7 @@ const RegisterForm = ({ switchMode, onSuccess }) => {
         break;
       case "phone":
       case "PhoneNumber":
-        if (!value) {
-          error = "رقم الهاتف مطلوب";
-        } else if (!validatePhone(value)) {
+        if (value && !validatePhone(value)) {
           error =
             "رقم الهاتف يجب أن يكون 11 رقم ويبدأ بـ 010 أو 011 أو 012 أو 015";
         }
@@ -165,8 +163,8 @@ const RegisterForm = ({ switchMode, onSuccess }) => {
         toast.error("الرجاء اختيار ملف صورة صالح");
         return;
       }
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("حجم الصورة يجب أن يكون أقل من 5MB");
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("حجم الصورة يجب أن يكون أقل من 2MB");
         return;
       }
       setPhoto(file);
@@ -187,7 +185,7 @@ const RegisterForm = ({ switchMode, onSuccess }) => {
     }
     if (!registerData.email || !validateEmail(registerData.email)) {
       newErrors.UniversityMailAddress =
-        "يجب استخدام البريد الجامعي (@std.mans.edu.eg أو @mans.edu.eg)";
+        "يجب استخدام البريد الجامعي (@std.mans.edu.eg)";
     }
     if (!registerData.password || !validatePassword(registerData.password)) {
       newErrors.Password =
@@ -196,9 +194,12 @@ const RegisterForm = ({ switchMode, onSuccess }) => {
     if (registerData.password !== registerData.registerConfirmPassword) {
       newErrors.registerConfirmPassword = "كلمتا المرور غير متطابقتين";
     }
-    if (!registerData.phone || !validatePhone(registerData.phone)) {
+    if (registerData.phone && !validatePhone(registerData.phone)) {
       newErrors.PhoneNumber =
         "رقم الهاتف يجب أن يكون 11 رقم ويبدأ بـ 010 أو 011 أو 012 أو 015";
+    }
+    if (!registerData.phone && !registerData.telegramUserId?.trim()) {
+      newErrors.PhoneNumber = "يجب إدخال رقم الهاتف أو يوزر تليجرام على الأقل";
     }
     if (!registerData.agreeToTerms) {
       newErrors.agreeToTerms = "يجب الموافقة على ميثاق الشرف";
@@ -216,11 +217,12 @@ const RegisterForm = ({ switchMode, onSuccess }) => {
 
     const formData = new FormData();
     formData.append("Name", registerData.name.trim());
-    formData.append("PhoneNumber", registerData.phone.trim());
-    formData.append(
-      "TelegramUserId",
-      registerData.telegramUserId?.trim() || "",
-    );
+    if (registerData.phone?.trim()) {
+      formData.append("PhoneNumber", registerData.phone.trim());
+    }
+    if (registerData.telegramUserId?.trim()) {
+      formData.append("TelegramUserId", registerData.telegramUserId.trim());
+    }
     if (photo) {
       formData.append("PersonalPhoto", photo);
     }
