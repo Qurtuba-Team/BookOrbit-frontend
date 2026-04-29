@@ -159,8 +159,8 @@ const ConditionDropdown = ({ value, onChange, disabled }) => {
 };
 
 const normalizeCopy = (row = {}) => {
-  const id = row.id ?? row.Id;
-  const bookId = row.bookId ?? row.BookId ?? row.book?.id ?? row.Book?.Id;
+  const id = row.Id ?? row.id;
+  const bookId = row.BookId ?? row.bookId ?? row.book?.Id ?? row.book?.id;
   const book = row.book ?? row.Book ?? {};
   const title =
     book.title ||
@@ -197,9 +197,13 @@ const normalizeCopy = (row = {}) => {
     condition: normalizedCondition,
     state,
     isOnLendingList: Boolean(isOnLendingList),
-    bookCoverImageUrl: bookId
-      ? `${API_BASE_URL}/api/v1.0/images/books/${bookId}`
-      : toApiAssetUrl(book.bookCoverImageUrl || book.BookCoverImageUrl || row.bookCoverImageUrl || row.BookCoverImageUrl || ""),
+    bookCoverImageUrl: toApiAssetUrl(
+      book.bookCoverImageUrl || 
+      book.BookCoverImageUrl || 
+      row.bookCoverImageUrl || 
+      row.BookCoverImageUrl || 
+      (bookId ? getBookImageUrl(bookId) : "")
+    ),
   };
 };
 

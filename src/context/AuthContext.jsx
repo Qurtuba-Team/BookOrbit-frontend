@@ -24,17 +24,32 @@ export const AuthProvider = ({ children }) => {
 
   const buildAbsoluteUrl = useCallback((value) => {
     if (!value) return null;
-    if (value.startsWith("http://") || value.startsWith("https://"))
-      return value;
-    if (value.startsWith("/")) return `${API_BASE_URL}${value}`;
-    return `${API_BASE_URL}/${value.replace(/^\/+/, "")}`;
+    const raw = String(value).trim();
+    
+    try {
+      const url = new URL(raw);
+      if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
+        const base = new URL(API_BASE_URL);
+        return `${base.origin}${url.pathname}${url.search}${url.hash}`;
+      }
+      return raw;
+    } catch {
+      if (raw.startsWith("/")) return `${API_BASE_URL}${raw}`;
+      return `${API_BASE_URL}/${raw.replace(/^\/+/, "")}`;
+    }
   }, []);
 
   const fetchProtectedImageAsSrc = useCallback(async (url) => {
     const { accessToken } = tokenStore.get();
     if (!accessToken) return null;
 
-    const res = await fetch(url, {
+    // Add cache buster to ensure we get the fresh image after an update
+    const buster = `t=${Date.now()}`;
+    const separator = url.includes("?") ? "&" : "?";
+    const finalUrl = `${url}${separator}${buster}`;
+
+    const res = await fetch(finalUrl, {
+      cache: "no-cache",
       headers: {
         Authorization: `Bearer ${accessToken}`,
         "ngrok-skip-browser-warning": "69420",

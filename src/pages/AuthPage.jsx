@@ -96,21 +96,21 @@ const AuthPage = () => {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="text-center py-6 bg-white/5 dark:bg-black/20 rounded-3xl p-8 backdrop-blur-md border border-white/10"
+        className="text-center py-6 bg-gray-50/50 dark:bg-black/20 rounded-3xl p-8 backdrop-blur-md border border-gray-100 dark:border-white/10 shadow-sm"
       >
-        <div className="w-20 h-20 bg-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-500/10">
+        <div className="w-20 h-20 bg-emerald-500/10 dark:bg-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-500/10">
           <CheckCircle2 size={40} className="text-emerald-500" />
         </div>
-        <h3 className="text-2xl font-black text-white mb-3">
+        <h3 className="text-2xl font-black text-library-primary dark:text-white mb-3">
           تحقق من بريدك الجامعي
         </h3>
-        <p className="text-white/60 text-sm leading-relaxed mb-8">
+        <p className="text-gray-500 dark:text-white/60 text-sm leading-relaxed mb-8">
           لقد أرسلنا رسالة تأكيد إلى:<br />
-          <span className="font-bold text-emerald-400 break-all select-all">
+          <span className="font-bold text-emerald-600 dark:text-emerald-400 break-all select-all">
             {confirmedEmail}
           </span>
           <br />
-          <span className="text-[10px] mt-4 block opacity-50 italic">
+          <span className="text-[10px] mt-4 block text-gray-400 dark:text-white/40 italic">
             إذا لم تجد الرسالة في صندوق الوارد، يرجى مراجعة مجلد الرسائل غير المرغوب فيها (Spam).
           </span>
         </p>
@@ -121,7 +121,7 @@ const AuthPage = () => {
             disabled={resendCooldown > 0}
             className={`w-full py-4 px-6 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
               resendCooldown > 0 
-              ? "bg-white/5 text-white/40 cursor-not-allowed" 
+              ? "bg-gray-100 dark:bg-white/5 text-gray-400 dark:text-white/40 cursor-not-allowed" 
               : "bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20"
             }`}
           >
@@ -137,7 +137,7 @@ const AuthPage = () => {
               setIsWaitingConfirmation(false);
               setIsLogin(true);
             }}
-            className="text-white/40 hover:text-white font-bold text-xs transition-colors flex items-center justify-center gap-1 mt-2"
+            className="text-gray-400 dark:text-white/40 hover:text-library-primary dark:hover:text-white font-bold text-xs transition-colors flex items-center justify-center gap-1 mt-2"
           >
             <ArrowRight size={14} /> العودة لتسجيل الدخول
           </button>

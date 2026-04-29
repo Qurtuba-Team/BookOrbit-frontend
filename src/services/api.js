@@ -1,5 +1,5 @@
 // ─── BookOrbit API Configuration ────────────────────────────────────────────
-import { API_BASE_URL, API_V1, tokenStore, BOOK_CATEGORY_LABELS } from "../utils/constants";
+import { API_BASE_URL, API_V1, tokenStore, BOOK_CATEGORY_LABELS, getBookImageUrl } from "../utils/constants";
 
 // ─── Token Refresh Queue ─────────────────────────────────────────────────────
 let isRefreshing = false;
@@ -61,7 +61,7 @@ export const normalizeStudent = (student = {}) => {
 
   return {
     ...student,
-    id: student.id || student.Id,
+    id: student.Id || student.id || student.StudentId || student.studentId,
     fullName: student.fullName || student.name || student.Name || "طالب",
     name: student.name || student.Name || student.fullName,
     universityMailAddress: student.universityMailAddress || student.UniversityMailAddress || "",
@@ -103,17 +103,20 @@ const normalizeBook = (book = {}) => {
 
       return {
         ...book,
-        id: book.id || book.Id,
+        id: book.Id || book.id || book.BookId || book.bookId,
         title: book.title || book.Title || "بدون عنوان",
         author: book.author || book.Author || "مؤلف مجهول",
         publisher: book.publisher || book.Publisher || "",
         isbn: book.isbn || book.ISBN || "",
         category: categoryLabel || "عام",
         copiesCount: book.copiesCount ?? book.availableCopiesCount ?? 0,
-        bookCoverImageUrl:
-          (book.id || book.Id)
-            ? `${API_V1}/images/books/${book.id || book.Id}`
-            : toApiAssetUrl(book.bookCoverImageUrl || book.BookCoverImageUrl || ""),
+        bookCoverImageUrl: toApiAssetUrl(
+          book.bookCoverImageUrl || 
+          book.BookCoverImageUrl || 
+          book.coverImageUrl ||
+          book.CoverImageUrl ||
+          ((book.Id || book.id || book.BookId || book.bookId) ? getBookImageUrl(book.Id || book.id || book.BookId || book.bookId) : "")
+        ),
         state: normalizedState,
         isApproved: isApproved,
         status:
@@ -137,8 +140,8 @@ const normalizeBorrowingRequest = (request = {}) => {
 
   return {
     ...request,
-    id: request.id || request.Id,
-    lendingRecordId: request.lendingRecordId || request.lendingListRecordId || request.LendingRecordId,
+    id: request.Id || request.id,
+    lendingRecordId: request.LendingRecordId || request.lendingRecordId || request.lendingListRecordId,
     studentName: request.studentName || request.borrowingStudentName || request.BorrowingStudentName || "",
     bookTitle: request.bookTitle || request.BookTitle || "",
     requestDate: request.requestDate || request.createdAtUtc || request.createdAt || request.createdAtUTC,
@@ -614,7 +617,7 @@ export const lendingApi = {
     const items = Array.isArray(res?.items)
       ? res.items.map((item) => ({
           ...item,
-          id: item.id || item.Id,
+          id: item.Id || item.id,
           bookTitle: item.bookTitle || item.title || item.Title || "",
           studentName: item.studentName || item.ownerName || item.OwnerName || "",
         }))
@@ -725,8 +728,5 @@ export const imagesApi = {
     }),
 
   /** GET /images/books/{bookId} — Book cover image */
-  getBookImage: (bookId) =>
-    apiRequest(`/images/books/${bookId}`, {
-      headers: { "Accept": "application/json" },
-    }),
+  getBookImage: (bookId) => getBookImageUrl(bookId),
 };

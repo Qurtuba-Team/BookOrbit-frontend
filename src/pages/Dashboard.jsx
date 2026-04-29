@@ -66,8 +66,8 @@ const BookCard3D = ({ book }) => {
           </div>
           <div className={`absolute inset-y-0 right-0 w-[24px] ${book.color || 'bg-library-primary'} [transform:translateX(12px)_rotateY(90deg)] rounded-r-sm overflow-hidden shadow-[inset_2px_0_5px_rgba(0,0,0,0.3)]`}></div>
           <div className="absolute inset-0 bg-white rounded-r-md rounded-l-sm overflow-hidden [transform:translateZ(12px)] shadow-[-5px_5px_15px_rgba(0,0,0,0.2)] border-l-2 border-black/10">
-             {book.id ? (
-               <img src={getBookImageUrl(book.id)} alt={book.title} className="w-full h-full object-cover" />
+             {book.bookCoverImageUrl || book.id ? (
+               <img src={book.bookCoverImageUrl || getBookImageUrl(book.id)} alt={book.title} className="w-full h-full object-cover" />
             ) : (
                <div className="w-full h-full bg-library-primary flex flex-col items-center justify-center p-3 text-center">
                  <h3 className="text-white font-bold text-sm mb-1 leading-tight">{book.title}</h3>

@@ -32,7 +32,7 @@ export const getStudentImageUrl = (studentId) =>
   `${API_V1}/images/students/${studentId}`;
 
 export const getBookImageUrl = (bookId) =>
-  `${API_V1}/images/books/${bookId}`;
+  `${API_BASE_URL}/uploads/books/book${bookId}.jpg`;
 
 // ─── Enum Display Labels ─────────────────────────────────────────────────────
 export const STUDENT_STATE_LABELS = {

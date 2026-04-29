@@ -1447,7 +1447,7 @@ const AdminDashboard = () => {
       }
       if (bookId && !bookImageMap[bookId]) {
         imgPromises.push(
-          fetchProtectedImageSrc(getBookImageUrl(bookId))
+          fetchProtectedImageSrc(detail?.bookCoverImageUrl || lend?.bookCoverImageUrl || getBookImageUrl(bookId))
             .then(src => src && setBookImageMap(prev => ({ ...prev, [bookId]: src })))
             .catch(() => {})
         );

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
@@ -33,11 +33,13 @@ const ProfileField = ({ icon: Icon, label, value, color = "indigo" }) => (
 
 const StudentProfile = () => {
   const { user, logout, refreshProfile } = useAuth();
+  const fileInputRef = useRef(null);
   const [activeSection, setActiveSection] = useState("info"); // info | security
   const profileCompletion = user?.phoneNumber ? 92 : 72;
   const isAdmin = user?.role?.toLowerCase() === "admin";
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [localPreview, setLocalPreview] = useState(null);
   const [form, setForm] = useState({
     fullName: "",
   });
@@ -75,6 +77,54 @@ const StudentProfile = () => {
       toast.error(err?.message || "تعذر تحديث البيانات", { id: t });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("يرجى اختيار ملف صورة صالح");
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("حجم الصورة يجب أن يكون أقل من 2MB");
+      return;
+    }
+
+    // Set local preview for instant feedback
+    const reader = new FileReader();
+    reader.onloadend = () => setLocalPreview(reader.result);
+    reader.readAsDataURL(file);
+
+    const t = toast.loading("جاري تحديث الصورة الشخصية...");
+    try {
+      const data = new FormData();
+      data.append("PersonalPhoto", file);
+      
+      // Backend might require Name field even in PATCH requests
+      const currentName = user?.fullName || user?.Name || "";
+      if (currentName) {
+        data.append("Name", currentName);
+      }
+      
+      if (!user?.studentId) {
+        throw new Error("تعذر العثور على معرف الطالب");
+      }
+
+      await studentsApi.update(user.studentId, data);
+      await refreshProfile?.();
+      setLocalPreview(null); // Clear local preview after success
+      toast.success("تم تحديث الصورة بنجاح", { id: t });
+    } catch (err) {
+      setLocalPreview(null); // Clear preview on error
+      console.error("Profile photo update error:", err);
+      const errorMessage = err?.errors 
+        ? Object.values(err.errors).flat().join(", ") 
+        : (err?.message || "تعذر تحديث الصورة");
+      toast.error(errorMessage, { id: t });
     }
   };
 
@@ -122,17 +172,27 @@ const StudentProfile = () => {
               
               <div className="relative w-24 h-24 mx-auto mb-4 group">
                 <div className="w-full h-full rounded-[2rem] overflow-hidden bg-gray-100 dark:bg-white/5 border-2 border-white dark:border-white/10 shadow-xl">
-                  {user?.image ? (
-                    <img src={user.image} className="w-full h-full object-cover" alt="" />
+                  {(localPreview || user?.image) ? (
+                    <img src={localPreview || user.image} className="w-full h-full object-cover" alt="" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-library-primary/10 text-4xl font-black">
                       {user?.fullName?.charAt(0)}
                     </div>
                   )}
                 </div>
-                <button className="absolute -bottom-1 -left-1 w-8 h-8 rounded-xl bg-white dark:bg-library-primary text-library-primary dark:text-white shadow-lg flex items-center justify-center border border-gray-100 dark:border-white/10 hover:scale-110 transition-transform">
+                <button 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute -bottom-1 -left-1 w-8 h-8 rounded-xl bg-white dark:bg-library-primary text-library-primary dark:text-white shadow-lg flex items-center justify-center border border-gray-100 dark:border-white/10 hover:scale-110 transition-transform"
+                >
                   <Camera size={14} />
                 </button>
+                <input 
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handlePhotoChange}
+                  accept="image/*"
+                  className="hidden"
+                />
               </div>
 
               <h2 className="text-xl font-black text-library-primary dark:text-white mb-1">{user?.fullName || "مستخدم"}</h2>
