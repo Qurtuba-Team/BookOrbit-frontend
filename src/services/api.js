@@ -6,6 +6,7 @@ let isRefreshing = false;
 let failedQueue = [];
 
 const toLowerSafe = (value) => String(value ?? "").toLowerCase();
+/** Rewrites localhost asset URLs so they align with REACT_APP_API_URL (same pattern as normalized books). */
 const toApiAssetUrl = (value) => {
   const raw = String(value ?? "").trim();
   if (!raw) return "";

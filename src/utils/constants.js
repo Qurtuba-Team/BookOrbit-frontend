@@ -35,6 +35,41 @@ export const getStudentImageUrl = (studentId) =>
 export const getBookImageUrl = (bookId) =>
   `${API_BASE_URL}/uploads/books/book${bookId}.jpg`;
 
+// Re-maps localhost asset URLs to match the configured API_BASE_URL port/origin.
+// Useful when the backend returns absolute localhost URLs that may differ from
+// the current REACT_APP_API_URL env variable.
+export const toApiAssetUrl = (value) => {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  try {
+    const url = new URL(raw);
+    if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
+      const base = new URL(API_BASE_URL);
+      return `${base.origin}${url.pathname}${url.search}${url.hash}`;
+    }
+    return raw;
+  } catch {
+    if (raw.startsWith("/")) {
+      try {
+        const base = new URL(API_BASE_URL);
+        return `${base.origin}${raw}`;
+      } catch {
+        return raw;
+      }
+    }
+    // Relative path served from API host (some backends omit leading slash).
+    if (/^uploads\//i.test(raw)) {
+      try {
+        const base = new URL(API_BASE_URL);
+        return `${base.origin}/${raw.replace(/^\/+/, "")}`;
+      } catch {
+        return raw;
+      }
+    }
+    return raw;
+  }
+};
+
 // ─── Label Helper ────────────────────────────────────────────────────────────
 export const getLabel = (labelsObject, key, defaultValue = "") => {
   if (key === null || key === undefined) return defaultValue;
