@@ -764,11 +764,9 @@ export const borrowingTransactionsApi = {
   /** GET /borrowingtransactions/{id} */
   getById: (id) => apiRequest(`/borrowingtransactions/${id}`),
 
-  /** POST /borrowingtransactions/{id}/return */
   markReturned: (id) =>
     apiRequest(`/borrowingtransactions/${id}/return`, { method: "PATCH" }),
 
-  /** POST /borrowingtransactions/{id}/lost */
   markLost: (id) =>
     apiRequest(`/borrowingtransactions/${id}/lost`, { method: "PATCH" }),
 
