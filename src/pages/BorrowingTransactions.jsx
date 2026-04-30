@@ -51,7 +51,10 @@ const transactionNumToKey = {
 const summarizeTransactionRow = (tx) => {
   const b = tx?.book ?? tx?.Book ?? tx?.bookDto ?? tx?.BookDto;
   const id = tx?.id ?? tx?.Id;
-  const rawSt = tx?.status ?? tx?.state;
+  let rawSt = tx?.status ?? tx?.state;
+  if (typeof rawSt === "string" && !isNaN(Number(rawSt)) && rawSt.trim() !== "") {
+    rawSt = Number(rawSt);
+  }
   const statusKey =
     typeof rawSt === "number"
       ? transactionNumToKey[rawSt] || "Borrowed"
@@ -249,6 +252,7 @@ const TransactionCard = ({
   onReturn,
   onLost,
   isAdminView,
+  isIncoming,
   onShowDetail,
 }) => {
   const navigate = useNavigate();
@@ -427,9 +431,9 @@ const TransactionCard = ({
             </div>
           </div>
 
-          {/* الإجراءات */}
-          {!isAdminView &&
-            (statusKey === "Borrowed" || statusKey === "Overdue") && (
+          {/* الإجراءات - تظهر للمستعير فقط (أو للأدمن) */}
+          {(isAdminView || !isIncoming) && 
+            (String(statusKey).toLowerCase() === "borrowed" || String(statusKey).toLowerCase() === "overdue") && (
               <div
                 data-tx-return-lost
                 className="flex flex-wrap items-center gap-3 pt-4 border-t border-library-primary/5 dark:border-white/5"
@@ -1049,7 +1053,8 @@ const BorrowingTransactions = () => {
                       key={tx.id || tx.Id}
                       tx={tx}
                       isProcessing={processingId}
-                      isAdminView={isAdmin || isIncoming}
+                      isAdminView={isAdmin}
+                      isIncoming={isIncoming}
                       onShowDetail={openTransactionDetail}
                       onReturn={(id) =>
                         handleAction(
@@ -1159,7 +1164,8 @@ const BorrowingTransactions = () => {
                       <TransactionCard
                         tx={studentTx}
                         isProcessing={processingId}
-                        isAdminView={isAdmin || searchResultViewerIsLender}
+                        isAdminView={isAdmin}
+                        isIncoming={searchResultViewerIsLender}
                         onShowDetail={openTransactionDetail}
                         onReturn={(id) =>
                           handleAction(
