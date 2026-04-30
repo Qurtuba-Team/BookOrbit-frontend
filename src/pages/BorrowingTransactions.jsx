@@ -2,6 +2,7 @@ import React, {
   useCallback,
   useEffect,
   useState,
+  useMemo,
 } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -50,7 +51,10 @@ const transactionNumToKey = {
 const summarizeTransactionRow = (tx) => {
   const b = tx?.book ?? tx?.Book ?? tx?.bookDto ?? tx?.BookDto;
   const id = tx?.id ?? tx?.Id;
-  const rawSt = tx?.status ?? tx?.state;
+  let rawSt = tx?.status ?? tx?.state;
+  if (typeof rawSt === "string" && !isNaN(Number(rawSt)) && rawSt.trim() !== "") {
+    rawSt = Number(rawSt);
+  }
   const statusKey =
     typeof rawSt === "number"
       ? transactionNumToKey[rawSt] || "Borrowed"
@@ -248,6 +252,7 @@ const TransactionCard = ({
   onReturn,
   onLost,
   isAdminView,
+  isIncoming,
   onShowDetail,
 }) => {
   const navigate = useNavigate();
@@ -426,9 +431,9 @@ const TransactionCard = ({
             </div>
           </div>
 
-          {/* الإجراءات */}
-          {!isAdminView &&
-            (statusKey === "Borrowed" || statusKey === "Overdue") && (
+          {/* الإجراءات - تظهر للمستعير فقط (أو للأدمن) */}
+          {(isAdminView || !isIncoming) && 
+            (String(statusKey).toLowerCase() === "borrowed" || String(statusKey).toLowerCase() === "overdue") && (
               <div
                 data-tx-return-lost
                 className="flex flex-wrap items-center gap-3 pt-4 border-t border-library-primary/5 dark:border-white/5"
@@ -644,6 +649,20 @@ const BorrowingTransactions = () => {
   const [processingId, setProcessingId] = useState(null);
   const [detailTx, setDetailTx] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  const statusChips = useMemo(
+    () => [
+      { id: "all", label: "الكل" },
+      ...Object.entries(BORROWING_TRANSACTION_STATE_LABELS).map(
+        ([id, label]) => ({
+          id,
+          label: label.split("(")[0].trim(), // Clean up the label
+        }),
+      ),
+    ],
+    [],
+  );
 
   const openTransactionDetail = useCallback(async (rawTx) => {
     setDetailTx(rawTx);
@@ -716,6 +735,15 @@ const BorrowingTransactions = () => {
         sortDirection: "desc",
       };
 
+      if (statusFilter !== "all") {
+        // Map key string to numeric enum if needed
+        const num = Object.keys(transactionNumToKey).find(
+          (k) => transactionNumToKey[k] === statusFilter,
+        );
+        if (num != null) params.states = [Number(num)];
+        else params.states = [statusFilter];
+      }
+
       if (isAdmin) {
         res = await borrowingTransactionsApi.getAll(params);
       } else if (isIncoming) {
@@ -772,13 +800,12 @@ const BorrowingTransactions = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, isAdmin, isIncoming]);
+  }, [page, isAdmin, isIncoming, statusFilter]);
 
   useEffect(() => {
     fetchTransactions();
-    setStudentTx(null);
     setSearchId("");
-  }, [fetchTransactions, currentTab]);
+  }, [fetchTransactions, currentTab, statusFilter]);
 
   const handleStudentSearch = async (e) => {
     if (e) e.preventDefault();
@@ -849,13 +876,13 @@ const BorrowingTransactions = () => {
 
   // Calculate quick stats from current page items
   const activeCount = items.filter((tx) => {
-    const st = tx.status ?? tx.state;
-    return st === 0 || st === "Borrowed" || st === "Overdue" || st === 2;
+    const st = String(tx.status ?? tx.state ?? "").toLowerCase();
+    return st === "0" || st === "borrowed" || st === "2" || st === "overdue";
   }).length;
 
   const returnedCount = items.filter((tx) => {
-    const st = tx.status ?? tx.state;
-    return st === 1 || st === "Returned";
+    const st = String(tx.status ?? tx.state ?? "").toLowerCase();
+    return st === "1" || st === "returned";
   }).length;
 
   return (
@@ -971,20 +998,36 @@ const BorrowingTransactions = () => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* List View Section */}
             <div className="lg:col-span-8 space-y-4">
-              <div className="flex items-center justify-between mb-4 px-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 px-2">
                 <h2 className="text-sm font-black text-library-primary dark:text-white flex items-center gap-2">
                   <ListChecks size={18} className="text-library-accent" />
                   قائمة المعاملات {isIncoming ? "(كتبي)" : "(استعاراتي)"}
                 </h2>
-                <button
-                  onClick={fetchTransactions}
-                  className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/5 transition-colors text-gray-400"
-                >
-                  <RefreshCcw
-                    size={16}
-                    className={loading ? "animate-spin" : ""}
-                  />
-                </button>
+                
+                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+                  {statusChips.map((chip) => (
+                    <button
+                      key={chip.id}
+                      onClick={() => setStatusFilter(chip.id)}
+                      className={`px-3 py-1.5 rounded-full text-[10px] font-black transition-all whitespace-nowrap border ${
+                        statusFilter === chip.id
+                          ? "bg-library-primary text-white border-library-primary shadow-md"
+                          : "bg-white dark:bg-white/5 text-gray-500 border-gray-100 dark:border-white/5 hover:border-library-accent/30"
+                      }`}
+                    >
+                      {chip.label}
+                    </button>
+                  ))}
+                  <button
+                    onClick={fetchTransactions}
+                    className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/5 transition-colors text-gray-400 ml-2"
+                  >
+                    <RefreshCcw
+                      size={14}
+                      className={loading ? "animate-spin" : ""}
+                    />
+                  </button>
+                </div>
               </div>
 
               {loading ? (
@@ -1010,7 +1053,8 @@ const BorrowingTransactions = () => {
                       key={tx.id || tx.Id}
                       tx={tx}
                       isProcessing={processingId}
-                      isAdminView={isAdmin || isIncoming}
+                      isAdminView={isAdmin}
+                      isIncoming={isIncoming}
                       onShowDetail={openTransactionDetail}
                       onReturn={(id) =>
                         handleAction(
@@ -1120,7 +1164,8 @@ const BorrowingTransactions = () => {
                       <TransactionCard
                         tx={studentTx}
                         isProcessing={processingId}
-                        isAdminView={isAdmin || searchResultViewerIsLender}
+                        isAdminView={isAdmin}
+                        isIncoming={searchResultViewerIsLender}
                         onShowDetail={openTransactionDetail}
                         onReturn={(id) =>
                           handleAction(

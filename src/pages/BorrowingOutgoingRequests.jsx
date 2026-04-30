@@ -355,16 +355,10 @@ const BorrowingOutgoingRequests = () => {
                           </div>
                           {rid ? <span className="font-mono text-[10px] opacity-70">رقم العرض: #{rid}</span> : null}
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] font-bold text-gray-500 dark:text-gray-400 max-w-sm">
                           <div className="flex items-center gap-1.5 rounded-lg border border-library-primary/5 bg-library-primary/[0.02] px-2.5 py-1.5 dark:border-white/10 dark:bg-white/[0.03]">
                             <CalendarDays size={14} className="opacity-60" />
                             <span>تاريخ الطلب: {formatDate(reqDate)}</span>
                           </div>
-                          <div className="flex items-center gap-1.5 rounded-lg border border-library-primary/5 bg-library-primary/[0.02] px-2.5 py-1.5 dark:border-white/10 dark:bg-white/[0.03]">
-                            <Clock3 size={14} className="opacity-60" />
-                            <span>الإرجاع المتوقع: {formatDate(expDate)}</span>
-                          </div>
-                        </div>
                       </div>
                       
                       {/* الإجراءات */}
@@ -432,7 +426,7 @@ const BorrowingOutgoingRequests = () => {
                 <p>رقم العرض: <span className="font-mono">#{detailRequest.lendingRecordId || detailRequest.LendingRecordId}</span></p>
                 <p>الحالة: <span className="font-black text-library-primary dark:text-white">{getLabel(BORROWING_REQUEST_STATE_LABELS, detailRequest.status || detailRequest.state)}</span></p>
                 <p>تاريخ الإنشاء: {formatDate(detailRequest.requestDate || detailRequest.createdAtUtc || detailRequest.createdAt)}</p>
-                <p>تاريخ الانتهاء: {formatDate(detailRequest.expirationDateUtc || detailRequest.expectedReturnDate)}</p>
+                {/* Expected return date removed as per request */}
                 {lendingRecordDetails[detailRequest.lendingRecordId || detailRequest.LendingRecordId] ? (
                   <p>
                     حالة سجل الإعارة:{" "}

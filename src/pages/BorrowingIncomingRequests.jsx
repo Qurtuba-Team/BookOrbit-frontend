@@ -380,7 +380,12 @@ const BorrowingIncomingRequests = () => {
                         </div>
                         {rid ? <span className="font-mono text-[10px] opacity-70">رقم العرض: #{rid}</span> : null}
                       </div>
-                      {/* Dates removed as per request */}
+                      <div className="grid grid-cols-1 gap-2 text-[11px] font-bold text-gray-500 dark:text-gray-400 max-w-sm">
+                        <div className="flex items-center gap-1.5 rounded-lg border border-library-primary/5 bg-library-primary/[0.02] px-2.5 py-1.5 dark:border-white/10 dark:bg-white/[0.03]">
+                          <CalendarDays size={14} className="opacity-60" />
+                          <span>تاريخ الطلب: {formatDate(reqDate)}</span>
+                        </div>
+                      </div>
                     </div>
                     
                     {/* الإجراءات */}

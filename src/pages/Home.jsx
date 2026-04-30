@@ -33,18 +33,6 @@ const SpringReveal = ({ children, className = "", delay = 0 }) => {
   );
 };
 
-// ─── Stats Counter ──────────────────────────────────────────────────────────
-const StatItem = ({ number, label, delay = 0 }) => (
-  <SpringReveal delay={delay} className="text-center">
-    <p className="text-2xl md:text-3xl font-black text-library-accent mb-1">
-      {number}
-    </p>
-    <p className="text-[10px] md:text-xs font-bold text-library-primary/40 dark:text-library-paper/40 uppercase tracking-wider">
-      {label}
-    </p>
-  </SpringReveal>
-);
-
 // ─── Feature Card ───────────────────────────────────────────────────────────
 const FeatureCard = ({ icon: Icon, title, desc, delay = 0 }) => (
   <SpringReveal delay={delay}>
@@ -62,38 +50,7 @@ const FeatureCard = ({ icon: Icon, title, desc, delay = 0 }) => (
   </SpringReveal>
 );
 
-// ─── Marquee Ticker ─────────────────────────────────────────────────────────
-const MarqueeTicker = () => {
-  const items = [
-    "هندسة",
-    "طب",
-    "صيدلة",
-    "حاسبات",
-    "علوم",
-    "إدارة أعمال",
-    "إعلام",
-    "حقوق",
-    "فنون",
-    "تربية",
-    "آداب",
-    "تجارة",
-  ];
-
-  return (
-    <div className="w-full overflow-hidden py-6 border-y border-library-primary/[0.06] dark:border-white/[0.06]">
-      <div className="flex animate-ticker whitespace-nowrap">
-        {[...items, ...items].map((item, i) => (
-          <span
-            key={i}
-            className="inline-block mx-6 text-sm font-bold text-library-primary/15 dark:text-library-paper/10 uppercase tracking-[0.3em]"
-          >
-            {item}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-};
+// Removed Stats and Marquee components
 
 // ─── 3D Book Graphic ────────────────────────────────────────────────────────
 const BookGraphic = () => (
@@ -387,20 +344,6 @@ const Home = () => {
             </motion.div>
           </div>
         </section>
-
-        {/* ════════════════════ STATS BAR ════════════════════ */}
-        <section className="py-12 md:py-16">
-          <div className="max-w-4xl mx-auto px-6 lg:px-8">
-            <div className="grid grid-cols-3 gap-6 md:gap-12">
-              <StatItem number="+1200" label="كتاب متاح" delay={0} />
-              <StatItem number="+8" label="جامعات" delay={0.1} />
-              <StatItem number="+3500" label="طالب مسجل" delay={0.2} />
-            </div>
-          </div>
-        </section>
-
-        {/* ════════════════════ MARQUEE ════════════════════ */}
-        <MarqueeTicker />
 
         {/* ════════════════════ FEATURES ════════════════════ */}
         <section className="py-20 md:py-32">

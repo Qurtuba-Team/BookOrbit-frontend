@@ -1,5 +1,5 @@
 export const API_BASE_URL =
-  process.env.REACT_APP_API_URL || "https://consumer-lizard-bodacious.ngrok-free.dev";
+  (process.env.REACT_APP_API_URL || "http://localhost:7240").replace(/\/+$/, "");
 export const API_V1 = `${API_BASE_URL}/api/v1.0`;
 
 // ─── Token Storage ───────────────────────────────────────────────────────────
@@ -76,7 +76,7 @@ export const getLabel = (labelsObject, key, defaultValue = "") => {
   const s = String(key).trim();
   const lower = s.toLowerCase();
   const normalized = lower.replace(/[\s-]/g, '');
-
+  
   // Try exact, then lowercase, then normalized (no spaces/dashes)
   return labelsObject[s] || labelsObject[lower] || labelsObject[normalized] || defaultValue || s;
 };

@@ -299,7 +299,11 @@ async function apiRequest(path, options = {}) {
     delete headers["Content-Type"];
   }
 
-  const response = await fetch(`${API_V1}${path}`, {
+  const finalUrl = path.startsWith("http") 
+    ? path 
+    : (path.startsWith("/api/") ? `${API_BASE_URL}${path}` : `${API_V1}${path}`);
+
+  const response = await fetch(finalUrl, {
     ...options,
     headers,
   });
@@ -762,11 +766,9 @@ export const borrowingTransactionsApi = {
   /** GET /borrowingtransactions/{id} */
   getById: (id) => apiRequest(`/borrowingtransactions/${id}`),
 
-  /** PATCH /borrowingtransactions/{id}/return */
   markReturned: (id) =>
     apiRequest(`/borrowingtransactions/${id}/return`, { method: "PATCH" }),
 
-  /** PATCH /borrowingtransactions/{id}/lost */
   markLost: (id) =>
     apiRequest(`/borrowingtransactions/${id}/lost`, { method: "PATCH" }),
 
