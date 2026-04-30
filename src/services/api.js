@@ -45,6 +45,8 @@ const borrowingStateMap = {
   2: "Rejected",
   3: "Cancelled",
   4: "Expired",
+  5: "Delivered",
+  6: "Returned",
 };
 
 export const normalizeStudent = (student = {}) => {

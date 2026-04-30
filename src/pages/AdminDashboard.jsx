@@ -39,9 +39,10 @@ import {
   booksApi, 
   lendingApi, 
   borrowingApi,
+  borrowingTransactionsApi,
   bookCopiesApi
 } from "../services/api";
-import { getStudentImageUrl, getBookImageUrl, tokenStore, STUDENT_STATE_LABELS, BOOK_STATE_LABELS, BOOK_CATEGORY_LABELS, BOOK_COPY_CONDITION_LABELS, BOOK_COPY_STATE_LABELS, BORROWING_REQUEST_STATE_LABELS, getLabel } from "../utils/constants";
+import { getStudentImageUrl, getBookImageUrl, tokenStore, STUDENT_STATE_LABELS, BOOK_STATE_LABELS, BOOK_CATEGORY_LABELS, BOOK_COPY_CONDITION_LABELS, BOOK_COPY_STATE_LABELS, BORROWING_REQUEST_STATE_LABELS, BORROWING_TRANSACTION_STATE_LABELS, getLabel, toApiAssetUrl } from "../utils/constants";
 import { useAuth } from "../context/AuthContext";
 
 const StatCard = ({ title, value, change, icon: Icon, color, trend = "up", onClick }) => {
@@ -188,6 +189,9 @@ const AdminDashboard = () => {
   const [loadingLendingDetail, setLoadingLendingDetail] = React.useState(false);
   const [selectedCopy, setSelectedCopy] = React.useState(null);
   const [isCopyModalOpen, setIsCopyModalOpen] = React.useState(false);
+  const [bookCopiesList, setBookCopiesList] = React.useState([]);
+  const [loadingBookCopiesList, setLoadingBookCopiesList] = React.useState(false);
+  const [isBookCopiesModalOpen, setIsBookCopiesModalOpen] = React.useState(false);
   const [currentCopiesPage, setCurrentCopiesPage] = React.useState(1);
   const [totalCopiesPages, setTotalCopiesPages] = React.useState(1);
   
@@ -293,18 +297,22 @@ const AdminDashboard = () => {
     try {
       let list = [];
       let total = 1;
-      if (subTab === "active") {
-        const res = await lendingApi.getAll({ pageSize: 10, page: currentLendingPage });
-        list = res.items || res.data || [];
-        total = res.totalPages || 1;
+      let params = { pageSize: 10, page: currentLendingPage };
+      let res;
+      
+      if (subTab === "active" || subTab === "completed") {
+        if (subTab === "active") params.states = [0, 2]; // Borrowed, Overdue
+        else if (subTab === "completed") params.states = [1, 3]; // Returned, Lost
+        res = await borrowingTransactionsApi.getAll(params);
       } else {
-        let params = { pageSize: 10, page: currentLendingPage };
-        if (subTab === "pending_owner") params.states = [0]; // Pending
-        else if (subTab === "pending_handover") params.states = [1]; // Approved
-        const res = await borrowingApi.getAll(params);
-        list = res.items || res.data || [];
-        total = res.totalPages || 1;
+        if (subTab === "pending_owner") params.States = [0]; // Pending
+        else if (subTab === "pending_handover") params.States = [1]; // Accepted
+        else if (subTab === "rejected") params.States = [2, 3, 4]; // Rejected, Cancelled, Expired
+        res = await borrowingApi.getAll(params);
       }
+      
+      list = res.items || res.data || [];
+      total = res.totalPages || 1;
       setLendings(list);
       setTotalLendingPages(total);
     } catch (error) {
@@ -463,19 +471,31 @@ const AdminDashboard = () => {
 
   React.useEffect(() => {
     const preloadBookImages = async () => {
-      // Only preload books that DON'T have a direct URL or if the URL needs protection
-      const booksToPreload = books.filter((b) => b?.id && !b.bookCoverImageUrl);
-      const ids = Array.from(new Set(booksToPreload.map((b) => b.id)));
+      const booksToPreload = [
+        ...books.filter((b) => b?.id).map(b => ({ id: b.id, url: b.bookCoverImageUrl })),
+        ...adminCopies.filter((c) => c?.bookId || c?.BookId).map(c => ({ id: c.bookId || c.BookId, url: c.bookCoverImageUrl || c.BookCoverImageUrl }))
+      ];
       
-      if (ids.length === 0) return;
+      const uniqueBooks = [];
+      const seenIds = new Set();
+      for (const b of booksToPreload) {
+        if (!seenIds.has(b.id)) {
+          seenIds.add(b.id);
+          uniqueBooks.push(b);
+        }
+      }
+
+      if (uniqueBooks.length === 0) return;
 
       const nextMap = {};
       await Promise.all(
-        ids.map(async (id) => {
+        uniqueBooks.map(async (bookObj) => {
+          const id = bookObj.id;
           if (bookImageMap[id] || attemptedBookImageIdsRef.current.has(id)) return;
           attemptedBookImageIdsRef.current.add(id);
           try {
-            const src = await fetchProtectedImageSrc(getBookImageUrl(id));
+            const urlToFetch = bookObj.url ? toApiAssetUrl(bookObj.url) : getBookImageUrl(id);
+            const src = await fetchProtectedImageSrc(urlToFetch);
             if (src) nextMap[id] = src;
           } catch {
             // ignore per-image failures
@@ -489,7 +509,7 @@ const AdminDashboard = () => {
     };
     preloadBookImages();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [books, fetchProtectedImageSrc]);
+  }, [books, adminCopies, fetchProtectedImageSrc]);
 
   React.useEffect(() => {
     const objectUrls = imageObjectUrlsRef.current;
@@ -943,7 +963,7 @@ const AdminDashboard = () => {
                     <div className="w-12 h-16 rounded-lg bg-gray-100 dark:bg-white/5 overflow-hidden border border-gray-200 dark:border-white/10 group-hover:border-emerald-500/50 transition-colors shadow-sm shrink-0">
                       {(book.bookCoverImageUrl || bookImageMap[book.id]) ? (
                         <img 
-                          src={book.bookCoverImageUrl || bookImageMap[book.id]} 
+                          src={bookImageMap[book.id] || toApiAssetUrl(book.bookCoverImageUrl)} 
                           className="w-full h-full object-cover" 
                           alt={book.title}
                           loading="lazy"
@@ -1071,7 +1091,7 @@ const AdminDashboard = () => {
                 <div className="w-full h-full rounded-xl overflow-hidden bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 shadow-inner">
                   {(selectedBook.bookCoverImageUrl || bookImageMap[selectedBook.id]) ? (
                     <img 
-                      src={selectedBook.bookCoverImageUrl || bookImageMap[selectedBook.id]} 
+                      src={bookImageMap[selectedBook.id] || toApiAssetUrl(selectedBook.bookCoverImageUrl)} 
                       className="w-full h-full object-cover" 
                       alt={selectedBook.title}
                       onError={(e) => {
@@ -1127,39 +1147,60 @@ const AdminDashboard = () => {
               </div>
             </div>
 
-            <div className="mt-8">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                {selectedBook?.status === "pending" || selectedBook?.state === 0 ? (
-                  <>
-                    <button
-                      onClick={async () => {
-                        await handleBookAction(selectedBook.id, "approve");
-                        setIsBookModalOpen(false);
-                      }}
-                      disabled={processingBookId === selectedBook.id}
-                      className="w-full py-3 rounded-xl bg-emerald-500 text-white text-[11px] font-black hover:bg-emerald-600 transition-all disabled:opacity-50"
-                    >
-                      اعتماد الكتاب
-                    </button>
-                    <button
-                      onClick={async () => {
-                        await handleBookAction(selectedBook.id, "reject");
-                        setIsBookModalOpen(false);
-                      }}
-                      disabled={processingBookId === selectedBook.id}
-                      className="w-full py-3 rounded-xl border border-rose-500/20 bg-rose-500/10 text-rose-600 text-[11px] font-black hover:bg-rose-500 hover:text-white transition-all disabled:opacity-50"
-                    >
-                      رفض الكتاب
-                    </button>
-                  </>
-                ) : null}
+            <div className="mt-8 space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  onClick={async () => {
+                    setIsBookCopiesModalOpen(true);
+                    setLoadingBookCopiesList(true);
+                    try {
+                      const res = await bookCopiesApi.getByBookId(selectedBook.id, { PageSize: 100 });
+                      setBookCopiesList(res?.items || res?.data || res || []);
+                    } catch (err) {
+                      setBookCopiesList([]);
+                    } finally {
+                      setLoadingBookCopiesList(false);
+                    }
+                  }}
+                  className="w-full py-3 rounded-xl bg-teal-50 text-teal-600 dark:bg-teal-500/10 dark:text-teal-400 text-[11px] font-black hover:bg-teal-500 hover:text-white transition-all border border-teal-500/20 shadow-sm flex items-center justify-center gap-2"
+                >
+                  <Copy size={16} />
+                  عرض نسخ الكتاب
+                </button>
                 <button 
                   onClick={() => setIsBookModalOpen(false)}
-                  className="w-full py-3 rounded-xl bg-gray-100 dark:bg-white/5 text-library-primary dark:text-white text-[11px] font-black hover:bg-gray-200 dark:hover:bg-white/10 transition-all"
+                  className="w-full py-3 rounded-xl bg-gray-100 dark:bg-white/5 text-library-primary dark:text-white text-[11px] font-black hover:bg-gray-200 dark:hover:bg-white/10 transition-all shadow-sm"
                 >
                   إغلاق النافذة
                 </button>
               </div>
+
+              {(selectedBook?.status === "pending" || selectedBook?.state === 0) && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 border-t border-gray-100 dark:border-white/5 pt-3">
+                  <button
+                    onClick={async () => {
+                      await handleBookAction(selectedBook.id, "approve");
+                      setIsBookModalOpen(false);
+                    }}
+                    disabled={processingBookId === selectedBook.id}
+                    className="w-full py-3 rounded-xl bg-emerald-500 text-white text-[11px] font-black hover:bg-emerald-600 transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm shadow-emerald-500/20"
+                  >
+                    <CheckCircle2 size={16} />
+                    اعتماد الكتاب
+                  </button>
+                  <button
+                    onClick={async () => {
+                      await handleBookAction(selectedBook.id, "reject");
+                      setIsBookModalOpen(false);
+                    }}
+                    disabled={processingBookId === selectedBook.id}
+                    className="w-full py-3 rounded-xl border border-rose-500/20 bg-rose-500/10 text-rose-600 text-[11px] font-black hover:bg-rose-500 hover:text-white transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    <XCircle size={16} />
+                    رفض الكتاب
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </motion.div>
@@ -1200,6 +1241,98 @@ const AdminDashboard = () => {
     return BOOK_COPY_STATE_LABELS[key] || String(s) || "غير محدد";
   };
 
+  const renderBookCopiesModal = () => {
+    if (!isBookCopiesModalOpen) return null;
+    return (
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6"
+      >
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsBookCopiesModalOpen(false)} />
+        <motion.div 
+          initial={{ scale: 0.9, y: 20 }}
+          animate={{ scale: 1, y: 0 }}
+          className="bg-white dark:bg-dark-surface w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl relative z-10 border border-white/10 flex flex-col max-h-[85vh]"
+          dir="rtl"
+        >
+          <div className="h-20 shrink-0 bg-gradient-to-r from-teal-600 to-emerald-600 relative flex items-center px-6">
+            <button 
+              onClick={() => setIsBookCopiesModalOpen(false)}
+              className="absolute left-6 w-8 h-8 rounded-full bg-white/10 backdrop-blur-md text-white flex items-center justify-center hover:bg-white/20 transition-all"
+            >
+              <X size={16} />
+            </button>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white">
+                <Copy size={20} />
+              </div>
+              <div>
+                <h3 className="text-white font-black text-sm">نسخ الكتاب</h3>
+                <p className="text-[10px] text-white/70 font-bold">{selectedBook?.title}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="p-6 overflow-y-auto flex-grow custom-scrollbar space-y-3">
+            {loadingBookCopiesList ? (
+              <div className="flex flex-col items-center justify-center py-20">
+                <Loader2 className="animate-spin text-teal-500 mb-3" size={32} />
+                <p className="text-xs font-black text-gray-400">جاري تحميل النسخ...</p>
+              </div>
+            ) : bookCopiesList.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <Copy className="text-gray-300 dark:text-white/20 mb-4" size={40} />
+                <p className="text-sm font-black text-library-primary dark:text-white">لا توجد نسخ لهذا الكتاب</p>
+              </div>
+            ) : (
+              bookCopiesList.map(copy => {
+                const id = copy?.id || copy?.Id;
+                const owner = copy?.ownerName || copy?.studentName || copy?.OwnerName || "طالب";
+                const condVal = normalizeConditionToNumber(copy?.condition ?? copy?.Condition);
+                const condColor = getConditionColor(condVal);
+                return (
+                  <div key={id} className="bg-gray-50 dark:bg-white/[0.03] rounded-xl p-4 border border-gray-100 dark:border-white/[0.06] flex items-center justify-between group hover:border-teal-500/30 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-teal-500/10 flex items-center justify-center text-teal-600 shrink-0">
+                        <Copy size={18} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-black text-library-primary dark:text-white mb-0.5 truncate">{owner}</p>
+                        <div className="flex items-center gap-2">
+                           <p className="text-[10px] text-gray-500">{getStateLabel(copy)}</p>
+                           <span className="text-gray-300 dark:text-white/20 text-[8px]">•</span>
+                           <span className="font-mono text-[9px] text-teal-600/70 font-black">#{String(id).split('-')[0]}...</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black border ${condColor.bg} ${condColor.text} ${condColor.border}`}>
+                        <div className={`w-1.5 h-1.5 rounded-full ${condColor.dot}`} />
+                        {getConditionLabel(condVal)}
+                      </span>
+                      <button 
+                        onClick={() => {
+                          setSelectedCopy(copy);
+                          setCopyConditionDrafts(prev => ({ ...prev, [id]: condVal }));
+                          setIsCopyModalOpen(true);
+                        }}
+                        className="w-8 h-8 rounded-lg bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 flex items-center justify-center text-gray-400 hover:text-teal-600 hover:border-teal-500/30 transition-all shadow-sm"
+                      >
+                        <Eye size={14} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </motion.div>
+      </motion.div>
+    );
+  };
+
   const renderCopyModal = () => {
     if (!isCopyModalOpen || !selectedCopy) return null;
     const copy = selectedCopy;
@@ -1236,8 +1369,20 @@ const AdminDashboard = () => {
           <div className="px-8 pb-8">
             <div className="relative -mt-10 mb-6">
               <div className="w-20 h-20 rounded-2xl bg-white dark:bg-dark-surface p-1.5 shadow-xl mx-auto">
-                <div className="w-full h-full rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-500/10 dark:to-emerald-500/10 border border-teal-500/10 flex items-center justify-center">
-                  <BookOpen size={28} className="text-teal-500/50" />
+                <div className="w-full h-full rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-500/10 dark:to-emerald-500/10 border border-teal-500/10 flex items-center justify-center overflow-hidden">
+                  {(copy?.bookCoverImageUrl || bookImageMap[copy?.bookId || copy?.BookId]) ? (
+                    <img 
+                      src={bookImageMap[copy?.bookId || copy?.BookId] || toApiAssetUrl(copy?.bookCoverImageUrl)} 
+                      alt="" 
+                      className="w-full h-full object-cover" 
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.parentElement.innerHTML = `<div class="w-full h-full flex items-center justify-center text-teal-500/50"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>`;
+                      }}
+                    />
+                  ) : (
+                    <BookOpen size={28} className="text-teal-500/50" />
+                  )}
                 </div>
               </div>
               <div className="mt-4 text-center">
@@ -1375,8 +1520,20 @@ const AdminDashboard = () => {
                 className="bg-white dark:bg-dark-surface rounded-2xl p-4 border border-gray-100 dark:border-white/[0.06] shadow-sm flex flex-col md:grid md:grid-cols-12 md:items-center gap-4 group hover:border-teal-500/30 transition-all"
               >
                 <div className="col-span-4 flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-500/10 dark:to-emerald-500/5 flex items-center justify-center border border-teal-500/10 shadow-sm shrink-0">
-                    <BookOpen size={18} className="text-teal-500/60" />
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-500/10 dark:to-emerald-500/5 flex items-center justify-center border border-teal-500/10 shadow-sm shrink-0 overflow-hidden">
+                    {(copy?.bookCoverImageUrl || bookImageMap[copy?.bookId || copy?.BookId]) ? (
+                      <img 
+                        src={bookImageMap[copy?.bookId || copy?.BookId] || toApiAssetUrl(copy?.bookCoverImageUrl)} 
+                        alt="" 
+                        className="w-full h-full object-cover" 
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.parentElement.innerHTML = `<div class="w-full h-full flex items-center justify-center text-teal-500/60"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>`;
+                        }}
+                      />
+                    ) : (
+                      <BookOpen size={18} className="text-teal-500/60" />
+                    )}
                   </div>
                   <div className="min-w-0">
                     <h4 className="text-[13px] font-black text-library-primary dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors truncate">{title}</h4>
@@ -1428,46 +1585,135 @@ const AdminDashboard = () => {
     setLoadingLendingDetail(true);
     
     try {
-      // Try to get full details from borrowing API first, then lending API
-      let detail;
-      if (subTab !== "active" && lend.id) {
-        detail = await borrowingApi.getById(lend.id);
-      } else if (lend.id) {
-        detail = await lendingApi.getById(lend.id);
+      let detail = { ...lend };
+      
+      // 1. Fetch borrowing request OR transaction detail
+      if (lend.id) {
+        if (subTab === "active" || subTab === "completed") {
+          const tx = await borrowingTransactionsApi.getById(lend.id).catch(() => null);
+          if (tx) detail = { ...detail, ...tx };
+        } else {
+          const br = await borrowingApi.getById(lend.id).catch(() => null);
+          if (br) detail = { ...detail, ...br };
+        }
       }
       
-      if (detail) {
-        setSelectedLending(prev => ({ ...prev, ...detail }));
+      const getSafeId = (id) => id && id !== "undefined" && id !== "null" ? id : null;
+
+      let lendingDetail = null;
+      // 2. Fetch the parent lending record to get the owner's details
+      const lendingRecordId = getSafeId(detail.lendingRecordId || detail.LendingRecordId || detail.lendingListRecordId || detail.LendingListRecordId);
+      if (lendingRecordId) {
+        lendingDetail = await lendingApi.getById(lendingRecordId).catch(() => null);
+      }
+      
+      // 3. Extract IDs carefully
+      const ownerStudentId = getSafeId(
+        detail.ownerStudentId || detail.OwnerStudentId || detail.ownerId || detail.OwnerId || 
+        lendingDetail?.studentId || lendingDetail?.StudentId || 
+        detail.lenderId || detail.LenderId
+      );
+      const borrowerStudentId = getSafeId(
+        detail.borrowingStudentId || detail.BorrowingStudentId || detail.requesterId || detail.RequesterId || 
+        detail.studentId || detail.StudentId || detail.borrowerId || detail.BorrowerId
+      );
+      
+      let bookId = getSafeId(
+        detail.bookId || detail.BookId || 
+        lendingDetail?.bookId || lendingDetail?.BookId || lendingDetail?.copy?.bookId || lendingDetail?.book?.id || 
+        detail.copy?.bookId || detail.book?.id || detail.bookDto?.id || detail.bookDto?.Id
+      );
+      
+      // If it's a transaction, it might only have bookCopyId
+      if (!bookId && (subTab === "active" || subTab === "completed")) {
+        const copyId = getSafeId(detail.bookCopyId || detail.BookCopyId);
+        if (copyId) {
+          const copyData = await bookCopiesApi.getById(copyId).catch(() => null);
+          if (copyData) {
+             bookId = getSafeId(copyData.bookId || copyData.BookId || copyData.book?.id || copyData.book?.Id);
+          }
+        }
       }
 
-      // Try to load images
-      const ownerStudentId = detail?.ownerStudentId || detail?.ownerId || lend.ownerStudentId || lend.ownerId;
-      const borrowerStudentId = detail?.borrowingStudentId || detail?.studentId || lend.borrowingStudentId || lend.studentId;
-      const bookId = detail?.bookId || lend.bookId;
+      setSelectedLending(prev => ({ 
+        ...prev, 
+        ...detail,
+        ...(lendingDetail && { lendingDetail }),
+        extractedOwnerId: ownerStudentId,
+        extractedBorrowerId: borrowerStudentId,
+        extractedBookId: bookId
+      }));
 
       const imgPromises = [];
-      if (ownerStudentId && !studentImageMap[ownerStudentId]) {
-        imgPromises.push(
-          fetchProtectedImageSrc(getStudentImageUrl(ownerStudentId))
-            .then(src => src && setStudentImageMap(prev => ({ ...prev, [ownerStudentId]: src })))
+      const dataPromises = [];
+
+      let fetchedOwnerName = null;
+      let fetchedBorrowerName = null;
+      let fetchedBookTitle = null;
+      let fetchedBookAuthor = null;
+      let fetchedBookIsbn = null;
+
+      if (ownerStudentId) {
+        if (!studentImageMap[ownerStudentId]) {
+          imgPromises.push(
+            fetchProtectedImageSrc(getStudentImageUrl(ownerStudentId))
+              .then(src => src && setStudentImageMap(prev => ({ ...prev, [ownerStudentId]: src })))
+              .catch(() => {})
+          );
+        }
+        dataPromises.push(
+          studentsApi.getById(ownerStudentId)
+            .then(s => { fetchedOwnerName = s?.fullName || s?.name || s?.Name || s?.FullName; })
             .catch(() => {})
         );
       }
-      if (borrowerStudentId && !studentImageMap[borrowerStudentId]) {
-        imgPromises.push(
-          fetchProtectedImageSrc(getStudentImageUrl(borrowerStudentId))
-            .then(src => src && setStudentImageMap(prev => ({ ...prev, [borrowerStudentId]: src })))
+      
+      if (borrowerStudentId) {
+        if (!studentImageMap[borrowerStudentId]) {
+          imgPromises.push(
+            fetchProtectedImageSrc(getStudentImageUrl(borrowerStudentId))
+              .then(src => src && setStudentImageMap(prev => ({ ...prev, [borrowerStudentId]: src })))
+              .catch(() => {})
+          );
+        }
+        dataPromises.push(
+          studentsApi.getById(borrowerStudentId)
+            .then(s => { fetchedBorrowerName = s?.fullName || s?.name || s?.Name || s?.FullName; })
             .catch(() => {})
         );
       }
-      if (bookId && !bookImageMap[bookId]) {
-        imgPromises.push(
-          fetchProtectedImageSrc(detail?.bookCoverImageUrl || lend?.bookCoverImageUrl || getBookImageUrl(bookId))
-            .then(src => src && setBookImageMap(prev => ({ ...prev, [bookId]: src })))
+      
+      if (bookId) {
+        if (!bookImageMap[bookId]) {
+          const coverUrl = detail?.bookCoverImageUrl || lend?.bookCoverImageUrl;
+          const urlToFetch = coverUrl ? toApiAssetUrl(coverUrl) : getBookImageUrl(bookId);
+          imgPromises.push(
+            fetchProtectedImageSrc(urlToFetch)
+              .then(src => src && setBookImageMap(prev => ({ ...prev, [bookId]: src })))
+              .catch(() => {})
+          );
+        }
+        dataPromises.push(
+          booksApi.getById(bookId)
+            .then(b => {
+              fetchedBookTitle = b?.title || b?.Title;
+              fetchedBookAuthor = b?.author || b?.Author;
+              fetchedBookIsbn = b?.isbn || b?.ISBN;
+            })
             .catch(() => {})
         );
       }
-      await Promise.allSettled(imgPromises);
+      
+      await Promise.allSettled([...imgPromises, ...dataPromises]);
+
+      setSelectedLending(prev => ({
+        ...prev,
+        ownerName: fetchedOwnerName || prev?.ownerName || prev?.OwnerName || prev?.ownerStudentName || prev?.studentName,
+        borrowingStudentName: fetchedBorrowerName || prev?.borrowingStudentName || prev?.BorrowingStudentName || prev?.borrowerName || prev?.studentName,
+        bookTitle: fetchedBookTitle || prev?.bookTitle || prev?.BookTitle || prev?.title,
+        bookAuthor: fetchedBookAuthor || prev?.bookAuthor || prev?.author,
+        isbn: fetchedBookIsbn || prev?.isbn || prev?.bookIsbn
+      }));
     } catch (err) {
       console.error("Failed to load lending details:", err);
     } finally {
@@ -1479,28 +1725,42 @@ const AdminDashboard = () => {
     if (!isLendingModalOpen || !selectedLending) return null;
 
     const lend = selectedLending;
-    const ownerStudentId = lend.ownerStudentId || lend.ownerId;
-    const borrowerStudentId = lend.borrowingStudentId || lend.studentId;
-    const bookId = lend.bookId;
+    const getSafeId = (id) => id && id !== "undefined" && id !== "null" ? id : null;
     
-    const ownerName = lend.ownerName || lend.ownerStudentName || "صاحب النسخة";
-    const borrowerName = lend.borrowingStudentName || lend.studentName || "الطالب المستعير";
-    const bookTitle = lend.bookTitle || lend.title || "كتاب";
-    const bookAuthor = lend.bookAuthor || lend.author || "";
-    const bookIsbn = lend.isbn || lend.bookIsbn || "";
+    const ownerStudentId = getSafeId(lend.extractedOwnerId || lend.ownerStudentId || lend.OwnerStudentId || lend.ownerId || lend.OwnerId || lend.copy?.studentId || lend.bookCopy?.studentId);
+    const borrowerStudentId = getSafeId(lend.extractedBorrowerId || lend.borrowingStudentId || lend.BorrowingStudentId || lend.studentId || lend.StudentId || lend.requesterId || lend.RequesterId);
+    const bookId = getSafeId(lend.extractedBookId || lend.bookId || lend.BookId || lend.book?.id || lend.Book?.Id || lend.copy?.bookId);
+    
+    // Add multiple fallbacks including potential PascalCase or mapped properties
+    const ownerName = lend.ownerName || lend.OwnerName || lend.ownerStudentName || lend.OwnerStudentName || lend.studentName || lend.StudentName || "صاحب النسخة";
+    const borrowerName = lend.borrowingStudentName || lend.BorrowingStudentName || lend.borrowerName || lend.BorrowerName || lend.studentName || lend.StudentName || "الطالب المستعير";
+    const bookTitle = lend.bookTitle || lend.BookTitle || lend.title || lend.Title || lend.book?.title || lend.Book?.Title || "كتاب";
+    const bookAuthor = lend.bookAuthor || lend.BookAuthor || lend.author || lend.Author || lend.book?.author || lend.Book?.Author || "";
+    const bookIsbn = lend.isbn || lend.ISBN || lend.bookIsbn || lend.BookIsbn || lend.book?.isbn || lend.Book?.ISBN || "";
     
     const requestDate = lend.requestDate || lend.createdAtUtc || lend.createdAt;
     const returnDate = lend.expectedReturnDate || lend.expirationDateUtc || lend.expirationDate || lend.returnDate;
     const borrowingDuration = lend.borrowingDurationInDays || lend.durationInDays;
     
     const stateValue = lend.state ?? lend.status;
-    const stateLabel = getLabel(BORROWING_REQUEST_STATE_LABELS, stateValue, subTab === "active" ? "نشطة" : "غير معروف");
-    const stateColor = 
-      stateValue === 0 || stateValue === "Pending" ? "amber" :
-      stateValue === 1 || stateValue === "Approved" ? "blue" :
-      stateValue === 2 || stateValue === "Rejected" ? "rose" :
-      stateValue === 4 || stateValue === "Completed" ? "emerald" : 
-      subTab === "active" ? "emerald" : "gray";
+    const isTransaction = subTab === "active" || subTab === "completed";
+    const labelsObj = isTransaction ? BORROWING_TRANSACTION_STATE_LABELS : BORROWING_REQUEST_STATE_LABELS;
+    
+    const stateLabel = getLabel(labelsObj, stateValue, isTransaction ? "نشطة" : "غير معروف");
+    
+    let stateColor = "gray";
+    if (isTransaction) {
+      if (stateValue === 0 || stateValue === "Borrowed") stateColor = "emerald";
+      else if (stateValue === 1 || stateValue === "Returned") stateColor = "blue";
+      else if (stateValue === 2 || stateValue === "Overdue") stateColor = "rose";
+      else if (stateValue === 3 || stateValue === "Lost") stateColor = "gray";
+    } else {
+      stateColor = 
+        stateValue === 0 || stateValue === "Pending" ? "amber" :
+        stateValue === 1 || stateValue === "Accepted" ? "blue" :
+        stateValue === 2 || stateValue === "Rejected" ? "rose" :
+        stateValue === 4 || stateValue === "Completed" ? "emerald" : "gray";
+    }
 
     const formatDate = (d) => {
       if (!d) return "—";
@@ -1549,10 +1809,44 @@ const AdminDashboard = () => {
             <div className="px-6 py-6 space-y-6 overflow-y-auto flex-grow scrollbar-thin">
               
               {/* Book Section */}
-              <div className="flex items-start gap-4 p-4 rounded-2xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5">
+              <div 
+                className="flex items-start gap-4 p-4 rounded-2xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5 cursor-pointer hover:border-emerald-500/30 transition-all"
+                onClick={async () => {
+                  if (!bookId) {
+                    toast.error("بيانات الكتاب غير متوفرة للفتح");
+                    return;
+                  }
+                  const t = toast.loading("جاري تحميل بيانات الكتاب...");
+                  try {
+                    const fullBook = await booksApi.getById(bookId);
+                    setSelectedBook(fullBook);
+                    setIsBookModalOpen(true);
+                    toast.dismiss(t);
+                  } catch(e) {
+                    toast.dismiss(t);
+                    setSelectedBook({
+                      id: bookId,
+                      title: bookTitle,
+                      authorName: bookAuthor,
+                      author: bookAuthor,
+                      isbn: bookIsbn,
+                      bookCoverImageUrl: lend.bookCoverImageUrl
+                    });
+                    setIsBookModalOpen(true);
+                  }
+                }}
+              >
                 <div className="w-14 h-20 rounded-xl bg-gray-100 dark:bg-white/5 overflow-hidden border border-gray-100 dark:border-white/10 shadow-inner shrink-0">
                   {(lend.bookCoverImageUrl || bookImageMap[bookId]) ? (
-                    <img src={lend.bookCoverImageUrl || bookImageMap[bookId]} alt="" className="w-full h-full object-cover" />
+                    <img 
+                      src={bookImageMap[bookId] || toApiAssetUrl(lend.bookCoverImageUrl)} 
+                      alt="" 
+                      className="w-full h-full object-cover" 
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.parentElement.innerHTML = `<div class="w-full h-full flex items-center justify-center text-gray-300 dark:text-white/20"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>`;
+                      }}
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-white/20">
                       <BookOpen size={20} />
@@ -1574,7 +1868,31 @@ const AdminDashboard = () => {
               {/* Owner & Borrower — Side by Side */}
               <div className="grid grid-cols-2 gap-3">
                 {/* Owner */}
-                <div className="p-4 rounded-2xl bg-emerald-500/[0.04] dark:bg-emerald-500/[0.06] border border-emerald-500/10">
+                <div 
+                  className="p-4 rounded-2xl bg-emerald-500/[0.04] dark:bg-emerald-500/[0.06] border border-emerald-500/10 cursor-pointer hover:border-emerald-500/30 transition-all"
+                  onClick={async () => {
+                    if (!ownerStudentId) {
+                      toast.error("بيانات المالك غير متوفرة");
+                      return;
+                    }
+                    const t = toast.loading("جاري تحميل بيانات الطالب...");
+                    try {
+                      const fullStudent = await studentsApi.getById(ownerStudentId);
+                      setSelectedStudent(fullStudent);
+                      setIsModalOpen(true);
+                      toast.dismiss(t);
+                    } catch(e) {
+                      toast.dismiss(t);
+                      setSelectedStudent({
+                        id: ownerStudentId,
+                        fullName: ownerName,
+                        universityMailAddress: lend.ownerEmail || "",
+                        phoneNumber: lend.ownerPhone || ""
+                      });
+                      setIsModalOpen(true);
+                    }
+                  }}
+                >
                   <p className="text-[9px] text-emerald-600 dark:text-emerald-400 font-black mb-3 uppercase tracking-widest flex items-center gap-1.5">
                     <Shield size={10} /> صاحب النسخة
                   </p>
@@ -1596,7 +1914,31 @@ const AdminDashboard = () => {
                 </div>
 
                 {/* Borrower */}
-                <div className="p-4 rounded-2xl bg-indigo-500/[0.04] dark:bg-indigo-500/[0.06] border border-indigo-500/10">
+                <div 
+                  className="p-4 rounded-2xl bg-indigo-500/[0.04] dark:bg-indigo-500/[0.06] border border-indigo-500/10 cursor-pointer hover:border-indigo-500/30 transition-all"
+                  onClick={async () => {
+                    if (!borrowerStudentId) {
+                      toast.error("بيانات المستعير غير متوفرة");
+                      return;
+                    }
+                    const t = toast.loading("جاري تحميل بيانات الطالب...");
+                    try {
+                      const fullStudent = await studentsApi.getById(borrowerStudentId);
+                      setSelectedStudent(fullStudent);
+                      setIsModalOpen(true);
+                      toast.dismiss(t);
+                    } catch(e) {
+                      toast.dismiss(t);
+                      setSelectedStudent({
+                        id: borrowerStudentId,
+                        fullName: borrowerName,
+                        universityMailAddress: lend.borrowerEmail || "",
+                        phoneNumber: lend.borrowerPhone || ""
+                      });
+                      setIsModalOpen(true);
+                    }
+                  }}
+                >
                   <p className="text-[9px] text-indigo-600 dark:text-indigo-400 font-black mb-3 uppercase tracking-widest flex items-center gap-1.5">
                     <Users size={10} /> المستعير
                   </p>
@@ -1717,11 +2059,11 @@ const AdminDashboard = () => {
             >
               <div className="col-span-4 flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-500/10 dark:to-amber-500/5 flex items-center justify-center text-amber-600 dark:text-amber-500 font-black text-sm border border-amber-500/10 shadow-sm shrink-0">
-                  {(lend.studentName || lend.ownerName || "S").charAt(0)}
+                  {(lend.borrowerName || lend.studentName || lend.ownerName || "S").charAt(0)}
                 </div>
                 <div className="min-w-0">
                   <h4 className="text-[13px] font-black text-library-primary dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-500 transition-colors truncate">
-                    {lend.studentName || lend.ownerName || "طالب"}
+                    {lend.borrowerName || lend.studentName || lend.ownerName || "طالب"}
                   </h4>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <BookMarked size={10} className="text-gray-400 shrink-0" />
@@ -1747,14 +2089,20 @@ const AdminDashboard = () => {
               <div className="col-span-3 flex items-center justify-center">
                 <span className={`px-3 py-1.5 rounded-lg text-[10px] font-black border flex items-center gap-1.5 ${
                   subTab === "active" ? 'bg-emerald-50 text-emerald-600 border-emerald-500/10 dark:bg-emerald-500/10 dark:text-emerald-400' : 
-                  (subTab === "pending_owner" ? 'bg-amber-50 text-amber-600 border-amber-500/10 dark:bg-amber-500/10 dark:text-amber-400' : 
-                  'bg-blue-50 text-blue-600 border-blue-500/10 dark:bg-blue-500/10 dark:text-blue-400')
+                  subTab === "completed" ? 'bg-blue-50 text-blue-600 border-blue-500/10 dark:bg-blue-500/10 dark:text-blue-400' :
+                  subTab === "pending_owner" ? 'bg-amber-50 text-amber-600 border-amber-500/10 dark:bg-amber-500/10 dark:text-amber-400' : 
+                  'bg-blue-50 text-blue-600 border-blue-500/10 dark:bg-blue-500/10 dark:text-blue-400'
                 }`}>
                   <div className={`w-1.5 h-1.5 rounded-full ${
                     subTab === "active" ? 'bg-emerald-500' : 
-                    (subTab === "pending_owner" ? 'bg-amber-500' : 'bg-blue-500')
+                    subTab === "completed" ? 'bg-blue-500' :
+                    subTab === "pending_owner" ? 'bg-amber-500' : 'bg-blue-500'
                   }`} />
-                  {BORROWING_REQUEST_STATE_LABELS[lend.status] || (subTab === "active" ? 'نشطة' : (subTab === "pending_owner" ? 'بانتظار المالك' : 'بانتظار التسليم'))}
+                  {(() => {
+                    const isTx = subTab === "active" || subTab === "completed";
+                    const labels = isTx ? BORROWING_TRANSACTION_STATE_LABELS : BORROWING_REQUEST_STATE_LABELS;
+                    return getLabel(labels, lend.state ?? lend.status, isTx ? "نشطة" : (subTab === "pending_owner" ? 'بانتظار المالك' : 'بانتظار التسليم'));
+                  })()}
                 </span>
               </div>
               
@@ -2138,7 +2486,12 @@ const AdminDashboard = () => {
               {menuItems.map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => setActiveTab(item.id)}
+                  onClick={() => {
+                    setActiveTab(item.id);
+                    if (item.id === "lending") setSubTab("active");
+                    else if (item.id === "students") setSubTab("verified");
+                    else if (item.id === "books") setSubTab("all");
+                  }}
                   className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl font-bold text-[12px] transition-all relative group ${
                     activeTab === item.id 
                       ? "bg-white/[0.12] text-white" 
@@ -2238,7 +2591,12 @@ const AdminDashboard = () => {
               {menuItems.map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => setActiveTab(item.id)}
+                  onClick={() => {
+                    setActiveTab(item.id);
+                    if (item.id === "lending") setSubTab("active");
+                    else if (item.id === "students") setSubTab("verified");
+                    else if (item.id === "books") setSubTab("all");
+                  }}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black border transition-all whitespace-nowrap shrink-0 ${
                     activeTab === item.id
                       ? "bg-library-primary text-white border-library-primary shadow-md shadow-library-primary/20"
@@ -2272,10 +2630,11 @@ const AdminDashboard = () => {
       </div>
 
       <AnimatePresence>
+        {isLendingModalOpen && renderLendingDetailModal()}
         {isModalOpen && renderStudentModal()}
         {isBookModalOpen && renderBookModal()}
+        {isBookCopiesModalOpen && renderBookCopiesModal()}
         {isCopyModalOpen && renderCopyModal()}
-        {isLendingModalOpen && renderLendingDetailModal()}
       </AnimatePresence>
     </>
   );
