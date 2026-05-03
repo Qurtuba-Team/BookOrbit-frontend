@@ -225,24 +225,6 @@
    SHIMMER EFFECT
    ========================================================================= */
 
-.text-shimmer {
-  background: linear-gradient(
-    135deg,
-    rgba(199, 163, 95, 1) 0%,
-    rgba(255, 255, 255, 1) 50%,
-    rgba(199, 163, 95, 1) 100%
-  );
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: shimmer 5s linear infinite;
-}
-
-@keyframes shimmer {
-  to { background-position: 200% center; }
-}
-
 /* =========================================================================
    3D BOOK COMPONENT
    ========================================================================= */

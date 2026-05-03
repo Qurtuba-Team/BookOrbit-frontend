@@ -74,7 +74,7 @@ export const EditBookModal = ({ isOpen, onClose, book, onBookUpdated }) => {
           initial={{ scale: 0.9, y: 20 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.9, y: 20 }}
-          className="bg-white dark:bg-[#0c0c0e] w-full max-w-xl rounded-2xl overflow-hidden shadow-2xl relative z-10 border border-white/10 flex flex-col max-h-[90vh]"
+          className="bg-white dark:bg-dark-surface w-full max-w-xl rounded-2xl overflow-hidden shadow-2xl relative z-10 border border-library-primary/10 dark:border-white/10 flex flex-col max-h-[90vh]"
           dir="rtl"
         >
           {/* Header */}

@@ -217,12 +217,14 @@ const StudentDashboard = () => {
             <div className="rounded-2xl border border-library-primary/10 dark:border-white/10 bg-white/80 dark:bg-white/[0.03] p-5">
               <h3 className="text-sm font-black text-library-primary dark:text-white mb-4">نظرة سريعة</h3>
               <div className="space-y-3">
-                <div className="rounded-xl p-3 bg-emerald-500/5 border border-emerald-500/15">
-                  <p className="text-[10px] font-black text-emerald-600 mb-1">اكتمال الحساب</p>
-                  <div className="h-2 rounded-full bg-emerald-100 dark:bg-emerald-900/20 overflow-hidden">
-                    <div className="h-full w-[88%] bg-emerald-500 rounded-full" />
+                {user?.role?.toLowerCase() !== 'admin' && (
+                  <div className="rounded-xl p-3 bg-emerald-500/5 border border-emerald-500/15">
+                    <p className="text-[10px] font-black text-emerald-600 mb-1">اكتمال الحساب</p>
+                    <div className="h-2 rounded-full bg-emerald-100 dark:bg-emerald-900/20 overflow-hidden">
+                      <div className="h-full w-[88%] bg-emerald-500 rounded-full" />
+                    </div>
                   </div>
-                </div>
+                )}
                 <div className="rounded-xl p-3 bg-indigo-500/5 border border-indigo-500/15">
                   <div className="flex items-center justify-between mb-1">
                     <p className="text-[10px] font-black text-indigo-600">رصيد النقاط</p>

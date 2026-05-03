@@ -249,10 +249,12 @@ const StudentProfile = () => {
             <div className="bg-white/70 dark:bg-dark-surface/70 rounded-2xl p-4 border border-white dark:border-white/5 shadow-sm">
               <h3 className="text-sm font-black text-library-primary dark:text-white mb-3">مؤشرات سريعة</h3>
               <div className="space-y-2.5">
-                <div className="flex items-center justify-between rounded-xl px-3 py-2 bg-gray-50 dark:bg-white/5">
-                  <p className="text-xs font-black text-gray-500">إكمال البيانات</p>
-                  <p className="text-xs font-black text-library-primary dark:text-white">{profileCompletion}%</p>
-                </div>
+                {!isAdmin && (
+                  <div className="flex items-center justify-between rounded-xl px-3 py-2 bg-gray-50 dark:bg-white/5">
+                    <p className="text-xs font-black text-gray-500">إكمال البيانات</p>
+                    <p className="text-xs font-black text-library-primary dark:text-white">{profileCompletion}%</p>
+                  </div>
+                )}
                 <div className="flex items-center justify-between rounded-xl px-3 py-2 bg-gray-50 dark:bg-white/5">
                   <p className="text-xs font-black text-gray-500">آخر تسجيل دخول</p>
                   <p className="text-xs font-black text-library-primary dark:text-white">اليوم</p>
@@ -289,15 +291,17 @@ const StudentProfile = () => {
                       <ShieldCheck className="text-indigo-500" size={16} />
                       معلومات الحساب
                     </h3>
-                    <div className="mb-4 rounded-xl p-3 bg-library-accent/5 border border-library-accent/15">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-[10px] font-black text-library-accent">نسبة اكتمال الملف</p>
-                        <p className="text-[10px] font-black text-library-primary dark:text-white">{profileCompletion}%</p>
+                    {!isAdmin && (
+                      <div className="mb-4 rounded-xl p-3 bg-library-accent/5 border border-library-accent/15">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-[10px] font-black text-library-accent">نسبة اكتمال الملف</p>
+                          <p className="text-[10px] font-black text-library-primary dark:text-white">{profileCompletion}%</p>
+                        </div>
+                        <div className="h-2 rounded-full bg-library-accent/15 overflow-hidden">
+                          <div className="h-full bg-library-accent rounded-full transition-all duration-500" style={{ width: `${profileCompletion}%` }} />
+                        </div>
                       </div>
-                      <div className="h-2 rounded-full bg-library-accent/15 overflow-hidden">
-                        <div className="h-full bg-library-accent rounded-full transition-all duration-500" style={{ width: `${profileCompletion}%` }} />
-                      </div>
-                    </div>
+                    )}
                     {!isAdmin && (
                       <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
                         {!editing ? (

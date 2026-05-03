@@ -137,7 +137,6 @@ const AddBook = () => {
         toast.error('عذراً، لا تمتلك الصلاحيات الكافية لإضافة كتاب. يجب أن يكون حسابك موثقاً (Active).');
       } else if (error.status === 409) {        toast.error('هذا الكتاب (أو الرقم الدولي ISBN) موجود بالفعل في الكتالوج.');
       } else if (error.errors) {
-        // Detailed validation errors from backend
         const firstError = Array.isArray(error.errors)
           ? error.errors[0]
           : Object.values(error.errors)[0]?.[0] || Object.values(error.errors)[0];
