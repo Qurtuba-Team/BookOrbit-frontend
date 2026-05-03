@@ -49,7 +49,6 @@ const BookCard3D = ({ book }) => {
       whileHover={{ y: -8 }}
       className="relative flex flex-col items-center group h-full"
     >
-      {/* 3D Book Container */}
       <div className="relative w-[130px] h-[190px] [perspective:1200px] z-10 mb-[-25px] mt-2 transition-transform duration-300 group-hover:scale-[1.02]">
         <motion.div className="w-full h-full relative [transform-style:preserve-3d] transition-transform duration-500 ease-out [transform:rotateY(30deg)_rotateX(5deg)] group-hover:[transform:rotateY(0deg)_rotateX(0deg)] cursor-pointer drop-shadow-2xl dark:drop-shadow-[0_20px_40px_rgba(0,0,0,0.45)]">
           <div
@@ -155,7 +154,6 @@ const Dashboard = () => {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
-  // Prioritize fullName from the student profile
   const rawName =
     user?.fullName ||
     user?.Name ||
@@ -179,11 +177,10 @@ const Dashboard = () => {
         sortColumn: "createdAt",
         sortDirection: "desc",
         searchTerm: debouncedSearch || undefined,
-        Statuses: "available", // ← فلترة على مستوى الـ API مباشرة
+        Statuses: "available",
       });
       const rows = res.items ?? res.data ?? [];
 
-      // Use availability count from the API response directly — no extra calls needed
       const booksWithAvailability = rows.map((book) => ({
         ...book,
         availableCopiesCountActual:
@@ -201,7 +198,7 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, user?.studentId]); // user?.studentId is stable — avoids re-fetch on every user object recreation
+  }, [debouncedSearch, user?.studentId]); 
 
   useEffect(() => {
     fetchAvailable();
@@ -217,7 +214,6 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen relative bg-library-paper dark:bg-dark-bg text-library-primary dark:text-library-paper transition-colors duration-300 overflow-x-hidden">
-      {/* خلفية هادئة — بدون صورة خارجية أو نبض scale يفسد التركيب */}
       <div
         className="fixed inset-0 z-0 pointer-events-none overflow-hidden"
         aria-hidden
@@ -229,7 +225,6 @@ const Dashboard = () => {
       <Navbar />
 
       <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 lg:pb-12 pt-under-fixed-nav lg:pt-under-fixed-nav-lg">
-        {/* ترحيب — نفس أسلوب البطاقات الزجاجية في لوحة الطالب */}
         <motion.div
           initial="hidden"
           animate="visible"

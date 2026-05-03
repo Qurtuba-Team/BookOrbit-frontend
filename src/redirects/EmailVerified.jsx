@@ -7,7 +7,7 @@ import { identityApi } from "../services/api";
 const EmailVerified = () => {
   const [params] = useSearchParams();
   const navigate = useNavigate();
-  const [status, setStatus] = useState("loading"); // loading | success | error
+  const [status, setStatus] = useState("loading"); 
   const [countdown, setCountdown] = useState(5);
 
   const verifiedRef = React.useRef(false);
@@ -17,9 +17,7 @@ const EmailVerified = () => {
     if (verifiedRef.current) return;
 
     const email = params.get("email")?.trim();
-    // بعض البواك تبعت encodedToken بدل token.
     const tokenParam = params.get("token") || params.get("encodedToken");
-    // استرجاع التوكن مع استبدال المسافات بعلامة + (لأن المتصفح قد يحول + إلى مسافة)
     const token = tokenParam?.replace(/ /g, "+");
 
     if (!email || !token) {
@@ -32,13 +30,11 @@ const EmailVerified = () => {
       try {
         await identityApi.confirmEmail(email, token);
         setStatus("success");
-        // Start countdown for auto-redirect
         timerRef.current = setInterval(() => {
           setCountdown((prev) => {
             if (prev <= 1) {
               clearInterval(timerRef.current);
               timerRef.current = null;
-              // Signal other tabs that verification was successful
               localStorage.setItem("email_verified_signal", Date.now().toString());
               navigate("/login", { replace: true });
               return 0;
@@ -68,7 +64,6 @@ const EmailVerified = () => {
 
   return (
     <div className="min-h-screen bg-library-paper dark:bg-dark-bg flex items-center justify-center p-6 relative overflow-hidden" dir="rtl">
-      {/* Background Elements */}
       <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-library-accent/10 rounded-full blur-[120px] animate-pulse" />
       <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-library-primary/10 rounded-full blur-[120px] animate-pulse" />
 
@@ -176,7 +171,6 @@ const EmailVerified = () => {
         </AnimatePresence>
       </motion.div>
 
-      {/* Footer Branding */}
       <div className="absolute bottom-8 left-0 right-0 text-center opacity-20 dark:opacity-10">
         <p className="text-library-primary dark:text-white font-black tracking-widest text-xl">
           BOOKORBIT

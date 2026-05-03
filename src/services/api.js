@@ -1,12 +1,9 @@
-// ─── BookOrbit API Configuration ────────────────────────────────────────────
 import { API_BASE_URL, API_V1, tokenStore, BOOK_CATEGORY_LABELS, getBookImageUrl, getStudentImageUrl, getLabel, BORROWING_REQUEST_STATE_LABELS } from "../utils/constants";
 
-// ─── Token Refresh Queue ─────────────────────────────────────────────────────
 let isRefreshing = false;
 let failedQueue = [];
 
 const toLowerSafe = (value) => String(value ?? "").toLowerCase();
-/** Rewrites localhost asset URLs so they align with REACT_APP_API_URL (same pattern as normalized books). */
 const toApiAssetUrl = (value) => {
   const raw = String(value ?? "").trim();
   if (!raw) return "";
@@ -31,9 +28,9 @@ const toApiAssetUrl = (value) => {
 };
 
 const studentStateMap = {
-  0: "pending",   // Unconfirmed
-  1: "approved",  // Confirmed (Browsing only)
-  2: "active",    // Verified (Full permissions)
+  0: "pending",   
+  1: "approved",  
+  2: "active",    
   3: "rejected",
   4: "banned",
   5: "unbanned",
@@ -51,12 +48,6 @@ const borrowingStateMap = {
 
 export const normalizeStudent = (student = {}) => {
   const stateValue = student.state ?? student.State;
-  
-  // Direct mapping from backend state:
-  // 0 / "pending"  => Pending (waiting for admin approval)
-  // 1 / "approved" => Approved (waiting for admin activation)
-  // 2 / "active"   => Active (fully verified)
-  // 4 / "banned"   => Banned
   
   const status = typeof stateValue === "number"
     ? studentStateMap[stateValue] || "pending"
@@ -87,7 +78,6 @@ const normalizeBook = (book = {}) => {
     const stateValue = book.state ?? book.State;
     const statusValue = String(book.status ?? book.Status ?? "").toLowerCase();
     const normalizedState = stateValue ?? statusValue;
-    // Robust check for approval: state 1, explicit true, or approved-like status strings
     const isApproved = 
       stateValue === 1 || 
       stateValue === true ||
@@ -157,7 +147,6 @@ export const normalizeBookCopy = (row = {}) => {
   const bookId = row.BookId ?? row.bookId ?? row.book?.Id ?? row.book?.id;
   const book = row.book ?? row.Book ?? {};
   
-  // Handle lending data if embedded
   const lending = row.lendingRecord || row.LendingRecord || row.lendingListRecord || row.LendingListRecord || null;
   
   return {
@@ -246,7 +235,6 @@ export const normalizeChatGroup = (g = {}) => {
     chatGroupId: g.chatGroupId || g.ChatGroupId,
     otherStudentId: otherId,
     otherStudentName: g.otherStudentName || g.OtherStudentName || "طالب",
-    // Always use student ID based image URL like in Profile page
     otherStudentImage: otherId ? getStudentImageUrl(otherId) : null,
     createdAt: g.createdAtUtc || g.CreatedAtUtc || g.createdAt || g.CreatedAt || new Date().toISOString(),
   };
@@ -310,17 +298,14 @@ const buildQuery = (params) => {
   return query.toString();
 };
 
-// ─── Core API Client ─────────────────────────────────────────────────────────
 async function apiRequest(path, options = {}) {
   let { accessToken, refreshToken: storedRefreshToken, expiresOnUtc } = tokenStore.get();
 
-  // ─── Proactive Token Refresh (Before 15m expiration) ──────────────────────
   if (accessToken && storedRefreshToken && expiresOnUtc && !options.skipAuth) {
     const expiresAt = new Date(expiresOnUtc).getTime();
     const now = new Date().getTime();
     const timeRemaining = expiresAt - now;
 
-    // Refresh if less than 2 minutes (120000 ms) remain
     if (timeRemaining > 0 && timeRemaining < 2 * 60 * 1000) {
       if (!isRefreshing) {
         isRefreshing = true;
@@ -341,7 +326,7 @@ async function apiRequest(path, options = {}) {
             const newTokens = await refreshRes.json();
             const rememberMe = localStorage.getItem("refreshToken") !== null;
             tokenStore.set(newTokens, rememberMe);
-            accessToken = newTokens.accessToken; // Use the new token for this request
+            accessToken = newTokens.accessToken; 
             processQueue(null, newTokens.accessToken);
           } else {
             throw new Error("Session expired during proactive refresh");
@@ -349,12 +334,11 @@ async function apiRequest(path, options = {}) {
         } catch (err) {
           processQueue(err, null);
           window.dispatchEvent(new CustomEvent("auth:logout"));
-          throw err; // Proactive refresh failed, abort request
+          throw err; 
         } finally {
           isRefreshing = false;
         }
       } else {
-        // If another request is already refreshing, wait for it
         try {
           accessToken = await new Promise((resolve, reject) => {
             failedQueue.push({ resolve, reject });
@@ -393,11 +377,9 @@ async function apiRequest(path, options = {}) {
     headers,
   });
 
-  // ✅ قراءة الـ Response Body كنص أولاً للتعامل مع جميع الـ Content-Types
   const responseText = await response.text();
 
   if (!response.ok) {
-    // ✅ محاولة تحليل الخطأ كـ JSON، ولو فشل نستخدم النص كما هو
     let errorData;
     try {
       errorData = responseText ? JSON.parse(responseText) : { detail: "حدث خطأ غير متوقع" };
@@ -405,19 +387,17 @@ async function apiRequest(path, options = {}) {
       errorData = { detail: responseText || `HTTP ${response.status}` };
     }
 
-    // ─── Rate Limit (429) Handling ──────────────────────────────────────────
     if (response.status === 429) {
       const retryAfter = response.headers.get("Retry-After");
       const waitTime = retryAfter ? parseInt(retryAfter, 10) * 1000 : 2000;
 
       const retryCount = options._retryCount || 0;
-      if (retryCount < 2) { // Retry up to 2 times
+      if (retryCount < 2) { 
         await new Promise(resolve => setTimeout(resolve, waitTime * (retryCount + 1)));
         return apiRequest(path, { ...options, _retryCount: retryCount + 1 });
       }
     }
 
-    // ─── Token Refresh Interceptor ───────────────────────────────────────────
     if (response.status === 401 && !options.skipAuth && storedRefreshToken) {
       if (!isRefreshing) {
         isRefreshing = true;
@@ -436,11 +416,9 @@ async function apiRequest(path, options = {}) {
 
           if (refreshRes.ok) {
             const newTokens = await refreshRes.json();
-            // Preserve the storage type based on where it was found
             const rememberMe = localStorage.getItem("refreshToken") !== null;
             tokenStore.set(newTokens, rememberMe);
             processQueue(null, newTokens.accessToken);
-            // Retry the original request that triggered the refresh
             return apiRequest(path, options);
           } else {
             throw new Error("Session expired");
@@ -454,7 +432,6 @@ async function apiRequest(path, options = {}) {
         }
       }
 
-      // Wait in queue and retry when refresh completes
       return new Promise((resolve, reject) => {
         failedQueue.push({ resolve, reject });
       })
@@ -462,7 +439,6 @@ async function apiRequest(path, options = {}) {
         .catch((err) => { throw err; });
     }
 
-    // لو مفيش Refresh Token أو الـ Refresh نفسه فشل
     if (response.status === 401 && !options.skipAuth) {
       window.dispatchEvent(new CustomEvent("auth:logout"));
     }
@@ -475,7 +451,6 @@ async function apiRequest(path, options = {}) {
     error.title = errorData.title;
     error.instance = errorData.instance;
 
-    // ✅ دعم أخطاء التحقق من الحقول (لو موجودة)
     if (errorData.errors) {
       error.errors = errorData.errors;
     } else if (errorData.extensions?.errors) {
@@ -485,10 +460,8 @@ async function apiRequest(path, options = {}) {
     throw error;
   }
 
-  // ✅ للتعامل مع 204 No Content
   if (response.status === 204) return null;
 
-  // ✅ التعامل مع الـ Response بناءً على الـ Content-Type
   const contentType = response.headers.get("content-type");
 
   if (contentType?.includes("application/json")) {
@@ -498,14 +471,11 @@ async function apiRequest(path, options = {}) {
       return responseText;
     }
   } else {
-    // لو الـ Response نص عادي (زي "Email Sent")، نرجعه كما هو
     return responseText;
   }
 }
 
-// ─── 1. IDENTITY ─────────────────────────────────────────────────────────────
 export const identityApi = {
-  /** POST /identity/token — Login */
   login: (email, password) =>
     apiRequest("/identity/token", {
       method: "POST",
@@ -513,7 +483,6 @@ export const identityApi = {
       body: JSON.stringify({ email, password }),
     }),
 
-  /** POST /identity/token/refresh — Refresh tokens */
   refreshToken: (refreshToken, expiredAccessToken) =>
     apiRequest("/identity/token/refresh", {
       method: "POST",
@@ -521,43 +490,43 @@ export const identityApi = {
       body: JSON.stringify({ refreshToken, expiredAccessToken }),
     }),
 
-  /** GET /identity/users/me — Current user info */
+  
   getMe: () => apiRequest("/identity/users/me"),
 
-  /** ✅ POST /identity/users/send-email-confirmation?email={email} */
+
   sendEmailConfirmation: (email) =>
     apiRequest(`/identity/users/send-email-confirmation?email=${encodeURIComponent(email)}`, {
       method: "POST",
       skipAuth: true,
     }),
 
-  /** POST /identity/confirm-email?email={email}&token={token} */
+ 
   confirmEmail: (email, token) =>
     apiRequest(`/identity/confirm-email?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`, {
       method: "POST",
       skipAuth: true,
     }),
 
-  /** POST /identity/users/send-reset-password?email={email} */
+  
   requestPasswordReset: (email) =>
     apiRequest(`/identity/users/send-reset-password?email=${encodeURIComponent(email)}`, {
       method: "POST",
       skipAuth: true,
     }),
 
-  /** POST /identity/reset-password */
+
   resetPassword: ({ email, token, newPassword }) =>
     apiRequest("/identity/reset-password", {
       method: "POST",
       skipAuth: true,
       body: JSON.stringify({
-        email: email,              // ✅ lowercase
-        encodedToken: token,       // ✅ camelCase (مش Token!)
-        newPassword: newPassword   // ✅ camelCase
+        email: email,              
+        encodedToken: token,       
+        newPassword: newPassword   
       }),
     }),
 
-  /** POST /identity/users/me/change-password */
+
   changePassword: ({ currentPassword, oldPassword, newPassword }) =>
     apiRequest("/identity/users/me/change-password", {
       method: "POST",
@@ -568,9 +537,9 @@ export const identityApi = {
     }),
 };
 
-// ─── 2. STUDENTS ─────────────────────────────────────────────────────────────
+
 export const studentsApi = {
-  /** POST /students — Register new student (multipart/form-data) */
+
   create: async (formData) => {
     const res = await apiRequest("/students", {
       method: "POST",
@@ -580,7 +549,7 @@ export const studentsApi = {
     return normalizeStudent(res);
   },
 
-  /** PATCH /students/{studentId} — Update student profile (multipart/form-data) */
+ 
   update: async (studentId, formData) => {
     const res = await apiRequest(`/students/${studentId}`, {
       method: "PATCH",
@@ -589,19 +558,16 @@ export const studentsApi = {
     return normalizeStudent(res || {});
   },
   
-  /** GET /students/me — Current student profile */
   getMe: async () => {
     const res = await apiRequest("/students/me");
     return normalizeStudent(res);
   },
   
-  /** GET /students/profiles/{studentId} — Student profile by ID */
   getById: async (studentId) => {
     const res = await apiRequest(`/students/profiles/${studentId}`);
     return normalizeStudent(res);
   },
   
-  /** GET /students — All students (Admin only) */
   getAll: async (params = {}) => {
     const query = buildQuery(params);
     const res = await apiRequest(`/students?${query}`);
@@ -613,41 +579,32 @@ export const studentsApi = {
     };
   },
 
-  /** PATCH /students/{studentId} — Update student profile (multipart/form-data) */
   updateRaw: (studentId, formData) =>
     apiRequest(`/students/${studentId}`, {
       method: "PATCH",
       body: formData
     }),
 
-  /** PATCH /students/{studentId}/approve */
   approve: (studentId) =>
     apiRequest(`/students/${studentId}/approve`, { method: "PATCH" }),
 
-  /** PATCH /students/{studentId}/activate */
   activate: (studentId) =>
     apiRequest(`/students/${studentId}/activate`, { method: "PATCH" }),
 
-  /** PATCH /students/{studentId}/ban */
   ban: (studentId) =>
     apiRequest(`/students/${studentId}/ban`, { method: "PATCH" }),
 
-  /** PATCH /students/{studentId}/unban */
   unban: (studentId) =>
     apiRequest(`/students/${studentId}/unban`, { method: "PATCH" }),
 
-  /** PATCH /students/{studentId}/reject */
   reject: (studentId) =>
     apiRequest(`/students/${studentId}/reject`, { method: "PATCH" }),
 
-  /** PATCH /students/{studentId}/pend */
   pend: (studentId) =>
     apiRequest(`/students/${studentId}/pend`, { method: "PATCH" }),
 };
 
-// ─── 3. BOOKS ────────────────────────────────────────────────────────────────
 export const booksApi = {
-  /** POST /books — Create new book (multipart/form-data) */
   create: async (formData) => {
     const res = await apiRequest("/books", {
       method: "POST",
@@ -656,7 +613,6 @@ export const booksApi = {
     return normalizeBook(res);
   },
 
-  /** GET /books — Paginated list of books */
   getAll: async (params = {}) => {
     const query = buildQuery(params);
     const res = await apiRequest(`/books?${query}`);
@@ -668,60 +624,59 @@ export const booksApi = {
     };
   },
 
-  /** GET /books/{bookId} — Book by ID */
   getById: async (bookId) => {
     const res = await apiRequest(`/books/${bookId}`);
     return normalizeBook(res);
   },
 
-  /** PATCH /books/{bookId} — Update book (multipart/form-data) */
+  
   update: (bookId, formData) =>
     apiRequest(`/books/${bookId}`, {
       method: "PATCH",
       body: formData,
     }),
 
-  /** DELETE /books/{bookId} — Delete book */
+  
   delete: (bookId) =>
     apiRequest(`/books/${bookId}`, {
       method: "DELETE"
     }),
 
-  /** PATCH /books/{bookId}/available — Approve book (Admin only) */
+  
   approve: (bookId) =>
     apiRequest(`/books/${bookId}/available`, { method: "PATCH" }),
 
-  /** PATCH /books/{bookId}/reject — Reject book (Admin only) */
+  
   reject: (bookId) =>
     apiRequest(`/books/${bookId}/reject`, { method: "PATCH" }),
 };
 
-// ─── 4. BOOK COPIES ──────────────────────────────────────────────────────────
+
 export const bookCopiesApi = {
-  /** POST /students/me/books/{bookId}/copies — Create book copy */
+  
   create: (bookId, condition) =>
     apiRequest(`/students/me/books/${bookId}/copies`, {
       method: "POST",
       body: JSON.stringify({ condition }),
     }),
 
-  /** GET /books/copies/{bookCopyId} — Book copy by ID */
+  
   getById: (bookCopyId) => apiRequest(`/books/copies/${bookCopyId}`),
 
-  /** PATCH /books/copies/{bookCopyId} — Update book copy */
+  
   update: (bookCopyId, condition) =>
     apiRequest(`/books/copies/${bookCopyId}`, {
       method: "PATCH",
       body: JSON.stringify({ condition }),
     }),
 
-  /** GET /books/{bookId}/copies — Copies by book ID */
+  
   getByBookId: (bookId, params = {}) => {
     const query = buildQuery(params);
     return apiRequest(`/books/${bookId}/copies?${query}`);
   },
 
-  /** GET /students/{studentId}/books/copies — Copies by student ID */
+  
   getByStudentId: async (studentId, params = {}) => {
     const query = buildQuery(params);
     const res = await apiRequest(`/students/${studentId}/books/copies?${query}`);
@@ -729,31 +684,31 @@ export const bookCopiesApi = {
     return { ...res, items, data: items };
   },
 
-  /** GET /books/copies — All copies (paginated) */
+  
   getAll: (params = {}) => {
     const query = buildQuery(params);
     return apiRequest(`/books/copies?${query}`);
   },
 
-  /** POST /students/me/books/copies/{bookCopyId}/list — Add to lending list */
+
   listForLending: (bookCopyId, borrowingDurationInDays) =>
     apiRequest(
       `/students/me/books/copies/${bookCopyId}/list?borrowingDurationInDays=${borrowingDurationInDays}`,
       { method: "POST" }
     ),
 
-  /** PATCH /books/copies/{bookCopyId}/available */
+  
   markAvailable: (bookCopyId) =>
     apiRequest(`/books/copies/${bookCopyId}/available`, { method: "PATCH" }),
 
-  /** PATCH /books/copies/{bookCopyId}/unavailable */
+  
   markUnavailable: (bookCopyId) =>
     apiRequest(`/books/copies/${bookCopyId}/unavailable`, { method: "PATCH" }),
 };
 
-// ─── 5. LENDING LIST ─────────────────────────────────────────────────────────
+
 export const lendingApi = {
-  /** GET /lendinglist — Paginated list of lending records */
+ 
   getAll: async (params = {}) => {
     const query = buildQuery(params);
     const res = await apiRequest(`/lendinglist?${query}`);
@@ -777,24 +732,24 @@ export const lendingApi = {
     };
   },
 
-  /** GET /lendinglist/{lendingListRecordId} — Record by ID */
+
   getById: (lendingListRecordId) =>
     apiRequest(`/lendinglist/${lendingListRecordId}`),
 
-  /** GET /lendinglist/{lendingListRecordId}/contact-info */
+
   getContactInfo: (lendingListRecordId) =>
     apiRequest(`/lendinglist/${lendingListRecordId}/contact-info`),
 
-  /** PATCH /lendinglist/{lendingListRecordId}/close */
+
   close: (lendingListRecordId) =>
     apiRequest(`/lendinglist/${lendingListRecordId}/close`, {
       method: "PATCH",
     }),
 };
 
-// ─── 6. BORROWING REQUESTS ───────────────────────────────────────────────────
+
 export const borrowingApi = {
-  /** GET /borrowingrequests — Paginated list of requests */
+
   getAll: async (params = {}) => {
     const query = buildQuery(params);
     const res = await apiRequest(`/borrowingrequests?${query}`);
@@ -806,7 +761,7 @@ export const borrowingApi = {
     };
   },
 
-  /** GET /borrowingrequests/me/in — Incoming requests for current student */
+
   getMineIncoming: async (params = {}) => {
     const query = buildQuery(params);
     const res = await apiRequest(`/borrowingrequests/me/in?${query}`);
@@ -814,7 +769,7 @@ export const borrowingApi = {
     return { ...res, items, data: items };
   },
 
-  /** GET /borrowingrequests/me/out — Outgoing requests from current student */
+  
   getMineOutgoing: async (params = {}) => {
     const query = buildQuery(params);
     const res = await apiRequest(`/borrowingrequests/me/out?${query}`);
@@ -822,47 +777,44 @@ export const borrowingApi = {
     return { ...res, items, data: items };
   },
 
-  /** GET /borrowingrequests/{borrowingRequestId} — Request by ID */
+ 
   getById: async (borrowingRequestId) => {
     const res = await apiRequest(`/borrowingrequests/${borrowingRequestId}`);
     return normalizeBorrowingRequest(res);
   },
 
-  /** POST /lendinglist/{lendingListRecordId}/request — Create borrowing request */
+ 
   create: (lendingListRecordId) =>
     apiRequest(`/lendinglist/${lendingListRecordId}/request`, {
       method: "POST",
       body: JSON.stringify({}),
     }),
 
-  /** PATCH /borrowingrequests/{id}/accept */
+
   accept: (id) => apiRequest(`/borrowingrequests/${id}/accept`, { method: "PATCH", body: JSON.stringify({}) }),
 
-  /** PATCH /borrowingrequests/{id}/reject */
+ 
   reject: (id) => apiRequest(`/borrowingrequests/${id}/reject`, { method: "PATCH", body: JSON.stringify({}) }),
 
-  /** PATCH /borrowingrequests/{id}/cancel */
+  
   cancel: (id) => apiRequest(`/borrowingrequests/${id}/cancel`, { method: "PATCH", body: JSON.stringify({}) }),
 
-  /** POST /borrowingrequests/{id}/otp — Send OTP to borrower for delivery confirmation */
   sendDeliverOtp: (id) => apiRequest(`/borrowingrequests/${id}/otp`, { method: "POST", body: JSON.stringify({}) }),
 
-  /** POST /borrowingrequests/{id}/deliver — Complete delivery with OTP */
   deliver: (id, otp) => apiRequest(`/borrowingrequests/${id}/deliver`, { 
     method: "POST", 
     body: JSON.stringify({ OtpCode: otp }) 
   }),
 };
 
-// ─── 7. BORROWING TRANSACTIONS ───────────────────────────────────────────────
 export const borrowingTransactionsApi = {
-  /** GET /borrowingtransactions — Admin list */
+  
   getAll: (params = {}) => {
     const query = buildQuery(params);
     return apiRequest(`/borrowingtransactions?${query}`);
   },
 
-  /** GET /borrowingtransactions/{id} */
+  
   getById: (id) => apiRequest(`/borrowingtransactions/${id}`),
 
   return: (id, otp) => apiRequest(`/borrowingtransactions/${id}/return`, { 
@@ -870,58 +822,46 @@ export const borrowingTransactionsApi = {
     body: JSON.stringify({ OtpCode: otp }) 
   }),
 
-  /** POST /borrowingtransactions/{id}/otp — Send OTP to lender for return confirmation */
   sendReturnOtp: (id) => apiRequest(`/borrowingtransactions/${id}/otp`, { method: "POST", body: JSON.stringify({}) }),
 
   markLost: (id) =>
     apiRequest(`/borrowingtransactions/${id}/lost`, { method: "PATCH" }),
 
-  /** GET /borrowingtransactions/me/in — Lender transactions */
   getMeIn: (params = {}) => {
     const query = buildQuery(params);
     return apiRequest(`/borrowingtransactions/me/in?${query}`);
   },
 
-  /** GET /borrowingtransactions/me/out — Borrower transactions */
   getMeOut: (params = {}) => {
     const query = buildQuery(params);
     return apiRequest(`/borrowingtransactions/me/out?${query}`);
   },
 };
 
-// ─── 8. IMAGES ───────────────────────────────────────────────────────────────
 export const imagesApi = {
-  /** GET /images/students/{studentId} — Student profile image */
   getStudentImage: (studentId) =>
     apiRequest(`/images/students/${studentId}`, {
       headers: { "Accept": "application/json" },
     }),
 
-  /** GET /images/books/{bookId} — Book cover image */
   getBookImage: (bookId) => getBookImageUrl(bookId),
 };
 
-// ─── 9. REVIEWS ─────────────────────────────────────────────────────────────
 export const reviewsApi = {
-  /** POST /api/v1/borrowingtransactions/{id}/review */
   create: (borrowingTransactionId, reviewData) =>
     apiRequest(`/borrowingtransactions/${encodeURIComponent(borrowingTransactionId)}/review`, {
       method: "POST",
       body: JSON.stringify(reviewData),
     }),
 
-  /** GET /api/v1/borrowingreviews/{borrowingReviewId} */
   getById: (borrowingReviewId) =>
     apiRequest(`/borrowingreviews/${borrowingReviewId}`),
 
-  /** GET /api/v1/borrowingreviews?ReviewedStudentId={studentId} */
   getByStudentId: (studentId) =>
     apiRequest(`/borrowingreviews`, { params: { ReviewedStudentId: studentId } }),
 };
 
-// ─── 10. NOTIFICATIONS ───────────────────────────────────────────────────────
 export const notificationsApi = {
-  /** GET /notifications */
   getAll: async (params = {}) => {
     const query = buildQuery({
       Page: 1,
@@ -934,17 +874,14 @@ export const notificationsApi = {
     return { ...res, items, data: items };
   },
 
-  /** GET /notifications/{notificationId} */
   getById: async (notificationId) => {
     const res = await apiRequest(`/notifications/${notificationId}`);
     return normalizeNotification(res);
   },
 
-  /** PATCH /notifications/{notificationId}/read (Assuming standard endpoint) */
   markAsRead: (notificationId) =>
     apiRequest(`/notifications/${notificationId}/read`, { method: "PATCH", body: JSON.stringify({}) }),
 
-  /** PATCH /notifications/read?maxTime={maxTime} */
   markAllAsRead: (maxTime) => {
     const time = maxTime || new Date(Date.now() + 10000).toISOString().replace('Z', '0000+00:00');
     return apiRequest(`/notifications/read`, { 
@@ -960,14 +897,11 @@ export const notificationsApi = {
     });
   },
 
-  /** DELETE /notifications/{notificationId} (Assuming standard endpoint) */
   delete: (notificationId) =>
     apiRequest(`/notifications/${notificationId}`, { method: "DELETE" }),
 };
 
-// ─── 11. CHAT ────────────────────────────────────────────────────────────────
 export const chatApi = {
-  /** GET /chat/groups — List of chat groups */
   getGroups: async (params = {}) => {
     const query = buildQuery({
       Page: 1,
@@ -979,7 +913,6 @@ export const chatApi = {
     return { ...res, items, data: items };
   },
 
-  /** GET /chat/groups/{chatGroupId}/messages — Message history */
   getMessages: async (chatGroupId, params = {}) => {
     const query = buildQuery({
       Page: 1,
@@ -991,14 +924,12 @@ export const chatApi = {
     return { ...res, items, data: items };
   },
 
-  /** POST /chat/messages — Send message */
   sendMessage: (receiverId, content) =>
     apiRequest("/chat/messages", {
       method: "POST",
       body: JSON.stringify({ receiverId, content }),
     }),
 
-  /** PATCH /chat/groups/{chatGroupId}/read — Mark all as read */
   markAsRead: (chatGroupId) =>
     apiRequest(`/chat/groups/${chatGroupId}/read`, {
       method: "PATCH",

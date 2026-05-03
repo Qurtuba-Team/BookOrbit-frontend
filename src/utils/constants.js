@@ -2,7 +2,6 @@ export const API_BASE_URL =
   process.env.REACT_APP_API_URL || "http://localhost:7240";
 export const API_V1 = `${API_BASE_URL}/api/v1`;
 
-// ─── Token Storage ───────────────────────────────────────────────────────────
 export const tokenStore = {
   get: () => {
     const storage = localStorage.getItem("accessToken")
@@ -30,16 +29,12 @@ export const tokenStore = {
     sessionStorage.removeItem("expiresOnUtc");
   },
 };
-// ─── Image URL Helpers ───────────────────────────────────────────────────────
 export const getStudentImageUrl = (studentId) =>
   `${API_V1}/images/students/${studentId}`;
 
 export const getBookImageUrl = (bookId) =>
   `${API_BASE_URL}/uploads/books/book${bookId}.jpg`;
 
-// Re-maps localhost asset URLs to match the configured API_BASE_URL port/origin.
-// Useful when the backend returns absolute localhost URLs that may differ from
-// the current REACT_APP_API_URL env variable.
 export const toApiAssetUrl = (value) => {
   const raw = String(value ?? "").trim();
   if (!raw) return "";
@@ -59,7 +54,6 @@ export const toApiAssetUrl = (value) => {
         return raw;
       }
     }
-    // Relative path served from API host (some backends omit leading slash).
     if (/^uploads\//i.test(raw)) {
       try {
         const base = new URL(API_BASE_URL);
@@ -72,14 +66,12 @@ export const toApiAssetUrl = (value) => {
   }
 };
 
-// ─── Label Helper ────────────────────────────────────────────────────────────
 export const getLabel = (labelsObject, key, defaultValue = "") => {
   if (key === null || key === undefined) return defaultValue;
   const s = String(key).trim();
   const lower = s.toLowerCase();
   const normalized = lower.replace(/[\s-]/g, "");
 
-  // Try exact, then lowercase, then normalized (no spaces/dashes)
   return (
     labelsObject[s] ||
     labelsObject[lower] ||
@@ -89,7 +81,6 @@ export const getLabel = (labelsObject, key, defaultValue = "") => {
   );
 };
 
-// ─── Enum Display Labels ─────────────────────────────────────────────────────
 export const STUDENT_STATE_LABELS = {
   Pending: "بانتظار تأكيد الإيميل",
   Approved: "مؤكد (بانتظار التوثيق)",

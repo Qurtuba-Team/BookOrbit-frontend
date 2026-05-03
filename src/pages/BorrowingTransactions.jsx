@@ -50,8 +50,6 @@ const transactionNumToKey = {
 };
 
 
-
-/** Builds all display fields shared by cards and the detail modal */
 const summarizeTransactionRow = (tx) => {
   if (!tx) return {};
   const b = tx?.book ?? tx?.Book ?? tx?.bookDto ?? tx?.BookDto;
@@ -74,11 +72,8 @@ const summarizeTransactionRow = (tx) => {
     tx?.Title ||
     "\u0643\u062a\u0627\u0628 \u063a\u064a\u0631 \u0645\u0639\u0631\u0648\u0641";
 
-  // Priority: 1. Full book object cover, 2. Transaction level cover
-  // Use the real ID from the enriched book object (which is a UUID)
   const bookId = b?.id ?? b?.Id ?? tx?.bookId ?? tx?.BookId;
 
-  // Priority: 1. Full book object cover, 2. Transaction level cover, 3. getBookImageUrl fallback
   const rawCoverUrl =
     b?.bookCoverImageUrl ??
     b?.BookCoverImageUrl ??
@@ -169,7 +164,7 @@ const summarizeTransactionRow = (tx) => {
     id,
     statusKey,
     title,
-    bookId, // UUID for /catalog/:id
+    bookId, 
     borrowerName,
     lenderName,
     borrowerId,
@@ -182,8 +177,6 @@ const summarizeTransactionRow = (tx) => {
     displayCoverUrl,
   };
 };
-
-// Removed local TRANSACTIONS_AR in favor of central constants
 
 const statusTone = {
   Borrowed:
@@ -210,7 +203,6 @@ const formatDate = (v) => {
   }
 };
 
-/** Cover from API URLs only — no external stock images */
 const CoverFromApi = ({ url, alt, wrapClassName, imgClassName }) => {
   const [broken, setBroken] = useState(false);
   useEffect(() => {
@@ -337,7 +329,6 @@ const TransactionCard = ({
       }
     >
       <div className="flex flex-col sm:flex-row gap-5">
-        {/* Book Cover Thumbnail */}
         <div className="shrink-0">
           <div 
             onClick={(e) => {
@@ -474,7 +465,6 @@ const TransactionCard = ({
             </div>
           </div>
 
-          {/* الإجراءات - تظهر للمستعير فقط (أو للأدمن) */}
           {(isAdminView || !isIncoming) && 
             (String(statusKey).toLowerCase() === "borrowed" || String(statusKey).toLowerCase() === "overdue") && (
               <div
@@ -511,7 +501,6 @@ const TransactionCard = ({
               </div>
             )}
 
-          {/* تقييم المستعير - يظهر للمالك فقط عند الإرجاع */}
           {isIncoming && (String(statusKey).toLowerCase() === "returned" || String(statusKey).toLowerCase() === "overdue") && (
             <div className="pt-4 border-t border-library-primary/5 dark:border-white/5">
               <button
@@ -560,7 +549,6 @@ const ReviewModal = ({ tx, onClose }) => {
       const s = summarizeTransactionRow(tx);
       const reviewerId = user?.studentId || user?.id || user?.Id;
       
-      // Determine who is being reviewed (the other party)
       const reviewedId = String(reviewerId).toLowerCase() === String(s.borrowerId).toLowerCase() 
         ? s.lenderId 
         : s.borrowerId;
@@ -812,16 +800,13 @@ const BorrowingTransactions = () => {
   const currentTab = urlType === "in" ? "in" : "out";
   const isIncoming = currentTab === "in";
 
-  // Shared list states
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [items, setItems] = useState([]);
 
-  // Student search state
   const [searchId, setSearchId] = useState("");
   const [studentTx, setStudentTx] = useState(null);
 
-  // Shared states
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState(null);
   const [detailTx, setDetailTx] = useState(null);
@@ -829,7 +814,6 @@ const BorrowingTransactions = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [reviewTx, setReviewTx] = useState(null);
 
-  // OTP States
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [otpTargetId, setOtpTargetId] = useState(null);
   const [otpValue, setOtpValue] = useState("");
@@ -842,7 +826,7 @@ const BorrowingTransactions = () => {
       ...Object.entries(BORROWING_TRANSACTION_STATE_LABELS).map(
         ([id, label]) => ({
           id,
-          label: label.split("(")[0].trim(), // Clean up the label
+          label: label.split("(")[0].trim(), 
         }),
       ),
     ],
@@ -854,7 +838,6 @@ const BorrowingTransactions = () => {
     setDetailLoading(true);
     const txId = rawTx?.id ?? rawTx?.Id;
     try {
-      // Step 1: fetch full transaction
       let fullTx = rawTx;
       if (txId) {
         try {
@@ -884,10 +867,12 @@ const BorrowingTransactions = () => {
                 };
               }
             } catch {
-              /* non-fatal */
+
             }
           }
-        } catch { /* non-fatal */ }
+        } catch { 
+
+        }
       }
 
       setDetailTx(fullTx);
@@ -915,7 +900,6 @@ const BorrowingTransactions = () => {
       };
 
       if (statusFilter !== "all") {
-        // Map key string to numeric enum if needed
         const num = Object.keys(transactionNumToKey).find(
           (k) => transactionNumToKey[k] === statusFilter,
         );
@@ -933,9 +917,6 @@ const BorrowingTransactions = () => {
 
       const raw = res.items ?? res.data ?? [];
 
-      // Enrich each transaction with book cover data via bookCopyId
-      // The transaction API does NOT return bookCoverImageUrl or bookId,
-      // so we fetch the book copy then the book to get the cover URL.
       const enriched = await Promise.all(
         raw.map(async (tx) => {
           const copyId = tx.bookCopyId ?? tx.BookCopyId;
@@ -948,7 +929,6 @@ const BorrowingTransactions = () => {
             const bookData = await booksApi.getById(bookId);
             if (!bookData) return tx;
 
-            // Try to get owner/lender name from copyData
             const ownerName = copyData.ownerName || copyData.OwnerName || copyData.studentName || copyData.StudentName || copyData.student?.fullName || copyData.student?.name;
 
             return {
@@ -960,7 +940,7 @@ const BorrowingTransactions = () => {
               bookAuthor: bookData.author || "",
             };
           } catch {
-            return tx; // non-fatal: show card without image
+            return tx; 
           }
         })
       );
@@ -1014,7 +994,6 @@ const BorrowingTransactions = () => {
 
   const handleAction = async (id, actionFn, successMsg, isReturnAction = false) => {
     if (isReturnAction) {
-      // For return, we need OTP first (sent to lender)
       setProcessingId(id);
       setIsOtpSending(true);
       try {
@@ -1039,7 +1018,6 @@ const BorrowingTransactions = () => {
       await fetchTransactions();
       if (studentTx) await handleStudentSearch();
       
-      // Show the review modal whenever a book is returned (only for lender)
       if (isReturnAction && isIncoming) {
         const fullTx = items.find(item => (item.id ?? item.Id) === id) || studentTx;
         setReviewTx(fullTx);
@@ -1063,12 +1041,10 @@ const BorrowingTransactions = () => {
     try {
       await borrowingTransactionsApi.return(otpTargetId, otpValue);
       
-      // ✅ If we reached here, the API call was successful
       toast.success("تم تنفيذ العملية بنجاح!", { id: t });
       setShowOtpModal(false);
       setOtpValue("");
       
-      // Attempt to refresh list without letting it crash the success experience
       try {
         await fetchTransactions();
         if (studentTx) await handleStudentSearch();
@@ -1108,7 +1084,6 @@ const BorrowingTransactions = () => {
           String(viewerId).toLowerCase(),
     );
 
-  // Calculate quick stats from current page items
   const activeCount = items.filter((tx) => {
     const st = String(tx.status ?? tx.state ?? "").toLowerCase();
     return st === "0" || st === "borrowed" || st === "2" || st === "overdue";
@@ -1192,7 +1167,6 @@ const BorrowingTransactions = () => {
               )}
             </div>
 
-            {/* Quick Stats Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">
               <div className="p-5 rounded-3xl bg-white/70 dark:bg-[#121214]/70 border border-library-primary/5 dark:border-white/5 shadow-sm">
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
@@ -1236,7 +1210,6 @@ const BorrowingTransactions = () => {
           </header>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* List View Section */}
             <div className="lg:col-span-8 space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 px-2">
                 <h2 className="text-sm font-black text-library-primary dark:text-white flex items-center gap-2">
@@ -1299,7 +1272,7 @@ const BorrowingTransactions = () => {
                       onReturn={(id) =>
                         handleAction(
                           id,
-                          null, // OTP flow handles the actual call
+                          null,
                           "تم تسجيل إرجاع الكتاب بنجاح",
                           true
                         )
@@ -1324,9 +1297,7 @@ const BorrowingTransactions = () => {
               />
             </div>
 
-            {/* Side Tools Section */}
             <aside className="lg:col-span-4 space-y-6">
-              {/* Search Utility */}
               <div className="p-6 rounded-3xl bg-white/70 dark:bg-[#121214]/70 border border-library-primary/10 dark:border-white/10 shadow-sm backdrop-blur-md sticky top-24">
                 <div className="flex items-center gap-2 mb-6">
                   <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center">
@@ -1412,7 +1383,7 @@ const BorrowingTransactions = () => {
                         onReturn={(id) =>
                           handleAction(
                             id,
-                            null, // OTP flow handles the actual call
+                            null, 
                             "تم تسجيل إرجاع الكتاب بنجاح",
                             true
                           )
@@ -1435,7 +1406,6 @@ const BorrowingTransactions = () => {
         </div>
       </main>
 
-      {/* OTP Verification Modal */}
       <AnimatePresence>
         {showOtpModal && (
           <motion.div

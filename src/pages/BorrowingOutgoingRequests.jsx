@@ -26,8 +26,6 @@ import { BORROWING_REQUEST_STATE_LABELS, getLabel } from "../utils/constants";
 
 const PAGE_SIZE = 10;
 
-// Removed local BORROWING_AR in favor of central constants
-
 const borrowingNumToKey = {
   0: "Pending",
   1: "Accepted",
@@ -154,10 +152,8 @@ const BorrowingOutgoingRequests = () => {
 
   useEffect(() => {
     if (user?.studentId && !isAdmin) fetchRequests();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchRequests, user?.studentId, isAdmin]);
 
-  // Fetch missing lender names
   useEffect(() => {
     const fetchMissingNames = async () => {
       const missingIds = items
@@ -174,7 +170,7 @@ const BorrowingOutgoingRequests = () => {
             setStudentNames(prev => ({ ...prev, [id]: data.fullName }));
           }
         } catch (err) {
-          // ignore
+
         }
       });
     };
@@ -347,8 +343,6 @@ const BorrowingOutgoingRequests = () => {
                   const statusAr = getLabel(BORROWING_REQUEST_STATE_LABELS, statusKey);
                   const title = req.bookTitle || req.BookTitle || "كتاب";
                   
-                  // For outgoing requests, the related user is the Lender (owner)
-                  // For outgoing requests, the lenderId is correctly mapped in normalizeBorrowingRequest
                   const lenderId = req.lenderId;
                   const ownerName = req.lenderName || studentNames[lenderId] || "صاحب النسخة";
                   
@@ -385,7 +379,6 @@ const BorrowingOutgoingRequests = () => {
                           </div>
                       </div>
                       
-                      {/* الإجراءات */}
                       <div className="flex flex-wrap items-center gap-2.5 md:justify-end shrink-0 pt-4 border-t border-library-primary/10 dark:border-white/10 md:border-0 md:pt-0">
                         {(statusKey === "Pending" || statusKey === "Accepted") && (
                           <button
@@ -464,7 +457,6 @@ const BorrowingOutgoingRequests = () => {
                 <p>رقم العرض: <span className="font-mono">#{detailRequest.lendingRecordId || detailRequest.LendingRecordId}</span></p>
                 <p>الحالة: <span className="font-black text-library-primary dark:text-white">{getLabel(BORROWING_REQUEST_STATE_LABELS, detailRequest.status || detailRequest.state)}</span></p>
                 <p>تاريخ الإنشاء: {formatDate(detailRequest.requestDate || detailRequest.createdAtUtc || detailRequest.createdAt)}</p>
-                {/* Expected return date removed as per request */}
                 {lendingRecordDetails[detailRequest.lendingRecordId || detailRequest.LendingRecordId] ? (
                   <p>
                     حالة سجل الإعارة:{" "}

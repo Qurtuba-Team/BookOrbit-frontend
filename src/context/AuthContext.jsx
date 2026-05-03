@@ -20,8 +20,6 @@ export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  // Stable fingerprint of current user — prevents setUser from triggering cascading re-renders
-  // when refreshProfile() returns equivalent data
   const userFingerprintRef = React.useRef(null);
   const AUTO_REFRESH_INTERVAL_MS = 9 * 60 * 1000;
 
@@ -46,7 +44,6 @@ export const AuthProvider = ({ children }) => {
     const { accessToken } = tokenStore.get();
     if (!accessToken) return null;
 
-    // Add cache buster to ensure we get the fresh image after an update
     const buster = `t=${Date.now()}`;
     const separator = url.includes("?") ? "&" : "?";
     const finalUrl = `${url}${separator}${buster}`;
@@ -64,7 +61,6 @@ export const AuthProvider = ({ children }) => {
     const contentType = res.headers.get("content-type") || "";
     const blob = await res.blob();
 
-    // Direct image payload (image/* or binary stream): render as object URL.
     if (
       contentType.startsWith("image/") ||
       contentType.includes("octet-stream")
@@ -99,7 +95,7 @@ export const AuthProvider = ({ children }) => {
           encoded = "";
         }
       } catch {
-        // keep original encoded value
+        
       }
     }
 
@@ -143,7 +139,6 @@ export const AuthProvider = ({ children }) => {
     [buildAbsoluteUrl, fetchProtectedImageAsSrc],
   );
 
-  // Helper to fetch full user profile (Identity + Student info)
   const fetchFullProfile = useCallback(async () => {
     try {
       const identityData = await identityApi.getMe();
@@ -151,12 +146,10 @@ export const AuthProvider = ({ children }) => {
       if (identityData) {
         const identityEmailConfirmed = identityData.emailConfirmed === true;
 
-        // Stage 1: Email not confirmed → force confirmation flow
         if (!identityEmailConfirmed) {
           return null;
         }
 
-        // Extract role
         const roles = identityData.roles || [];
         const isAdmin =
           roles.some((r) => r.toLowerCase().includes("admin")) ||
@@ -164,7 +157,6 @@ export const AuthProvider = ({ children }) => {
             identityData.role.toLowerCase().includes("admin"));
         const userRole = isAdmin ? "Admin" : roles[0] || "Student";
 
-        // Admin → skip student data fetch
         if (isAdmin) {
           return {
             ...identityData,
@@ -180,12 +172,10 @@ export const AuthProvider = ({ children }) => {
           };
         }
 
-        // Student flow: fetch student data to get the actual state
         try {
           const studentData = await studentsApi.getMe();
           const studentState = studentData.state ?? studentData.State;
 
-          // Stage 2: Email confirmed but state is pending (0) → awaiting admin approval
           if (
             studentState === 0 ||
             studentState === "pending" ||
@@ -297,8 +287,6 @@ export const AuthProvider = ({ children }) => {
   const refreshProfile = useCallback(async () => {
     const fullUser = await fetchFullProfile();
     if (fullUser && !fullUser.awaitingApproval) {
-      // Only call setUser if something meaningful actually changed
-      // This prevents cascading re-renders from useEffect([user]) across the app
       const fingerprint = JSON.stringify({
         id: fullUser.id,
         studentId: fullUser.studentId,
@@ -345,7 +333,6 @@ export const AuthProvider = ({ children }) => {
 
       const fullUser = await fetchFullProfile();
 
-      // Case 1: awaitingApproval returned (email confirmed but state=pending)
       if (fullUser && fullUser.awaitingApproval) {
         tokenStore.clear();
         return {
@@ -355,7 +342,6 @@ export const AuthProvider = ({ children }) => {
         };
       }
 
-      // Case 2: null returned (email not confirmed)
       if (!fullUser) {
         const identityData = await identityApi.getMe().catch(() => null);
         tokenStore.clear();

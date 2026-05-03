@@ -6,7 +6,7 @@ const Preloader = ({ onComplete }) => {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    const duration = 2000; // 2 seconds
+    const duration = 2000; 
     const interval = 20;
     const steps = duration / interval;
     const increment = 100 / steps;
@@ -27,7 +27,6 @@ const Preloader = ({ onComplete }) => {
 
   return (
     <div className="preloader-root">
-      {/* Split Overlays */}
       <motion.div
         initial={{ scaleY: 1 }}
         exit={{ scaleY: 0 }}

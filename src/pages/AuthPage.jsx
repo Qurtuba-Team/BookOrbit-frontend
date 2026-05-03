@@ -18,13 +18,11 @@ const AuthPage = () => {
   const [confirmedEmail, setConfirmedEmail] = useState("");
   const [covenantCallback, setCovenantCallback] = useState(null);
 
-  // Cross-tab communication for email verification
   useEffect(() => {
     const handleStorageChange = (e) => {
       if (e.key === "email_verified_signal") {
         setIsWaitingConfirmation(false);
         setIsLogin(true);
-        // Clean up the signal
         localStorage.removeItem("email_verified_signal");
       }
     };
@@ -159,12 +157,10 @@ const AuthPage = () => {
       />
 
       <div className="flex min-h-screen">
-        {/* LEFT half → Register form (Desktop Only) */}
         <div
           className="hidden lg:flex w-1/2 bg-library-paper dark:bg-dark-bg p-12 flex-col justify-center relative overflow-hidden"
           style={{ direction: "rtl" }}
         >
-          {/* Abstract background shapes */}
           <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-white/[0.02] rounded-full blur-3xl" />
           <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-library-accent/10 rounded-full blur-3xl" />
           <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-library-primary-light/5 rounded-full blur-2xl" />
@@ -194,7 +190,6 @@ const AuthPage = () => {
           </div>
         </div>
 
-        {/* RIGHT half → Login form (Desktop) & Switcher (Mobile) */}
         <div
           className="w-full lg:w-1/2 flex items-center justify-center px-5 sm:px-12 lg:px-12 py-10 sm:py-12 lg:py-0 pt-[max(2.5rem,env(safe-area-inset-top,0px)+1rem)] lg:pt-0"
           style={{ direction: "rtl" }}
@@ -210,7 +205,6 @@ const AuthPage = () => {
               <span>العودة للرئيسية</span>
             </Link>
 
-            {/* Mobile Tabs */}
             <div className="lg:hidden relative flex bg-library-primary/[0.04] dark:bg-white/[0.04] rounded-xl p-1 mb-6">
               <motion.div
                 className="absolute top-1 bottom-1 rounded-lg bg-white dark:bg-library-primary shadow-lg"
@@ -289,7 +283,6 @@ const AuthPage = () => {
         </div>
       </div>
 
-      {/* Desktop Sliding Overlay */}
       <motion.div
         className="hidden lg:flex absolute top-0 bottom-0 w-1/2 bg-library-primary dark:bg-dark-surface z-20 items-center justify-center p-12 overflow-hidden shadow-2xl dark:shadow-black/50 dark:border-x dark:border-white/5"
         initial={false}
@@ -299,7 +292,6 @@ const AuthPage = () => {
         <div className="absolute inset-0 bg-texture opacity-30" />
         <div className="absolute top-1/3 right-1/4 w-64 h-64 bg-library-accent/[0.05] rounded-full blur-[100px]" />
         
-        {/* Fixed Home Link in Overlay */}
         <Link
           to="/"
           className="absolute top-12 right-12 text-white/50 hover:text-white flex items-center gap-2 text-xs font-black transition-all group z-30"
@@ -386,7 +378,6 @@ const AuthPage = () => {
         </AnimatePresence>
       </motion.div>
 
-      {/* Covenant of Integrity Modal */}
       <AnimatePresence>
         {covenantCallback && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">

@@ -113,13 +113,11 @@ const AddBook = () => {
       data.append('ISBN', formData.isbn?.trim() || "");
       data.append('Publisher', formData.publisher?.trim() || "");
       
-      // Explicitly check that coverFile is a File object
       if (coverFile instanceof File || coverFile instanceof Blob) {
         data.append('CoverImage', coverFile);
       }
       
       if (formData.categories && formData.categories.length > 0) {
-        // Send each category as a separate 'Categories' entry
         formData.categories.forEach(cat => {
           data.append('Categories', cat);
         });
@@ -169,7 +167,6 @@ const AddBook = () => {
       <div dir="rtl" className="min-h-screen bg-library-paper dark:bg-dark-bg pt-[calc(8rem+env(safe-area-inset-top,0px))] pb-12 px-4 sm:px-6 lg:px-8 font-sans text-library-ink dark:text-gray-100 transition-colors duration-300">
         <div className="max-w-6xl mx-auto">
           
-          {/* Back Button */}
           <motion.button
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
@@ -188,7 +185,6 @@ const AddBook = () => {
             animate={{ opacity: 1, y: 0 }}
             className="bg-white dark:bg-dark-surface rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] overflow-hidden border border-library-primary/5 dark:border-white/5 transition-colors duration-300"
           >
-            {/* Header */}
             <div className="bg-gradient-to-l from-library-primary to-library-primary/80 dark:from-black dark:to-library-primary/20 px-8 py-10 text-white relative overflow-hidden transition-colors duration-300">
               <div className="absolute top-0 right-0 -mt-10 -mr-10 text-white opacity-5">
                 <BookOpen size={200} />
@@ -213,7 +209,6 @@ const AddBook = () => {
                 className="grid grid-cols-1 lg:grid-cols-12 gap-12"
               >
                 
-                {/* 3D Book Preview Area */}
                 <motion.div variants={itemVariants} className="lg:col-span-4 flex flex-col gap-6">
                   <div className="font-bold text-library-primary dark:text-white text-lg mb-1 flex items-center gap-2 transition-colors duration-300">
                     <ImageIcon size={20} className="text-library-accent" />
@@ -241,10 +236,8 @@ const AddBook = () => {
                           exit={{ opacity: 0 }}
                           className="w-full h-full flex flex-col items-center justify-center relative"
                         >
-                          {/* 3D Book — غلاف أوضح: حواف صفحات + عمق + hover */}
                           <div className="group/book3d relative z-10 mt-[-32px] h-[300px] w-[210px] [perspective:2200px]">
                             <motion.div className="relative h-full w-full cursor-default [transform-style:preserve-3d] transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] [transform:rotateY(38deg)_rotateX(8deg)] group-hover/book3d:[transform:rotateY(22deg)_rotateX(4deg)]">
-                              {/* ظهر الغلاف */}
                               <div className="absolute inset-0 overflow-hidden rounded-l-xl rounded-r-sm border-l border-black/25 bg-library-primary [transform:translateZ(-18px)] shadow-2xl" aria-hidden>
                                 <img
                                   src={coverPreview}
@@ -252,34 +245,28 @@ const AddBook = () => {
                                   alt=""
                                 />
                               </div>
-                              {/* حافة الصفحات (اليسار في فضاء 3D) */}
                               <div className="absolute inset-y-[5px] left-[2px] flex w-[26px] flex-col justify-evenly overflow-hidden border-y border-gray-300 bg-[#ececec] shadow-inner [transform:translateX(-13px)_rotateY(-90deg)] dark:border-gray-600 dark:bg-[#2a3038]">
                                 {Array.from({ length: 28 }).map((_, i) => (
                                   <div key={`sp-${i}`} className="h-px w-full shrink-0 bg-[#d8d8d8] dark:bg-gray-600" />
                                 ))}
                               </div>
-                              {/* حافة علوية (رأس الكتاب) */}
                               <div className="absolute left-[3px] right-[3px] top-[2px] flex h-[22px] flex-row justify-evenly overflow-hidden border-x border-gray-300 bg-[#f0f0f0] shadow-inner [transform:translateY(-11px)_rotateX(90deg)] dark:border-gray-600 dark:bg-[#353b44]">
                                 {Array.from({ length: 36 }).map((_, i) => (
                                   <div key={`tp-${i}`} className="h-full w-px shrink-0 bg-[#dadada] dark:bg-gray-600" />
                                 ))}
                               </div>
-                              {/* حافة سفلية */}
                               <div className="absolute bottom-[2px] left-[3px] right-[3px] flex h-[22px] flex-row justify-evenly overflow-hidden border-x border-gray-300 bg-[#e4e4e4] [transform:translateY(11px)_rotateX(-90deg)] dark:border-gray-600 dark:bg-[#2f353d]">
                                 {Array.from({ length: 36 }).map((_, i) => (
                                   <div key={`bt-${i}`} className="h-full w-px shrink-0 bg-[#cfcfcf] dark:bg-gray-600" />
                                 ))}
                               </div>
-                              {/* قطع الصفحات (يمين الغلاف) */}
                               <div className="absolute inset-y-[4px] right-0 flex w-[32px] flex-col justify-evenly overflow-hidden rounded-r-sm border-y border-r border-black/15 bg-[#fafafa] shadow-[inset_-6px_0_14px_rgba(0,0,0,0.12)] [transform:translateX(16px)_rotateY(90deg)] dark:border-white/10 dark:bg-[#1e232b] dark:shadow-[inset_-6px_0_18px_rgba(0,0,0,0.5)]">
                                 {Array.from({ length: 36 }).map((_, i) => (
                                   <div key={`pg-${i}`} className="h-px w-full shrink-0 bg-[#e2e2e2] dark:bg-gray-700" />
                                 ))}
                               </div>
-                              {/* الغلاف الأمامي */}
                               <div className="absolute inset-0 overflow-hidden rounded-l-xl rounded-r-sm border-l-2 border-white/25 bg-white [transform:translateZ(18px)] shadow-[-12px_12px_28px_rgba(0,0,0,0.35)] ring-1 ring-black/5 dark:shadow-[-14px_18px_36px_rgba(0,0,0,0.55)] dark:ring-white/10">
                                 <img src={coverPreview} className="h-full w-full object-cover" alt="غلاف الكتاب" />
-                                {/* لمعان ربط خفيف بدون تدرج كامل الشاشة */}
                                 <div
                                   className="pointer-events-none absolute inset-y-0 start-0 w-[28%] bg-white/25 mix-blend-overlay dark:bg-white/10"
                                   aria-hidden
@@ -317,10 +304,8 @@ const AddBook = () => {
                   </div>
                 </motion.div>
 
-                {/* Form Fields Area */}
                 <motion.div variants={itemVariants} className="lg:col-span-8 space-y-8">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Title */}
                     <div className="space-y-2">
                       <label className="text-xs font-black text-library-primary/60 dark:text-gray-300 flex items-center gap-2 transition-colors duration-300 mr-1">
                         <BookOpen size={16} className="text-library-accent" /> اسم الكتاب
@@ -333,7 +318,6 @@ const AddBook = () => {
                       />
                     </div>
 
-                    {/* Author */}
                     <div className="space-y-2">
                       <label className="text-xs font-black text-library-primary/60 dark:text-gray-300 flex items-center gap-2 transition-colors duration-300 mr-1">
                         <User size={16} className="text-library-accent" /> اسم المؤلف
@@ -346,7 +330,6 @@ const AddBook = () => {
                       />
                     </div>
 
-                    {/* ISBN */}
                     <div className="space-y-2">
                       <label className="text-xs font-black text-library-primary/60 dark:text-gray-300 flex items-center gap-2 transition-colors duration-300 mr-1">
                         <Barcode size={16} className="text-library-accent" /> رقم ISBN
@@ -358,7 +341,6 @@ const AddBook = () => {
                       />
                     </div>
 
-                    {/* Publisher */}
                     <div className="space-y-2">
                       <label className="text-xs font-black text-library-primary/60 dark:text-gray-300 flex items-center gap-2 transition-colors duration-300 mr-1">
                         <Building size={16} className="text-library-accent" /> الناشر
@@ -376,7 +358,7 @@ const AddBook = () => {
                       </label>
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
                         {Object.entries(BOOK_CATEGORY_LABELS)
-                          .filter(([key]) => key[0] === key[0].toUpperCase()) // Only show CamelCase keys to avoid duplicates
+                          .filter(([key]) => key[0] === key[0].toUpperCase()) 
                           .map(([key, label]) => {
                           const isSelected = formData.categories.includes(key);
                           return (
@@ -400,14 +382,12 @@ const AddBook = () => {
                     </div>
                   </div>
 
-                  {/* Categories Info */}
                   <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-500/5 border border-amber-200 dark:border-amber-500/10">
                     <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 leading-relaxed">
                       * ملاحظة: سيتم مراجعة بيانات الكتاب من قبل الإدارة قبل ظهوره بشكل عام في المكتبة. يرجى التأكد من دقة المعلومات وصورة الغلاف.
                     </p>
                   </div>
 
-                  {/* Submit Button */}
                   <div className="pt-4 flex justify-end">
                     <motion.button
                       whileHover={isSubmitting ? {} : { scale: 1.01, translateY: -2 }}

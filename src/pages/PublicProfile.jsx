@@ -46,11 +46,8 @@ const PublicProfile = () => {
         setLoading(true);
         setError(null);
 
-        // 1. Fetch student basic info via /students/profiles/{studentId}
         const studentData = await studentsApi.getById(studentId);
         setStudent(studentData);
-
-        // 2. Fetch student's book copies and reviews
         setLoadingBooks(true);
         const [copiesRes, lendingRes, reviewsRes] = await Promise.all([
           bookCopiesApi.getByStudentId(studentId, { Page: 1, PageSize: 50 }),
@@ -70,7 +67,6 @@ const PublicProfile = () => {
           ? reviewsRes
           : reviewsRes?.items || [];
 
-        // Enrich reviews with reviewer names
         const uniqueIds = [
           ...new Set(
             rawReviews
@@ -95,18 +91,16 @@ const PublicProfile = () => {
         }));
         setReviews(enriched);
 
-        // 3. Build a map: bookCopyId → lending record (for cost, days, etc.)
         const lendingByCopyId = {};
         lendingRecords.forEach((lr) => {
           const copyId = lr.bookCopyId ?? lr.BookCopyId;
           if (copyId) lendingByCopyId[String(copyId)] = lr;
         });
 
-        // 4. Only show copies that have an active lending record, enriched with lending data
         const listedCopies = copies
           .map((copy) => {
             const lr = lendingByCopyId[String(copy.id)];
-            if (!lr) return null; // skip copies not on lending list
+            if (!lr) return null;
             return {
               ...copy,
               cost: lr.cost ?? lr.Cost ?? 0,
@@ -123,7 +117,6 @@ const PublicProfile = () => {
 
         setStudentBooks(listedCopies);
 
-        // 5. Fetch authenticated student image via /images/students/{studentId}
         fetchStudentImage(studentId);
       } catch (err) {
         console.error("Public profile fetch error:", err);
@@ -157,7 +150,6 @@ const PublicProfile = () => {
             const blob = await res.blob();
             setProfileImage(URL.createObjectURL(blob));
           } else {
-            // Backend may return base64 string
             const text = await res.text();
             const cleaned = text.replace(/^"|"$/g, "").trim();
             if (cleaned.startsWith("data:image/")) {
@@ -177,7 +169,6 @@ const PublicProfile = () => {
     }
 
     return () => {
-      // Cleanup blob URL on unmount
       if (profileImage && profileImage.startsWith("blob:")) {
         URL.revokeObjectURL(profileImage);
       }
@@ -243,7 +234,6 @@ const PublicProfile = () => {
         </div>
 
         <div className="max-w-5xl mx-auto px-4 relative z-10">
-          {/* Back Button */}
           <button
             onClick={() => navigate(-1)}
             className="flex items-center gap-2 text-gray-500 hover:text-library-primary dark:hover:text-white mb-8 font-black text-sm transition-all group"
@@ -255,7 +245,6 @@ const PublicProfile = () => {
           </button>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left Sidebar - Profile Card */}
             <div className="lg:col-span-1">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -341,7 +330,6 @@ const PublicProfile = () => {
               </motion.div>
             </div>
 
-            {/* Right Side - Available Books */}
             <div className="lg:col-span-2">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-black text-library-primary dark:text-white flex items-center gap-3">
@@ -438,7 +426,6 @@ const PublicProfile = () => {
             </div>
           </div>
 
-          {/* Reviews Section */}
           <div className="mt-16">
             <h3 className="text-xl font-black text-library-primary dark:text-white flex items-center gap-3 mb-8">
               <Star className="text-amber-500" size={24} fill="currentColor" />

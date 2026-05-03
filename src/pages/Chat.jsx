@@ -70,7 +70,6 @@ const Chat = () => {
 
   const [newChatStudent, setNewChatStudent] = useState(null);
 
-  // Sync studentId from URL with activeChatGroupId
   useEffect(() => {
     if (studentId) {
       const group = groups.find((g) => g.otherStudentId === studentId);
@@ -78,7 +77,6 @@ const Chat = () => {
         setActiveChatGroupId(group.chatGroupId);
         setNewChatStudent(null);
       } else {
-        // Check if we have metadata from location.state
         const { studentName, studentImage } = location.state || {};
         if (studentName) {
           setNewChatStudent({
@@ -87,7 +85,6 @@ const Chat = () => {
             otherStudentImage: studentImage,
           });
         } else {
-          // Fetch student info
           studentsApi.getById(studentId).then((data) => {
             if (data) {
               setNewChatStudent({
@@ -104,7 +101,6 @@ const Chat = () => {
     }
   }, [studentId, groups, setActiveChatGroupId, location.state]);
 
-  // Fetch messages when group changes
   useEffect(() => {
     if (activeChatGroupId) {
       fetchMessages(activeChatGroupId);
@@ -154,7 +150,7 @@ const Chat = () => {
       setSelectedFile(null);
       setShowEmojiPicker(false);
     } catch (err) {
-      // Error handled in context
+
     }
   };
 
@@ -195,7 +191,6 @@ const Chat = () => {
           <Aurora />
         </div>
 
-        {/* Sidebar */}
         <motion.div
           animate={{
             width: isSidebarOpen ? (isNarrow ? "100%" : "380px") : "0px",
@@ -314,7 +309,6 @@ const Chat = () => {
           </div>
         </motion.div>
 
-        {/* Chat Area */}
         <motion.div
           animate={{
             opacity: !isSidebarOpen || !isNarrow ? 1 : 0,
@@ -325,7 +319,6 @@ const Chat = () => {
         >
           {activeGroup ? (
             <>
-              {/* Header */}
               <div className="p-3 md:p-4 border-b border-library-primary/5 dark:border-white/5 flex items-center justify-between bg-white/50 dark:bg-black/30 backdrop-blur-xl">
                 <div className="flex items-center gap-3">
                   <button
@@ -419,7 +412,6 @@ const Chat = () => {
                 </div>
               </div>
 
-              {/* Messages Area */}
               <div
                 ref={scrollRef}
                 className="flex-grow overflow-y-auto custom-scrollbar p-3 md:p-6 space-y-6"
@@ -484,7 +476,6 @@ const Chat = () => {
                 )}
               </div>
 
-              {/* Input Area */}
               <div className="p-3 md:p-5 bg-white/60 dark:bg-black/40 backdrop-blur-3xl border-t border-library-primary/5 dark:border-white/5 relative z-50">
                 <AnimatePresence>
                   {selectedFile && (

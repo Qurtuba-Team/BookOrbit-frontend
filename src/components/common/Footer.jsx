@@ -43,13 +43,10 @@ const Footer = () => {
 
   return (
     <footer className="relative bg-[#080e18] pt-20 pb-8 overflow-hidden">
-      {/* Subtle top gradient */}
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-library-accent/30 to-transparent" />
 
       <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
-        {/* Main Footer Content */}
         <div className="flex flex-col md:flex-row justify-between items-start gap-12 mb-16">
-          {/* Brand */}
           <div className="max-w-sm">
             <div className="flex items-center gap-2.5 mb-5">
               <OrbitIcon />
@@ -63,7 +60,6 @@ const Footer = () => {
             </p>
           </div>
 
-          {/* Quick Links */}
           <div className="flex flex-col gap-4">
             <p className="text-white/20 text-[10px] font-bold uppercase tracking-[0.2em]">
               روابط سريعة
@@ -81,7 +77,6 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Social */}
           <div className="flex flex-col gap-4">
             <p className="text-white/20 text-[10px] font-bold uppercase tracking-[0.2em]">
               تابعنا
@@ -104,7 +99,6 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Bottom Bar */}
         <div className="pt-6 border-t border-white/[0.04] flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-gray-700 text-xs font-medium">
             © {currentYear} BookOrbit. جميع الحقوق محفوظة.
@@ -120,7 +114,6 @@ const Footer = () => {
         </div>
       </div>
 
-      {/* Scroll to Top */}
       <AnimatePresence>
         {showScrollTop && (
           <motion.button

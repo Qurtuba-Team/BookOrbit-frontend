@@ -44,14 +44,12 @@
     @apply bg-dark-bg text-gray-200;
   }
 
-  /* Selection */
   ::selection {
     background: rgba(199, 163, 95, 0.25);
   }
 }
 
 @layer utilities {
-  /* Space below fixed Navbar + notch (iOS / Capacitor) */
   .pt-under-fixed-nav {
     padding-top: calc(4rem + env(safe-area-inset-top, 0px) + 1rem);
   }
@@ -61,7 +59,6 @@
     }
   }
 
-  /* Glass Cards */
   .glass-card {
     @apply bg-white/70 backdrop-blur-2xl border border-white/50;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
@@ -72,7 +69,6 @@
   }
 }
 
-/* ===== Custom Scrollbar ===== */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -87,11 +83,9 @@
   background: rgba(199, 163, 95, 0.5);
 }
 
-/* Hide scrollbar utility */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Horizontal scroll: fade physical edges (tabs, chips) */
 .mask-fade-edges {
   mask-image: linear-gradient(
     90deg,
@@ -108,10 +102,6 @@
     transparent 100%
   );
 }
-
-/* =========================================================================
-   PREMIUM PRELOADER
-   ========================================================================= */
 
 .preloader-root {
   position: fixed;
@@ -153,10 +143,6 @@
   line-height: 1;
 }
 
-/* =========================================================================
-   AURORA BACKGROUND
-   ========================================================================= */
-
 .aurora-bg {
   position: fixed;
   inset: 0;
@@ -197,10 +183,6 @@
   66% { transform: translate(-30px, 40px) scale(0.9); }
 }
 
-/* =========================================================================
-   ORBIT ICON ANIMATIONS
-   ========================================================================= */
-
 .orbit-ring-svg {
   animation: orbit-rotate 6s linear infinite;
   transform-origin: center;
@@ -221,13 +203,6 @@
   to { transform: rotate(360deg); }
 }
 
-/* =========================================================================
-   SHIMMER EFFECT
-   ========================================================================= */
-
-/* =========================================================================
-   3D BOOK COMPONENT
-   ========================================================================= */
 
 .perspective-container {
   perspective: 2500px;
@@ -321,7 +296,6 @@
   box-shadow: inset 2px 0 8px rgba(0,0,0,0.3);
 }
 
-/* Mobile Book Scaling */
 @media (max-width: 768px) {
   .book-wrapper { width: 200px; height: 280px; }
   .book-block-page { width: 190px; padding: 20px; }
@@ -331,10 +305,6 @@
   .book-wrapper { width: 160px; height: 230px; }
   .book-block-page { width: 155px; padding: 15px; }
 }
-
-/* =========================================================================
-   SPRING REVEAL ANIMATION
-   ========================================================================= */
 
 .spring-reveal {
   clip-path: inset(100% 0 0 0);
@@ -352,10 +322,6 @@
   opacity: 1;
 }
 
-/* =========================================================================
-   FLOATING ANIMATION
-   ========================================================================= */
-
 @keyframes gentle-float {
   0%, 100% { transform: translateY(0px) rotateX(4deg) rotateY(-6deg); }
   50% { transform: translateY(-14px) rotateX(2deg) rotateY(-3deg); }
@@ -364,10 +330,6 @@
 .animate-ultimate-float {
   animation: gentle-float 8s ease-in-out infinite;
 }
-
-/* =========================================================================
-   BACKGROUND TEXTURE
-   ========================================================================= */
 
 .bg-texture {
   background-color: transparent;
@@ -379,10 +341,6 @@
   background-image:
     radial-gradient(rgba(199, 163, 95, 0.03) 1px, transparent 1px);
 }
-
-/* =========================================================================
-   ACCENT LINE GLOW
-   ========================================================================= */
 
 .accent-line {
   position: relative;
@@ -396,10 +354,6 @@
   border-radius: inherit;
 }
 
-/* =========================================================================
-   MARQUEE TICKER
-   ========================================================================= */
-
 @keyframes ticker {
   0% { transform: translateX(0); }
   100% { transform: translateX(50%); }
@@ -409,10 +363,6 @@
   animation: ticker 40s linear infinite;
 }
 
-/* =========================================================================
-   CONTACT FORM INPUTS
-   ========================================================================= */
-
 .contact-input {
   @apply w-full bg-library-primary/[0.03] dark:bg-white/[0.04] border border-library-primary/10 dark:border-white/[0.08] rounded-xl px-5 py-4 outline-none text-library-primary dark:text-white placeholder-library-primary/30 dark:placeholder-white/25 text-sm;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
@@ -421,10 +371,6 @@
   border-color: rgba(199, 163, 95, 0.4);
   box-shadow: 0 0 0 3px rgba(199, 163, 95, 0.08);
 }
-
-/* =========================================================================
-   CARD HOVER LIFT
-   ========================================================================= */
 
 .card-lift {
   transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.4s ease;

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 
-/** Matches CSS pixel width; updates on resize/orientation. SSR-safe. */
 export function useMediaQuery(query) {
   const [matches, setMatches] = useState(() => {
     if (typeof window === "undefined") return false;

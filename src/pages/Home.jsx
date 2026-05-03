@@ -22,8 +22,6 @@ import Footer from "../components/common/Footer";
 import ContactForm from "../components/common/ContactForm";
 import appsImg from "../assets/images/apps.jpeg";
 
-
-// ─── Spring Reveal Component ────────────────────────────────────────────────
 const SpringReveal = ({ children, className = "", delay = 0 }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-8% 0px -8% 0px" });
@@ -39,10 +37,6 @@ const SpringReveal = ({ children, className = "", delay = 0 }) => {
   );
 };
 
-
-// Removed Stats and Marquee components
-
-// ─── 3D Book Graphic ────────────────────────────────────────────────────────
 const BookGraphic = () => (
   <div className="perspective-container">
     <div className="book-wrapper animate-ultimate-float">
@@ -110,7 +104,6 @@ const BookGraphic = () => (
   </div>
 );
 
-// ─── Download Section ───────────────────────────────────────────────────────
 const DownloadSection = () => {
   const isNative = !!window.Capacitor || navigator.userAgent.toLowerCase().includes('electron');
   
@@ -120,7 +113,6 @@ const DownloadSection = () => {
     <section className="py-24 md:py-32 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
       <div className="grid lg:grid-cols-2 gap-16 items-center">
-        {/* Left - Content */}
         <SpringReveal>
           <p className="text-library-accent text-[10px] font-bold uppercase tracking-[0.4em] mb-6">
             متاح الآن على كافة المنصات
@@ -134,7 +126,6 @@ const DownloadSection = () => {
           </p>
 
           <div className="grid sm:grid-cols-2 gap-6">
-            {/* Mobile App */}
             <div className="p-8 rounded-3xl bg-white dark:bg-white/[0.03] shadow-sm dark:shadow-none backdrop-blur-md hover:shadow-xl hover:shadow-library-accent/5 transition-all group flex flex-col items-center text-center">
               <div className="w-14 h-14 rounded-2xl bg-library-accent/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <Smartphone className="text-library-accent" size={28} />
@@ -152,7 +143,6 @@ const DownloadSection = () => {
               </div>
             </div>
 
-            {/* Desktop App */}
             <div className="p-8 rounded-3xl bg-white dark:bg-white/[0.03] shadow-sm dark:shadow-none backdrop-blur-md hover:shadow-xl hover:shadow-library-accent/5 transition-all group flex flex-col items-center text-center">
               <div className="w-14 h-14 rounded-2xl bg-library-accent/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <Monitor className="text-library-accent" size={28} />
@@ -170,7 +160,6 @@ const DownloadSection = () => {
           </div>
         </SpringReveal>
 
-        {/* Right - Mockup */}
         <SpringReveal delay={0.2} className="relative">
           <div className="relative z-10 group">
             <div className="absolute inset-0 bg-library-accent/20 rounded-[2rem] blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
@@ -187,12 +176,10 @@ const DownloadSection = () => {
   );
 };
 
-// ─── Contact Section ────────────────────────────────────────────────────────
 const ContactSection = () => (
   <section className="py-16 md:py-20 relative overflow-hidden">
     <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
       <div className="grid lg:grid-cols-2 gap-16 lg:gap-20 items-start">
-        {/* Left - Info */}
         <SpringReveal className="pt-4">
           <p className="text-library-accent text-[10px] font-bold uppercase tracking-[0.4em] mb-5">
             تواصل معنا
@@ -236,7 +223,6 @@ const ContactSection = () => (
           </div>
         </SpringReveal>
 
-        {/* Right - Form */}
         <SpringReveal delay={0.15}>
           <ContactForm />
         </SpringReveal>
@@ -245,7 +231,6 @@ const ContactSection = () => (
   </section>
 );
 
-// ─── Main Home Component ────────────────────────────────────────────────────
 const Home = () => {
   const { scrollYProgress } = useScroll();
   const yHero = useTransform(scrollYProgress, [0, 0.3], [0, 60]);
@@ -288,10 +273,8 @@ const Home = () => {
       <Navbar />
 
       <main className="relative z-10 pt-under-fixed-nav">
-        {/* ════════════════════ HERO SECTION ════════════════════ */}
         <section className="relative min-h-[75vh] flex items-center pt-16 pb-10">
           <div className="max-w-7xl mx-auto px-6 lg:px-8 w-full grid lg:grid-cols-2 gap-10 items-center">
-            {/* Text */}
             <motion.div
               style={{ y: yHero }}
               className="flex flex-col items-center lg:items-start z-10 text-center lg:text-right"
@@ -331,7 +314,6 @@ const Home = () => {
               </SpringReveal>
             </motion.div>
 
-            {/* Book */}
             <motion.div
               initial={{ opacity: 0, scale: 0.92 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -345,9 +327,7 @@ const Home = () => {
           </div>
         </section>
 
-        {/* ════════════════════ HOW IT WORKS (BENTO GRID) ════════════════════ */}
         <section className="py-20 md:py-32 relative overflow-hidden">
-          {/* Subtle Background Elements */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-[600px] bg-library-accent/[0.02] rounded-full blur-[100px] pointer-events-none"></div>
 
           <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
@@ -364,7 +344,6 @@ const Home = () => {
             </SpringReveal>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[auto]">
-              {/* Card 1: Network & Search (Span 2 cols on Desktop) */}
               <SpringReveal delay={0} className="md:col-span-2">
                 <div className="h-full group p-8 md:p-10 rounded-3xl bg-white dark:bg-white/[0.03] border border-library-primary/[0.06] dark:border-white/[0.06] hover:border-library-accent/30 transition-all duration-500 card-lift overflow-hidden relative flex flex-col justify-end min-h-[320px] shadow-sm dark:shadow-none">
                   <div className="absolute top-0 right-0 w-64 h-64 bg-library-accent/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/4 group-hover:bg-library-accent/20 transition-all duration-700"></div>
@@ -383,7 +362,6 @@ const Home = () => {
                 </div>
               </SpringReveal>
 
-              {/* Card 2: Security & Meetup (Span 1 col) */}
               <SpringReveal delay={0.1} className="md:col-span-1">
                 <div className="h-full group p-8 md:p-10 rounded-3xl bg-white dark:bg-white/[0.03] border border-library-primary/[0.06] dark:border-white/[0.06] hover:border-library-accent/30 transition-all duration-500 card-lift relative flex flex-col justify-end min-h-[320px] overflow-hidden shadow-sm dark:shadow-none">
                   <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-library-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -402,7 +380,6 @@ const Home = () => {
                 </div>
               </SpringReveal>
 
-              {/* Card 3: Smart OTP (Span 3 cols) */}
               <SpringReveal delay={0.2} className="md:col-span-3">
                 <div className="group p-8 md:p-12 rounded-3xl bg-gradient-to-br from-library-accent/5 to-white dark:from-library-accent/10 dark:to-library-primary/40 border border-library-accent/20 hover:border-library-accent/40 transition-all duration-500 card-lift relative overflow-hidden flex flex-col md:flex-row items-center gap-8 md:gap-12 shadow-sm dark:shadow-none">
                   <div className="absolute inset-0 bg-black/[0.01] dark:bg-white/[0.01] mix-blend-overlay pointer-events-none"></div>
@@ -431,10 +408,8 @@ const Home = () => {
           </div>
         </section>
 
-        {/* ════════════════════ DIGITAL SHELF ════════════════════ */}
         <section className="py-20 md:py-32 relative overflow-hidden">
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
-            {/* Header */}
             <SpringReveal className="flex flex-col md:flex-row justify-between items-center md:items-end mb-14 md:mb-20 pb-10 gap-6 text-center md:text-right">
               <div>
                 <p className="text-library-accent text-[10px] font-bold uppercase tracking-[0.4em] mb-4">
@@ -455,7 +430,6 @@ const Home = () => {
               </Link>
             </SpringReveal>
 
-            {/* Book Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
               {books.map((book, idx) => (
                 <motion.div
@@ -474,7 +448,6 @@ const Home = () => {
                     to="/login"
                     className="w-full aspect-[3/4] bg-white dark:bg-white/[0.02] backdrop-blur-md border border-library-primary/[0.06] dark:border-white/[0.06] shadow-sm dark:shadow-none hover:border-library-accent/30 rounded-2xl relative overflow-hidden flex flex-col justify-between p-7 md:p-8 card-lift"
                   >
-                    {/* Hover Glow Background */}
                     <div className="absolute top-0 right-0 w-48 h-48 bg-library-accent/5 rounded-full blur-[50px] -translate-y-1/2 translate-x-1/4 group-hover:bg-library-accent/15 transition-all duration-700"></div>
 
                     <div className="text-library-primary/30 dark:text-library-paper/20 text-[10px] font-black uppercase tracking-[0.4em] relative z-10">
@@ -488,7 +461,6 @@ const Home = () => {
                         {book.author}
                       </p>
                     </div>
-                    {/* Hover Overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/60 to-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-20 backdrop-blur-[2px]">
                       <span className="bg-library-accent text-library-primary px-6 py-3 rounded-full text-xs font-black shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
                         سجّل الدخول للتصفح
@@ -501,10 +473,7 @@ const Home = () => {
           </div>
         </section>
 
-        {/* ════════════════════ DOWNLOAD SECTION ════════════════════ */}
         <DownloadSection />
-
-        {/* ════════════════════ CONTACT ════════════════════ */}
         <ContactSection />
       </main>
 

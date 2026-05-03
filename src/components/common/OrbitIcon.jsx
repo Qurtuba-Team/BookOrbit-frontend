@@ -33,7 +33,6 @@ export const OrbitIcon = ({ className = "w-9 h-9" }) => (
       </filter>
     </defs>
 
-    {/* Core Planet */}
     <g transform="translate(50 50)">
       <motion.circle 
         r="14" 
@@ -43,25 +42,20 @@ export const OrbitIcon = ({ className = "w-9 h-9" }) => (
         transition={{ duration: 4, ease: "easeInOut", repeat: Infinity }}
       />
       <circle r="9" fill="var(--color-accent)" />
-      {/* Small highlight on core */}
       <circle cx="-3" cy="-3" r="3" fill="white" opacity="0.3" filter="url(#glow)" />
     </g>
 
-    {/* Ring 1 - Horizontal */}
     <motion.g
       style={{ transformOrigin: "50px 50px" }}
       animate={{ rotate: 360 }}
       transition={{ duration: 14, ease: "linear", repeat: Infinity }}
     >
       <ellipse cx="50" cy="50" rx="42" ry="14" stroke="url(#ring1Grad)" strokeWidth="1.5" fill="none" />
-      {/* Orbiting Planet 1 */}
       <circle cx="92" cy="50" r="3.5" fill="var(--color-accent)" filter="url(#glow)" />
-      {/* Small trailing dust */}
       <circle cx="85" cy="60" r="1.5" fill="var(--color-accent)" opacity="0.6" />
       <circle cx="78" cy="63" r="1" fill="var(--color-accent)" opacity="0.3" />
     </motion.g>
 
-    {/* Ring 2 - Tilted */}
     <motion.g
       style={{ transformOrigin: "50px 50px" }}
       animate={{ rotate: -360 }}
@@ -69,12 +63,10 @@ export const OrbitIcon = ({ className = "w-9 h-9" }) => (
     >
       <g transform="rotate(60 50 50)">
         <ellipse cx="50" cy="50" rx="35" ry="10" stroke="url(#ring2Grad)" strokeWidth="1" fill="none" />
-        {/* Orbiting Planet 2 */}
         <circle cx="15" cy="50" r="2.5" fill="var(--color-primary)" filter="url(#glow)" />
       </g>
     </motion.g>
 
-    {/* Ring 3 - Outer Tilted */}
     <motion.g
       style={{ transformOrigin: "50px 50px" }}
       animate={{ rotate: 360 }}
@@ -82,7 +74,6 @@ export const OrbitIcon = ({ className = "w-9 h-9" }) => (
     >
       <g transform="rotate(-45 50 50)">
         <ellipse cx="50" cy="50" rx="48" ry="16" stroke="url(#ring1Grad)" strokeWidth="0.5" fill="none" opacity="0.6" />
-        {/* Orbiting Planet 3 */}
         <circle cx="50" cy="34" r="2" fill="white" filter="url(#glow)" opacity="0.8" />
       </g>
     </motion.g>

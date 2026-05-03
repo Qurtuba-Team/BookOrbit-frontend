@@ -14,7 +14,6 @@ export const EditBookModal = ({ isOpen, onClose, book, onBookUpdated }) => {
     category: book?.category || ''
   });
 
-  // Re-initialize when book changes
   React.useEffect(() => {
     if (book) {
       setFormData({
@@ -45,7 +44,6 @@ export const EditBookModal = ({ isOpen, onClose, book, onBookUpdated }) => {
     const loadingToast = toast.loading('جاري تحديث بيانات الكتاب...');
     
     try {
-      // Backend update endpoint currently supports title (+ optional cover image) via multipart/form-data.
       const payload = new FormData();
       payload.append("title", formData.title.trim());
       await booksApi.update(book.id, payload);
@@ -77,7 +75,6 @@ export const EditBookModal = ({ isOpen, onClose, book, onBookUpdated }) => {
           className="bg-white dark:bg-dark-surface w-full max-w-xl rounded-2xl overflow-hidden shadow-2xl relative z-10 border border-library-primary/10 dark:border-white/10 flex flex-col max-h-[90vh]"
           dir="rtl"
         >
-          {/* Header */}
           <div className="bg-gradient-to-l from-library-primary to-library-primary/80 px-6 py-5 text-white flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center">
@@ -97,7 +94,6 @@ export const EditBookModal = ({ isOpen, onClose, book, onBookUpdated }) => {
             </button>
           </div>
 
-          {/* Form Content */}
           <div className="p-6 overflow-y-auto custom-scrollbar">
             <form id="edit-book-form" onSubmit={handleSubmit} className="space-y-5">
               
@@ -167,7 +163,6 @@ export const EditBookModal = ({ isOpen, onClose, book, onBookUpdated }) => {
             </form>
           </div>
 
-          {/* Footer Actions */}
           <div className="p-5 border-t border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-white/[0.02] flex items-center justify-end gap-3 flex-shrink-0">
             <button
               type="button"

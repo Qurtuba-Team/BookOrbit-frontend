@@ -1,10 +1,3 @@
-/**
- * MyCopies — /my-copies
- * APIs:
- *   GET  /students/{studentId}/books/copies
- *   POST /students/me/books/{bookId}/copies
- *   POST /students/me/books/copies/{bookCopyId}/list?borrowingDurationInDays=...
- */
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -32,7 +25,7 @@ import { showReadableAccessErrorToast } from "../utils/accessMessages";
 import { API_BASE_URL, getBookImageUrl, tokenStore, BOOK_COPY_CONDITION_LABELS, BOOK_COPY_STATE_LABELS, getLabel } from "../utils/constants";
 
 const CONDITION_OPTIONS = Object.entries(BOOK_COPY_CONDITION_LABELS)
-  .filter(([key]) => isNaN(Number(key))) // Filter out numeric keys to avoid duplicates
+  .filter(([key]) => isNaN(Number(key))) 
   .map(([key, label], index) => ({ value: index, label, key }));
 
 const LENDING_DAYS_PRESETS = [7, 14, 21, 30];
@@ -59,7 +52,6 @@ const toApiAssetUrl = (value) => {
   }
 };
 
-/** Custom condition picker — native `<select>` cannot style the open menu. */
 const ConditionDropdown = ({ value, onChange, disabled }) => {
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
@@ -404,7 +396,7 @@ const MyCopies = () => {
     } finally {
       setLoading(false);
     }
-  }, [studentId]); // user is only used in error toast — not needed as a dependency
+  }, [studentId]);
 
   const fetchBookImage = useCallback(async (bookId) => {
     if (!bookId || imageFetchStarted.current.has(bookId)) return;
@@ -426,7 +418,7 @@ const MyCopies = () => {
       blobUrlsRef.current.add(objectUrl);
       setImageMap((prev) => ({ ...prev, [bookId]: objectUrl }));
     } catch {
-      // ignore
+
     }
   }, []);
 
@@ -598,7 +590,6 @@ const MyCopies = () => {
           </div>
         </header>
 
-        {/* Add copy */}
         <section className="mb-8">
           <div className="relative z-30 bg-white/80 dark:bg-dark-surface/80 backdrop-blur-xl rounded-2xl border border-white dark:border-white/5 p-5 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:border-library-primary/15 dark:hover:border-library-accent/20">
             <h2 className="text-sm font-black text-library-primary dark:text-white mb-4 flex items-center gap-2">
@@ -664,7 +655,6 @@ const MyCopies = () => {
           </div>
         </section>
 
-        {/* List */}
         <section>
           <h2 className="text-sm font-black text-library-primary dark:text-white mb-4 flex items-center gap-3">
             <span

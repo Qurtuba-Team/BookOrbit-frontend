@@ -42,12 +42,8 @@ const Notifications = () => {
 
   const markAllAsRead = async () => {
     try {
-      // Optimistically update local state
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-      
       await notificationsApi.markAllAsRead();
-      
-      // Notify other components (like Navbar) to refresh
       window.dispatchEvent(new CustomEvent("notifications:updated"));
     } catch (err) {
       console.error("Error marking all as read:", err);
@@ -190,7 +186,6 @@ const Notifications = () => {
             </motion.div>
           </div>
 
-          {/* Filters */}
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -211,7 +206,6 @@ const Notifications = () => {
             ))}
           </motion.div>
 
-          {/* Notifications List */}
           <div className="space-y-4">
             <AnimatePresence mode="popLayout">
               {loading ? (
@@ -249,7 +243,6 @@ const Notifications = () => {
                             }[ui.color] || "bg-white dark:bg-white/[0.07] border-library-accent/20 shadow-sm"
                       }`}
                     >
-                      {/* Decorative gradient background */}
                       {!notification.isRead && (
                         <div className={`absolute top-0 right-0 w-32 h-32 blur-[40px] opacity-20 pointer-events-none -mr-16 -mt-16 bg-current ${
                           ui.color === 'emerald' ? 'text-emerald-500' :

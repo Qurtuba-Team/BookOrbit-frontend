@@ -262,7 +262,6 @@ const AdminDashboard = () => {
   }, []);
 
   React.useEffect(() => {
-    // Reset subTab and pages when main tab changes
     setSubTab("all");
     setCurrentStudentPage(1);
     setCurrentBookPage(1);
@@ -305,13 +304,12 @@ const AdminDashboard = () => {
   const fetchBooks = React.useCallback(async () => {
     setLoadingBooks(true);
     try {
-      let params = { pageSize: 20, page: currentBookPage }; // Fetch slightly more to allow for filtering if API is missing states param
+      let params = { pageSize: 20, page: currentBookPage }; 
       if (bookSearchQuery) params.searchTerm = bookSearchQuery;
 
       const res = await booksApi.getAll(params);
       let items = res.items || res.data || [];
 
-      // Use frontend filtering if backend doesn't support the specific status filter yet
       if (subTab === "pending") {
         items = items.filter((b) => {
           const state = String(b?.state ?? "").toLowerCase();
@@ -319,7 +317,6 @@ const AdminDashboard = () => {
           return state === "0" || state === "pending" || status === "pending";
         });
       } else {
-        // "all" tab: show approved/available books only
         items = items.filter((b) => {
           const state = String(b?.state ?? "").toLowerCase();
           const status = String(b?.status ?? "").toLowerCase();
@@ -352,13 +349,13 @@ const AdminDashboard = () => {
       let params = { pageSize: 10, page: currentLendingPage };
 
       if (subTab === "active" || subTab === "completed") {
-        if (subTab === "active") params.states = [0, 2]; // Borrowed, Overdue
-        else if (subTab === "completed") params.states = [1, 3]; // Returned, Lost
+        if (subTab === "active") params.states = [0, 2]; 
+        else if (subTab === "completed") params.states = [1, 3];
         res = await borrowingTransactionsApi.getAll(params);
       } else {
-        if (subTab === "pending_owner") params.states = [0]; // Pending
-        else if (subTab === "pending_handover") params.states = [1]; // Accepted
-        else if (subTab === "rejected") params.states = [2, 3, 4]; // Rejected, Cancelled, Expired
+        if (subTab === "pending_owner") params.states = [0];
+        else if (subTab === "pending_handover") params.states = [1]; 
+        else if (subTab === "rejected") params.states = [2, 3, 4]; 
         res = await borrowingApi.getAll(params);
       }
 
@@ -420,32 +417,32 @@ const AdminDashboard = () => {
         ] = await Promise.all([
           studentsApi
             .getAll({ pageSize: 1, states: [2] })
-            .catch(() => ({ totalCount: 0 })), // Active (Verified)
+            .catch(() => ({ totalCount: 0 })), 
           booksApi
             .getAll({ pageSize: 1, states: [1] })
             .catch(() => ({ totalCount: 0 })),
           lendingApi.getAll({ pageSize: 1 }).catch(() => ({ totalCount: 0 })),
           studentsApi
             .getAll({ pageSize: 1, states: [0], emailConfirmed: true })
-            .catch(() => ({ totalCount: 0 })), // Pending Approval (Confirmed & 0)
+            .catch(() => ({ totalCount: 0 })),
           studentsApi
             .getAll({ pageSize: 1, states: [1], emailConfirmed: true })
-            .catch(() => ({ totalCount: 0 })), // Pending Verification (Confirmed & 1)
+            .catch(() => ({ totalCount: 0 })), 
           studentsApi
             .getAll({ pageSize: 1, emailConfirmed: false })
-            .catch(() => ({ totalCount: 0 })), // Unconfirmed Email
+            .catch(() => ({ totalCount: 0 })), 
           borrowingApi
             .getAll({ pageSize: 4, states: [0] })
             .catch(() => ({ items: [] })),
           studentsApi
             .getAll({ pageSize: 4, states: [0, 1], emailConfirmed: true })
-            .catch(() => ({ items: [] })), // Confirmed students for recent
+            .catch(() => ({ items: [] })), 
           studentsApi
             .getAll({ pageSize: 1, states: [4] })
-            .catch(() => ({ totalCount: 0 })), // Banned Students
+            .catch(() => ({ totalCount: 0 })), 
           booksApi
             .getAll({ pageSize: 1, states: [0] })
-            .catch(() => ({ totalCount: 0 })), // Pending Books
+            .catch(() => ({ totalCount: 0 })),
         ]);
 
         const activeCount = studentsRes?.totalCount || 0;
@@ -526,7 +523,6 @@ const AdminDashboard = () => {
       } else if (subTab === "banned") {
         params.states = [4];
       } else {
-        // "all" tab: ask backend for all states (including unbanned/any future states)
         delete params.states;
       }
 
@@ -567,7 +563,7 @@ const AdminDashboard = () => {
             const src = await fetchProtectedImageSrc(getStudentImageUrl(id));
             if (src) nextMap[id] = src;
           } catch {
-            // ignore per-image failures
+
           }
         }),
       );
@@ -619,7 +615,7 @@ const AdminDashboard = () => {
             const src = await fetchProtectedImageSrc(urlToFetch);
             if (src) nextMap[id] = src;
           } catch {
-            // ignore per-image failures
+
           }
         }),
       );
@@ -629,7 +625,6 @@ const AdminDashboard = () => {
       }
     };
     preloadBookImages();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [books, adminCopies, fetchProtectedImageSrc]);
 
   React.useEffect(() => {
@@ -658,8 +653,8 @@ const AdminDashboard = () => {
   const handleStudentAction = async (id, action) => {
     try {
       const loadingToast = toast.loading("جاري تنفيذ الإجراء...");
-      if (action === "approve") await studentsApi.approve(id); // 0 -> 1
-      else if (action === "activate") await studentsApi.activate(id); // 1 -> 2
+      if (action === "approve") await studentsApi.approve(id);
+      else if (action === "activate") await studentsApi.activate(id); 
       else if (action === "ban") await studentsApi.ban(id);
       else if (action === "unban") await studentsApi.unban(id);
       else if (action === "reject") await studentsApi.reject(id);
@@ -2020,7 +2015,6 @@ const AdminDashboard = () => {
     try {
       let detail = { ...lend };
 
-      // 1. Fetch borrowing request OR transaction detail
       if (lend.id) {
         if (subTab === "active" || subTab === "completed") {
           const tx = await borrowingTransactionsApi
@@ -2037,7 +2031,6 @@ const AdminDashboard = () => {
         id && id !== "undefined" && id !== "null" ? id : null;
 
       let lendingDetail = null;
-      // 2. Fetch the parent lending record to get the owner's details
       const lendingRecordId = getSafeId(
         detail.lendingRecordId ||
           detail.LendingRecordId ||
@@ -2050,7 +2043,6 @@ const AdminDashboard = () => {
           .catch(() => null);
       }
 
-      // 3. Extract IDs aggressively from all possible locations
       const ownerStudentId = getSafeId(
         detail.ownerStudentId ||
           detail.OwnerStudentId ||
@@ -2096,7 +2088,6 @@ const AdminDashboard = () => {
           detail.copy?.book?.id
       );
 
-      // 4. Critical fallback for transactions missing bookId
       if (!bookId || !ownerStudentId) {
         const copyId = getSafeId(
           detail.bookCopyId || 
@@ -2313,7 +2304,6 @@ const AdminDashboard = () => {
         lend.copy?.bookId,
     );
 
-    // Add multiple fallbacks including potential PascalCase or mapped properties
     const ownerName =
       lend.ownerName ||
       lend.OwnerName ||
@@ -2430,7 +2420,6 @@ const AdminDashboard = () => {
           className="bg-white dark:bg-dark-surface w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl relative z-10 border border-white/10 flex flex-col max-h-[90vh]"
           dir="rtl"
         >
-          {/* Header */}
           <div className="h-24 shrink-0 bg-library-primary relative">
             <button
               onClick={() => setIsLendingModalOpen(false)}
@@ -2463,7 +2452,6 @@ const AdminDashboard = () => {
             </div>
           ) : (
             <div className="px-6 py-6 space-y-6 overflow-y-auto flex-grow scrollbar-thin">
-              {/* Book Section */}
               <div
                 className="flex items-start gap-4 p-4 rounded-2xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5 cursor-pointer hover:border-library-accent/35 transition-all"
                 onClick={async () => {
@@ -2543,9 +2531,7 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
-              {/* Owner & Borrower — Side by Side */}
               <div className="grid grid-cols-2 gap-3">
-                {/* Owner */}
                 <div
                   className="p-4 rounded-2xl bg-library-primary/[0.05] dark:bg-white/[0.04] border border-library-primary/12 dark:border-white/10 cursor-pointer hover:border-library-accent/35 transition-all"
                   onClick={async () => {
@@ -2604,7 +2590,6 @@ const AdminDashboard = () => {
                   </div>
                 </div>
 
-                {/* Borrower */}
                 <div
                   className="p-4 rounded-2xl bg-library-primary/[0.05] dark:bg-white/[0.04] border border-library-primary/15 dark:border-white/10 cursor-pointer hover:border-library-accent/35 transition-all"
                   onClick={async () => {
@@ -2664,7 +2649,6 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
-              {/* Timeline / Dates */}
               <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5 space-y-3">
                 <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest flex items-center gap-1.5">
                   <CalendarDays size={10} /> التواريخ والمدة
@@ -2717,7 +2701,6 @@ const AdminDashboard = () => {
                 )}
               </div>
 
-              {/* Additional Details (if any IDs available) */}
               {(lend.bookCopyId || lend.lendingRecordId || lend.id) && (
                 <div className="flex items-center gap-3 flex-wrap text-[8px] font-mono text-gray-400 px-1">
                   {lend.id && <span>طلب: #{lend.id}</span>}
@@ -2730,7 +2713,6 @@ const AdminDashboard = () => {
             </div>
           )}
 
-          {/* Footer */}
           <div className="px-6 pb-5">
             <button
               onClick={() => setIsLendingModalOpen(false)}
@@ -2865,11 +2847,9 @@ const AdminDashboard = () => {
       parseInt(String(statsData.lendings.value).replace(/,/g, "")) || 0;
     const totalBooks = parseInt(String(statsData.books.value).replace(/,/g, "")) || 0;
     
-    // Calculate raw ratio and a capped version for the UI
     const rawRatio = totalBooks > 0 ? Math.round((borrowedCount / totalBooks) * 100) : 0;
     const lendingRatio = Math.min(100, rawRatio);
 
-    // Generate consistent looking chart data scaled to 0-100%
     const chartData = [
       Math.max(15, lendingRatio * 0.6),
       Math.max(25, lendingRatio * 0.8),

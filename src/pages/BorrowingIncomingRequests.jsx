@@ -30,8 +30,6 @@ import { BORROWING_REQUEST_STATE_LABELS, getLabel } from "../utils/constants";
 
 const PAGE_SIZE = 10;
 
-// Removed local BORROWING_AR in favor of central constants
-
 const borrowingNumToKey = {
   0: "Pending",
   1: "Accepted",
@@ -112,7 +110,6 @@ const BorrowingIncomingRequests = () => {
   const [loadingContactRecordId, setLoadingContactRecordId] = useState(null);
   const [closingRecordId, setClosingRecordId] = useState(null);
   
-  // OTP States
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [otpTargetId, setOtpTargetId] = useState(null);
   const [otpValue, setOtpValue] = useState("");
@@ -170,12 +167,10 @@ const BorrowingIncomingRequests = () => {
 
   useEffect(() => {
     if (user?.studentId && !isAdmin) fetchRequests();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchRequests, user?.studentId, isAdmin]);
 
   const handleAction = async (id, actionFn, successMsg, isDeliver = false) => {
     if (isDeliver) {
-      // For delivery, we need OTP first
       setProcessingId(id);
       setIsOtpSending(true);
       try {
@@ -217,12 +212,10 @@ const BorrowingIncomingRequests = () => {
     try {
       await borrowingApi.deliver(otpTargetId, otpValue);
       
-      // ✅ Success in API call
       toast.success("تم تسليم الكتاب بنجاح!", { id: t });
       setShowOtpModal(false);
       setOtpValue("");
       
-      // Attempt refresh safely
       try {
         await fetchRequests();
       } catch (refreshErr) {
@@ -410,8 +403,6 @@ const BorrowingIncomingRequests = () => {
             <ul className="space-y-3">
               {items.map((req) => {
                 const id = req.id ?? req.Id;
-                // req.status is already the Arabic label (set by normalizeBorrowingRequest)
-                // We must use req.state which holds the raw numeric or string value from the API
                 const rawSt = req.state;
                 let statusKey = typeof rawSt === "number"
                   ? borrowingNumToKey[rawSt] || "Pending"
@@ -462,7 +453,6 @@ const BorrowingIncomingRequests = () => {
                       </div>
                     </div>
                     
-                    {/* الإجراءات */}
                     <div className="flex flex-wrap items-center gap-2.5 md:justify-end shrink-0 pt-4 border-t border-library-primary/10 dark:border-white/10 md:border-0 md:pt-0">
                       {statusKey === "Pending" && (
                         <>
@@ -571,7 +561,6 @@ const BorrowingIncomingRequests = () => {
                 <p>رقم الطلب: <span className="font-mono">#{detailRequest.id || detailRequest.Id}</span></p>
                 <p>رقم العرض: <span className="font-mono">#{detailRequest.lendingRecordId || detailRequest.LendingRecordId}</span></p>
                 <p>الحالة: <span className="font-black text-library-primary dark:text-white">{getLabel(BORROWING_REQUEST_STATE_LABELS, detailRequest.status || detailRequest.state)}</span></p>
-                {/* Dates removed as per request */}
                 {lendingRecordDetails[detailRequest.lendingRecordId || detailRequest.LendingRecordId] ? (
                   <p>
                     حالة سجل الإعارة:{" "}
@@ -611,7 +600,6 @@ const BorrowingIncomingRequests = () => {
         )}
       </AnimatePresence>
 
-      {/* OTP Verification Modal */}
       <AnimatePresence>
         {showOtpModal && (
           <motion.div

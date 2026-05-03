@@ -33,7 +33,6 @@ const CustomCursor = () => {
 
     window.addEventListener("mousemove", moveCursor);
 
-    // Initial setup for existing elements
     const updateListeners = () => {
       const elements = document.querySelectorAll("[data-cursor-image], a, button");
       elements.forEach((el) => {
@@ -43,7 +42,6 @@ const CustomCursor = () => {
     };
 
     updateListeners();
-    // Observe DOM changes to catch dynamic elements
     const observer = new MutationObserver(updateListeners);
     observer.observe(document.body, { childList: true, subtree: true });
 
@@ -55,17 +53,15 @@ const CustomCursor = () => {
 
   return (
     <>
-      {/* The Lens Cursor */}
       <motion.div
         className={`custom-cursor-lens ${isInteractive ? "cursor-hover" : ""}`}
         style={{
           left: cursorXSpring,
           top: cursorYSpring,
-          opacity: hoverData.active ? 0 : 1, // Hide lens when image is peeked
+          opacity: hoverData.active ? 0 : 1, 
         }}
       />
 
-      {/* The Image Peek */}
       <AnimatePresence>
         {hoverData.active && (
           <motion.div
@@ -78,7 +74,7 @@ const CustomCursor = () => {
               top: cursorYSpring,
               width: 150,
               height: 200,
-              x: 20, // Offset from cursor
+              x: 20,
               y: -100,
               backgroundImage: `url(${hoverData.image})`,
               backgroundSize: "cover",

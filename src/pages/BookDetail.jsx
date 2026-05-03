@@ -170,13 +170,10 @@ const BookDetail = () => {
       setLoading(true);
       setError(null);
 
-      // 1. Fetch book metadata
       const bookData = await booksApi.getById(bookId);
       setBook(bookData);
       setBookCopiesCount(bookData.copiesCount || bookData.CopiesCount || 0);
 
-      // 2. Fetch available lending records for this book using the optimized API
-      // Query: /api/v1/lendinglist?States=available&BookId={id}
       const lendingRes = await lendingApi.getAll({
         States: "available",
         BookId: bookId,
@@ -379,7 +376,6 @@ const BookDetail = () => {
         </button>
 
         <div className="bg-white/80 dark:bg-white/5 backdrop-blur-xl rounded-3xl overflow-hidden border border-gray-100 dark:border-white/10 shadow-xl flex flex-col md:flex-row mb-8">
-          {/* Cover Side */}
           <div className="w-full md:w-1/3 bg-gray-50 dark:bg-black/20 p-8 flex items-center justify-center relative">
             <div className="absolute inset-0 bg-gradient-to-br from-library-accent/5 to-transparent"></div>
             <div className="relative w-48 h-72 shadow-2xl rounded-r-xl rounded-l-sm overflow-hidden border-l border-white/20">
@@ -397,7 +393,6 @@ const BookDetail = () => {
             </div>
           </div>
 
-          {/* Details Side */}
           <div className="w-full md:w-2/3 p-8 lg:p-12 flex flex-col justify-between">
             <div>
               <div className="flex items-start justify-between gap-4 mb-2">
@@ -459,7 +454,6 @@ const BookDetail = () => {
           </div>
         </div>
 
-        {/* ─── LENDING MARKETPLACE SECTION ─── */}
         <div className="bg-white/80 dark:bg-white/5 backdrop-blur-xl rounded-3xl overflow-hidden border border-gray-100 dark:border-white/10 shadow-xl p-8 lg:p-12 mb-8">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-blue-500/10 flex items-center justify-center text-indigo-500">

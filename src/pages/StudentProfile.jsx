@@ -37,7 +37,7 @@ const ProfileField = ({ icon: Icon, label, value, color = "indigo" }) => (
 const StudentProfile = () => {
   const { user, logout, refreshProfile } = useAuth();
   const fileInputRef = useRef(null);
-  const [activeSection, setActiveSection] = useState("info"); // info | security
+  const [activeSection, setActiveSection] = useState("info"); 
   const profileCompletion = user?.telegramUserId ? 100 : (user?.phoneNumber ? 85 : 70);
   const isAdmin = user?.role?.toLowerCase() === "admin";
   const [editing, setEditing] = useState(false);
@@ -49,16 +49,13 @@ const StudentProfile = () => {
   });
   const [reviews, setReviews] = useState([]);
 
-  // Sync form fields only when specific user data changes
   useEffect(() => {
     setForm({
       fullName: user?.fullName || user?.Name || "",
       telegramUserId: user?.telegramUserId || user?.TelegramUserId || "",
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.studentId, user?.fullName, user?.telegramUserId]);
 
-  // Fetch reviews only once when studentId becomes available
   useEffect(() => {
     if (!user?.studentId) return;
     reviewsApi.getByStudentId(user.studentId)
@@ -74,7 +71,6 @@ const StudentProfile = () => {
         setReviews(enriched);
       })
       .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.studentId]);
 
   const handleEditChange = (e) => {
@@ -124,7 +120,6 @@ const StudentProfile = () => {
       return;
     }
 
-    // Set local preview for instant feedback
     const reader = new FileReader();
     reader.onloadend = () => setLocalPreview(reader.result);
     reader.readAsDataURL(file);
@@ -134,7 +129,6 @@ const StudentProfile = () => {
       const data = new FormData();
       data.append("PersonalPhoto", file);
       
-      // Backend might require Name field even in PATCH requests
       const currentName = user?.fullName || user?.Name || "";
       if (currentName) {
         data.append("Name", currentName);
@@ -146,10 +140,10 @@ const StudentProfile = () => {
 
       await studentsApi.update(user.studentId, data);
       await refreshProfile?.();
-      setLocalPreview(null); // Clear local preview after success
+      setLocalPreview(null); 
       toast.success("تم تحديث الصورة بنجاح", { id: t });
     } catch (err) {
-      setLocalPreview(null); // Clear preview on error
+      setLocalPreview(null); 
       console.error("Profile photo update error:", err);
       const errorMessage = err?.errors 
         ? Object.values(err.errors).flat().join(", ") 
@@ -191,7 +185,6 @@ const StudentProfile = () => {
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left Column - Identity Card */}
           <div className="lg:col-span-4 space-y-5">
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
@@ -272,10 +265,8 @@ const StudentProfile = () => {
                 </div>
               </div>
             </div>
-
           </div>
 
-          {/* Right Column - Content */}
           <div className="lg:col-span-8">
             <AnimatePresence mode="wait">
               {activeSection === "info" ? (
@@ -396,7 +387,6 @@ const StudentProfile = () => {
                     )}
                   </div>
 
-                  {/* Personal Reviews Section */}
                   <div className="bg-white/60 dark:bg-dark-surface/60 backdrop-blur-xl rounded-2xl p-6 border border-white dark:border-white/5 shadow-sm">
                     <h3 className="text-base font-black text-library-primary dark:text-white mb-5 flex items-center gap-2">
                       <Star className="text-amber-500" size={16} fill="currentColor" />

@@ -98,7 +98,6 @@ const ForgotPasswordModal = ({
             onClick={(e) => e.stopPropagation()}
             style={{ direction: "rtl" }}
           >
-            {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-library-accent/10 flex items-center justify-center">

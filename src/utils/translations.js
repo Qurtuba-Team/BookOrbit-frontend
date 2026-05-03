@@ -1,5 +1,5 @@
 export const notificationTranslations = {
-  // الأنماط المعقدة (Complex Patterns - should be first)
+  
   "Your request for the book": "طلبك لكتاب",
   "for the book": "للكتاب",
   "for your copy of the book": "لنسختك من كتاب",
@@ -12,7 +12,7 @@ export const notificationTranslations = {
   "point": "نقطة",
   "Your": "طلبك الـ",
 
-  // العناوين (Titles)
+  
   "Borrowing Request": "طلب استعارة",
   "Request Accepted": "تم قبول الطلب",
   "Request Rejected": "تم رفض الطلب",
@@ -24,7 +24,6 @@ export const notificationTranslations = {
   "System Update": "تحديث النظام",
   "Reminder": "تذكير",
 
-  // الجمل الشائعة (Messages)
   "has been accepted": "تم قبوله",
   "has been rejected": "تم رفضه",
   "wants to borrow": "يريد استعارة",

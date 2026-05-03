@@ -17,13 +17,10 @@ const ContactForm = () => {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      // يرجى استبدال هذه القيم بالمعرفات الخاصة بك من EmailJS
-      // أو استخدام process.env.REACT_APP_EMAILJS_SERVICE_ID
       const serviceId = process.env.REACT_APP_EMAILJS_SERVICE_ID || "YOUR_SERVICE_ID";
       const templateId = process.env.REACT_APP_EMAILJS_TEMPLATE_ID || "YOUR_TEMPLATE_ID";
       const publicKey = process.env.REACT_APP_EMAILJS_PUBLIC_KEY || "YOUR_PUBLIC_KEY";
 
-      // نستخدم formRef.current مع EmailJS لإرسال الفورم بأكمله بما يتوافق مع القوالب
       await emailjs.sendForm(serviceId, templateId, formRef.current, publicKey);
       
       toast.success("تم إرسال رسالتك بنجاح! سنقوم بالرد عليك قريباً.");

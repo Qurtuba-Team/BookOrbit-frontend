@@ -28,21 +28,18 @@ export const ChatProvider = ({ children }) => {
   const [unreadCounts, setUnreadCounts] = useState({});
   const [studentImages, setStudentImages] = useState({});
 
-  // Refs — never cause re-renders, safe to use inside closures
   const connectionRef = useRef(null);
   const activeChatGroupIdRef = useRef(null);
   const retryTimerRef = useRef(null);
 
-  // Keep ref in sync with state (no re-render side-effects)
   useEffect(() => {
     activeChatGroupIdRef.current = activeChatGroupId;
   }, [activeChatGroupId]);
 
-  // ── 1. Fetch student image ────────────────────────────────────────────────
   const fetchStudentImage = useCallback(async (studentId) => {
     if (!studentId) return;
     setStudentImages((prev) => {
-      if (prev[studentId]) return prev; // already fetched
+      if (prev[studentId]) return prev; 
       return prev;
     });
     try {
@@ -57,16 +54,15 @@ export const ChatProvider = ({ children }) => {
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
         setStudentImages((prev) => {
-          if (prev[studentId]) return prev; // double-check
+          if (prev[studentId]) return prev; 
           return { ...prev, [studentId]: url };
         });
       }
     } catch {
-      // Fail silently
+
     }
   }, []);
 
-  // ── 2. Fetch Chat Groups ──────────────────────────────────────────────────
   const fetchGroups = useCallback(async () => {
     if (!isLoggedIn) return;
     try {
@@ -77,13 +73,12 @@ export const ChatProvider = ({ children }) => {
         if (group.otherStudentId) fetchStudentImage(group.otherStudentId);
       });
     } catch (err) {
-      // Fail silently — not critical
+
     } finally {
       setLoadingGroups(false);
     }
   }, [isLoggedIn, fetchStudentImage]);
 
-  // ── 3. Fetch Messages ─────────────────────────────────────────────────────
   const fetchMessages = useCallback(
     async (chatGroupId) => {
       if (!isLoggedIn) return;
@@ -93,7 +88,7 @@ export const ChatProvider = ({ children }) => {
         const reversed = [...(res.items ?? [])].reverse();
         setMessages((prev) => ({ ...prev, [chatGroupId]: reversed }));
       } catch {
-        // Fail silently
+
       } finally {
         setLoadingMessages(false);
       }
@@ -101,7 +96,6 @@ export const ChatProvider = ({ children }) => {
     [isLoggedIn],
   );
 
-  // ── 4. Mark as read ───────────────────────────────────────────────────────
   const markAsRead = useCallback(
     async (chatGroupId) => {
       if (!isLoggedIn) return;
@@ -109,13 +103,12 @@ export const ChatProvider = ({ children }) => {
         await chatApi.markAsRead(chatGroupId);
         setUnreadCounts((prev) => ({ ...prev, [chatGroupId]: 0 }));
       } catch {
-        // Fail silently
+
       }
     },
     [isLoggedIn],
   );
 
-  // ── 5. Send Message ───────────────────────────────────────────────────────
   const sendMessage = useCallback(
     async (receiverId, content) => {
       if (!isLoggedIn) return;
@@ -144,25 +137,21 @@ export const ChatProvider = ({ children }) => {
     [isLoggedIn, fetchGroups],
   );
 
-  // ── 6. SignalR — ONE connection, never recreated unless logged out ─────────
   useEffect(() => {
     if (!isLoggedIn) return;
-    if (connectionRef.current) return; // Already connected — do nothing
+    if (connectionRef.current) return; 
 
     let isMounted = true;
 
     const newConnection = new signalR.HubConnectionBuilder()
       .withUrl(`${API_BASE_URL}/chat-hub`, {
-        // Always fetches the LATEST token — fixes the 401 on reconnect
         accessTokenFactory: () => tokenStore.get().accessToken,
-        // WebSocket only — avoids the constant Long Polling (_=timestamp) requests
         transport: signalR.HttpTransportType.WebSockets,
         skipNegotiation: true,
       })
       .withAutomaticReconnect({
-        // Stop retrying after ~1 minute of failures (prevents infinite 401 loop)
         nextRetryDelayInMilliseconds: (retryContext) => {
-          if (retryContext.previousRetryCount >= 5) return null; // Give up
+          if (retryContext.previousRetryCount >= 5) return null; 
           return [0, 3000, 5000, 10000, 15000][retryContext.previousRetryCount];
         },
       })
@@ -182,7 +171,6 @@ export const ChatProvider = ({ children }) => {
           [message.chatGroupId]: (prev[message.chatGroupId] || 0) + 1,
         }));
       }
-      // Refresh groups list when a message arrives
       chatApi
         .getGroups()
         .then((data) => {
@@ -214,8 +202,7 @@ export const ChatProvider = ({ children }) => {
         connectionRef.current = newConnection;
         setConnection(newConnection);
       } catch {
-        // If start fails, withAutomaticReconnect handles retries
-        // Do NOT call start() again manually — that's what causes the flood
+
       }
     };
 
@@ -230,9 +217,8 @@ export const ChatProvider = ({ children }) => {
         setConnection(null);
       }
     };
-  }, [isLoggedIn]); // ← ONLY isLoggedIn. Nothing else.
+  }, [isLoggedIn]); 
 
-  // ── 7. Fetch groups once on login ─────────────────────────────────────────
   useEffect(() => {
     if (isLoggedIn) fetchGroups();
   }, [isLoggedIn, fetchGroups]);

@@ -8,7 +8,6 @@ import {
 import { AnimatePresence } from "framer-motion";
 import { Toaster } from "react-hot-toast";
 
-// Pages
 import Home from "./pages/Home";
 import AuthPage from "./pages/AuthPage";
 import Dashboard from "./pages/Dashboard";
@@ -30,16 +29,13 @@ import Notifications from "./pages/Notifications";
 import PublicProfile from "./pages/PublicProfile";
 import Chat from "./pages/Chat";
 
-// Effects
 import Preloader from "./components/effects/Preloader";
 import Aurora from "./components/effects/Aurora";
 
-// Contexts
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import ChatProvider from "./context/ChatContext";
 
-// ── Guards ───────────────────────────────────────────────────────────────────
 const ProtectedRoute = ({ children }) => {
   const { isLoggedIn, loading } = useAuth();
 
@@ -64,14 +60,12 @@ const AdminRoute = ({ children }) => {
   if (!isLoggedIn) {
     return <Navigate to="/login" replace />;
   }
-  // تحقق من صلاحية الأدمن
   if (user?.role?.toLowerCase() !== "admin") {
     return <Navigate to="/app" replace />;
   }
   return children;
 };
 
-// حارس للصفحات العامة — يمنع المستخدم المسجل من الرجوع للهوم أو اللوجين
 const GuestRoute = ({ children }) => {
   const { isLoggedIn, loading, user } = useAuth();
   if (loading) return null;
@@ -86,7 +80,6 @@ const GuestRoute = ({ children }) => {
   return children;
 };
 
-// ── Routes ──────────────────────────────────────────────────────────────────
 function AppRoutes() {
   const [loading, setLoading] = useState(
     () => !sessionStorage.getItem("site_loaded"),
@@ -108,7 +101,6 @@ function AppRoutes() {
             <Toaster position="top-center" reverseOrder={false} />
 
             <Routes>
-              {/* ─ Public Routes (محمية من المسجلين) ─ */}
               <Route
                 path="/"
                 element={
@@ -154,7 +146,6 @@ function AppRoutes() {
                 }
               />
 
-              {/* ── Student Protected Routes (محمية) ── */}
               <Route
                 path="/app"
                 element={
@@ -260,7 +251,6 @@ function AppRoutes() {
                 }
               />
 
-              {/* ── Admin Protected Routes (محمية) ── */}
               <Route
                 path="/admin"
                 element={
@@ -286,7 +276,6 @@ function AppRoutes() {
                 }
               />
 
-              {/* ── Legacy Routes (تم حمايتها الآن) ─ */}
               <Route
                 path="/dashboard"
                 element={
@@ -304,7 +293,6 @@ function AppRoutes() {
                 }
               />
 
-              {/* ── Fallback ── */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </div>

@@ -73,7 +73,6 @@ const ResetPassword = () => {
       setIsSuccess(true);
       toast.success("تم تغيير كلمة المرور بنجاح!");
 
-      // Redirect to login after 3 seconds
       setTimeout(() => {
         navigate("/login", { replace: true });
       }, 3000);
@@ -99,7 +98,6 @@ const ResetPassword = () => {
       className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-library-paper dark:bg-dark-bg"
       dir="rtl"
     >
-      {/* Background Elements */}
       <div className="absolute inset-0 z-0">
         <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-library-primary/10 rounded-full blur-[100px] animate-pulse" />
         <div
@@ -114,7 +112,6 @@ const ResetPassword = () => {
         className="w-full max-w-md z-10"
       >
         <div className="glass-card rounded-2xl p-8 shadow-2xl relative overflow-hidden">
-          {/* Header */}
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-library-accent/10 rounded-2xl flex items-center justify-center mx-auto mb-4 rotate-3 hover:rotate-0 transition-transform duration-300">
               <ShieldCheck size={32} className="text-library-accent" />
@@ -178,7 +175,6 @@ const ResetPassword = () => {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
-                {/* Email Display (Read-only) */}
                 <div className="bg-library-primary/5 dark:bg-white/5 p-3 rounded-xl border border-library-primary/10 dark:border-white/10">
                   <span className="text-[10px] uppercase font-black text-library-primary/40 dark:text-white/40 block mb-1">
                     البريد الإلكتروني
@@ -188,7 +184,6 @@ const ResetPassword = () => {
                   </span>
                 </div>
 
-                {/* New Password */}
                 <div>
                   <label className="block text-xs font-bold text-library-primary/70 dark:text-gray-300 mb-2 mr-1">
                     كلمة المرور الجديدة
@@ -223,7 +218,6 @@ const ResetPassword = () => {
                   <PasswordStrengthMeter password={newPassword} />
                 </div>
 
-                {/* Confirm Password */}
                 <div>
                   <label className="block text-xs font-bold text-library-primary/70 dark:text-gray-300 mb-2 mr-1">
                     تأكيد كلمة المرور
@@ -296,7 +290,6 @@ const ResetPassword = () => {
           </AnimatePresence>
         </div>
 
-        {/* Footer */}
         <p className="text-center mt-8 text-sm text-library-primary/50 dark:text-gray-500 font-medium">
           هل تذكرت كلمة المرور؟{" "}
           <Link

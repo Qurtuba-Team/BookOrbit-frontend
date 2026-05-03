@@ -50,8 +50,6 @@ const Navbar = () => {
     if (isLoggedIn && user?.role?.toLowerCase() !== "admin") {
       fetchBrief();
     }
-    // Only re-fetch when the actual logged-in identity changes (not on every user object recreation)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoggedIn, user?.studentId]);
 
   useEffect(() => {
@@ -59,7 +57,6 @@ const Navbar = () => {
     return () => window.removeEventListener("notifications:updated", fetchBrief);
   }, []);
 
-  // Try to find the best display name
   const displayName =
     user?.fullName ||
     user?.Name ||
@@ -67,7 +64,6 @@ const Navbar = () => {
     user?.userName ||
     user?.email?.split("@")[0] ||
     "المستخدم";
-  // Keep role label stable after removing specialization field.
   const displayRole =
     user?.role?.toLowerCase() === "admin" ? "إدارة النظام" : "طالب جامعي";
   const homePath = isLoggedIn
@@ -194,15 +190,12 @@ const Navbar = () => {
                           <span className="absolute top-2.5 end-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-dark-bg" />
                         )}
                       </Link>
-                      {/* Messages Icon */}
                       <Link
                         to="/chat"
                         className="relative w-9 h-9 rounded-lg items-center justify-center bg-white/60 dark:bg-white/5 text-library-primary/70 dark:text-gray-400 hover:text-library-accent transition-all border border-library-primary/10 dark:border-white/10 flex"
                         title="الرسائل"
                       >
                         <MessageSquare size={17} />
-                        {/* Only show if there are unread messages - assuming logic exists or hardcoded for now */}
-                        {/* <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-library-accent rounded-full border-2 border-white dark:border-dark-bg animate-bounce"></span> */}
                       </Link>
 
                       <div 
@@ -443,7 +436,6 @@ const Navbar = () => {
       <AnimatePresence>
         {mobileMenuOpen && (
           <>
-            {/* Backdrop overlay */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -458,7 +450,6 @@ const Navbar = () => {
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
               className="fixed inset-y-0 right-0 z-[100] w-[min(100%,22rem)] max-w-[360px] bg-white dark:bg-dark-bg shadow-2xl flex flex-col pt-[max(4rem,env(safe-area-inset-top,0px)+3rem)] px-5 pb-[env(safe-area-inset-bottom,0px)] lg:hidden overflow-hidden border-l border-library-primary/5 dark:border-white/5"
             >
-              {/* Close Button Inside Drawer */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
