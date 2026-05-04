@@ -82,7 +82,7 @@ Getting BookOrbit running locally is straightforward.
 
 3.  **Launch**
     ```bash
-    npm run dev
+    npm start
     ```
 
 The application will be live at `http://localhost:3001`.
