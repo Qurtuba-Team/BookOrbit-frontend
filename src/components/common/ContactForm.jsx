@@ -44,6 +44,7 @@ const ContactForm = () => {
           <input
             type="text"
             placeholder="الاسم"
+            aria-label="الاسم"
             className={`contact-input w-full ${errors.user_name ? "border-red-500/50 focus:border-red-500" : ""}`}
             {...register("user_name", { required: "يرجى إدخال اسمك" })}
           />
@@ -53,6 +54,7 @@ const ContactForm = () => {
           <input
             type="email"
             placeholder="البريد الإلكتروني"
+            aria-label="البريد الإلكتروني"
             className={`contact-input w-full ${errors.user_email ? "border-red-500/50 focus:border-red-500" : ""}`}
             {...register("user_email", { 
               required: "يرجى إدخال بريدك الإلكتروني",
@@ -69,6 +71,7 @@ const ContactForm = () => {
         <input
           type="text"
           placeholder="الموضوع"
+          aria-label="الموضوع"
           className={`contact-input w-full ${errors.subject ? "border-red-500/50 focus:border-red-500" : ""}`}
           {...register("subject", { required: "يرجى إدخال الموضوع" })}
         />
@@ -77,6 +80,7 @@ const ContactForm = () => {
       <div>
         <textarea
           placeholder="رسالتك..."
+          aria-label="رسالتك"
           rows="5"
           className={`contact-input w-full resize-none ${errors.message ? "border-red-500/50 focus:border-red-500" : ""}`}
           {...register("message", { required: "يرجى كتابة رسالتك" })}

@@ -166,6 +166,7 @@ const DownloadSection = () => {
             <img 
               src={appsImg} 
               alt="BookOrbit App Mockup" 
+              loading="lazy"
               className="relative z-10 w-full h-auto rounded-3xl shadow-2xl transform group-hover:scale-[1.02] transition-transform duration-700"
             />
           </div>

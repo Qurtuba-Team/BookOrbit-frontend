@@ -48,63 +48,77 @@ export const AuthProvider = ({ children }) => {
     const separator = url.includes("?") ? "&" : "?";
     const finalUrl = `${url}${separator}${buster}`;
 
-    const res = await fetch(finalUrl, {
-      cache: "no-cache",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "ngrok-skip-browser-warning": "69420",
-      },
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+      console.warn(`Protected image fetch to ${finalUrl} timed out`);
+    }, 10000);
 
-    if (!res.ok) return null;
+    try {
+      const res = await fetch(finalUrl, {
+        cache: "no-cache",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "ngrok-skip-browser-warning": "69420",
+        },
+        signal: controller.signal,
+      });
 
-    const contentType = res.headers.get("content-type") || "";
-    const blob = await res.blob();
+      if (!res.ok) return null;
 
-    if (
-      contentType.startsWith("image/") ||
-      contentType.includes("octet-stream")
-    ) {
-      if (profileObjectUrl) URL.revokeObjectURL(profileObjectUrl);
-      profileObjectUrl = URL.createObjectURL(blob);
-      return profileObjectUrl;
-    }
+      const contentType = res.headers.get("content-type") || "";
+      const blob = await res.blob();
 
-    const raw = (await blob.text()).trim();
-    if (!raw) return null;
-
-    let encoded = raw;
-    if (encoded.startsWith('"') && encoded.endsWith('"')) {
-      encoded = encoded.slice(1, -1);
-    }
-
-    if (encoded.startsWith("{") || encoded.startsWith("[")) {
-      try {
-        const parsed = JSON.parse(encoded);
-        if (typeof parsed === "string") {
-          encoded = parsed;
-        } else if (parsed && typeof parsed === "object") {
-          encoded =
-            parsed.image ||
-            parsed.base64 ||
-            parsed.data ||
-            parsed.content ||
-            parsed.result ||
-            "";
-        } else {
-          encoded = "";
-        }
-      } catch {
-        
+      if (
+        contentType.startsWith("image/") ||
+        contentType.includes("octet-stream")
+      ) {
+        if (profileObjectUrl) URL.revokeObjectURL(profileObjectUrl);
+        profileObjectUrl = URL.createObjectURL(blob);
+        return profileObjectUrl;
       }
-    }
 
-    if (encoded.startsWith("data:image/")) {
-      return encoded;
-    }
+      const raw = (await blob.text()).trim();
+      if (!raw) return null;
 
-    encoded = encoded.replace(/\s/g, "");
-    return encoded ? `data:image/jpeg;base64,${encoded}` : null;
+      let encoded = raw;
+      if (encoded.startsWith('"') && encoded.endsWith('"')) {
+        encoded = encoded.slice(1, -1);
+      }
+
+      if (encoded.startsWith("{") || encoded.startsWith("[")) {
+        try {
+          const parsed = JSON.parse(encoded);
+          if (typeof parsed === "string") {
+            encoded = parsed;
+          } else if (parsed && typeof parsed === "object") {
+            encoded =
+              parsed.image ||
+              parsed.base64 ||
+              parsed.data ||
+              parsed.content ||
+              parsed.result ||
+              "";
+          } else {
+            encoded = "";
+          }
+        } catch {
+          
+        }
+      }
+
+      if (encoded.startsWith("data:image/")) {
+        return encoded;
+      }
+
+      encoded = encoded.replace(/\s/g, "");
+      return encoded ? `data:image/jpeg;base64,${encoded}` : null;
+    } catch (err) {
+      console.error("Error fetching protected image:", err);
+      return null;
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }, []);
 
   const loadStudentProfileImage = useCallback(

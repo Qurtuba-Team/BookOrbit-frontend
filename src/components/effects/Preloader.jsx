@@ -6,7 +6,7 @@ const Preloader = ({ onComplete }) => {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    const duration = 2000; 
+    const duration = 1200; 
     const interval = 20;
     const steps = duration / interval;
     const increment = 100 / steps;

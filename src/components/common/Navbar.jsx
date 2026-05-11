@@ -163,6 +163,7 @@ const Navbar = () => {
                     whileHover={{ scale: 1.1, rotate: 15 }}
                     whileTap={{ scale: 0.9 }}
                     onClick={toggleDarkMode}
+                    aria-label={isDarkMode ? "تفعيل الوضع المضيء" : "تفعيل الوضع المظلم"}
                     className="hidden lg:flex w-9 h-9 rounded-lg items-center justify-center bg-white/60 dark:bg-white/5 text-library-primary/70 dark:text-library-paper/60 hover:text-library-accent transition-all border border-library-primary/10 dark:border-white/10"
                   >
                     <AnimatePresence mode="wait">
@@ -360,6 +361,7 @@ const Navbar = () => {
                       backgroundColor: "rgba(239, 68, 68, 0.15)",
                     }}
                     onClick={logout}
+                    aria-label="تسجيل الخروج"
                     className="hidden md:flex items-center justify-center w-9 h-9 rounded-lg bg-red-500/5 text-red-500 transition-all border border-red-500/15"
                     title="تسجيل الخروج"
                   >
@@ -415,6 +417,7 @@ const Navbar = () => {
 
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                aria-label="فتح قائمة التنقل"
                 className="lg:hidden w-10 h-10 rounded-xl flex items-center justify-center bg-library-primary/5 dark:bg-white/5 text-library-primary dark:text-library-paper relative z-[60]"
               >
                 <AnimatePresence mode="wait">
@@ -622,6 +625,7 @@ const Navbar = () => {
                     <div className="mt-auto pt-6 space-y-3">
                       <button
                         onClick={toggleDarkMode}
+                        aria-label={isDarkMode ? "تفعيل الوضع المضيء" : "تفعيل الوضع المظلم"}
                         className="w-full flex items-center justify-between p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 text-library-primary dark:text-white active:scale-95 transition-all"
                       >
                         <div className="flex items-center gap-3">

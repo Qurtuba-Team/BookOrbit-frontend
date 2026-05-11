@@ -241,14 +241,15 @@ export const normalizeChatGroup = (g = {}) => {
 };
 
 const processQueue = (error, token = null) => {
-  failedQueue.forEach((prom) => {
+  const currentQueue = [...failedQueue];
+  failedQueue = [];
+  currentQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
     } else {
       prom.resolve(token);
     }
   });
-  failedQueue = [];
 };
 
 const commonErrorTranslations = {
@@ -299,6 +300,7 @@ const buildQuery = (params) => {
 };
 
 async function apiRequest(path, options = {}) {
+  const REQUEST_TIMEOUT = 15000;
   let { accessToken, refreshToken: storedRefreshToken, expiresOnUtc } = tokenStore.get();
 
   if (accessToken && storedRefreshToken && expiresOnUtc && !options.skipAuth) {
@@ -371,107 +373,126 @@ async function apiRequest(path, options = {}) {
     if (qs) finalUrl += (finalUrl.includes("?") ? "&" : "?") + qs;
   }
 
-  const response = await fetch(finalUrl, {
-    ...options,
-    method: (options.method || "GET").toUpperCase(),
-    headers,
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+    console.warn(`Request to ${finalUrl} timed out after ${REQUEST_TIMEOUT}ms`);
+  }, REQUEST_TIMEOUT);
 
-  const responseText = await response.text();
+  try {
+    const response = await fetch(finalUrl, {
+      ...options,
+      method: (options.method || "GET").toUpperCase(),
+      headers,
+      signal: controller.signal,
+    });
 
-  if (!response.ok) {
-    let errorData;
-    try {
-      errorData = responseText ? JSON.parse(responseText) : { detail: "حدث خطأ غير متوقع" };
-    } catch {
-      errorData = { detail: responseText || `HTTP ${response.status}` };
-    }
+    const responseText = await response.text();
 
-    if (response.status === 429) {
-      const retryAfter = response.headers.get("Retry-After");
-      const waitTime = retryAfter ? parseInt(retryAfter, 10) * 1000 : 2000;
-
-      const retryCount = options._retryCount || 0;
-      if (retryCount < 2) { 
-        await new Promise(resolve => setTimeout(resolve, waitTime * (retryCount + 1)));
-        return apiRequest(path, { ...options, _retryCount: retryCount + 1 });
+    if (!response.ok) {
+      let errorData;
+      try {
+        errorData = responseText ? JSON.parse(responseText) : { detail: "حدث خطأ غير متوقع" };
+      } catch {
+        errorData = { detail: responseText || `HTTP ${response.status}` };
       }
-    }
 
-    if (response.status === 401 && !options.skipAuth && storedRefreshToken) {
-      if (!isRefreshing) {
-        isRefreshing = true;
-        try {
-          const refreshRes = await fetch(`${API_V1}/identity/token/refresh`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "ngrok-skip-browser-warning": "69420"
-            },
-            body: JSON.stringify({
-              refreshToken: storedRefreshToken,
-              expiredAccessToken: accessToken
-            }),
-          });
+      if (response.status === 429) {
+        const retryAfter = response.headers.get("Retry-After");
+        const waitTime = retryAfter ? parseInt(retryAfter, 10) * 1000 : 2000;
 
-          if (refreshRes.ok) {
-            const newTokens = await refreshRes.json();
-            const rememberMe = localStorage.getItem("refreshToken") !== null;
-            tokenStore.set(newTokens, rememberMe);
-            processQueue(null, newTokens.accessToken);
-            return apiRequest(path, options);
-          } else {
-            throw new Error("Session expired");
-          }
-        } catch (err) {
-          processQueue(err, null);
-          window.dispatchEvent(new CustomEvent("auth:logout"));
-          throw err;
-        } finally {
-          isRefreshing = false;
+        const retryCount = options._retryCount || 0;
+        if (retryCount < 2) { 
+          await new Promise(resolve => setTimeout(resolve, waitTime * (retryCount + 1)));
+          return apiRequest(path, { ...options, _retryCount: retryCount + 1 });
         }
       }
 
-      return new Promise((resolve, reject) => {
-        failedQueue.push({ resolve, reject });
-      })
-        .then(() => apiRequest(path, options))
-        .catch((err) => { throw err; });
+      if (response.status === 401 && !options.skipAuth && storedRefreshToken) {
+        if (!isRefreshing) {
+          isRefreshing = true;
+          let refreshSuccess = false;
+          let newToken = null;
+          let refreshError = null;
+
+          try {
+            const refreshRes = await fetch(`${API_V1}/identity/token/refresh`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "ngrok-skip-browser-warning": "69420"
+              },
+              body: JSON.stringify({
+                refreshToken: storedRefreshToken,
+                expiredAccessToken: accessToken
+              }),
+            });
+
+            if (refreshRes.ok) {
+              const newTokens = await refreshRes.json();
+              const rememberMe = localStorage.getItem("refreshToken") !== null;
+              tokenStore.set(newTokens, rememberMe);
+              newToken = newTokens.accessToken;
+              refreshSuccess = true;
+            } else {
+              refreshError = new Error("Session expired");
+            }
+          } catch (err) {
+            refreshError = err;
+          }
+
+          if (refreshSuccess) {
+            processQueue(null, newToken);
+            isRefreshing = false;
+            return apiRequest(path, options);
+          } else {
+            processQueue(refreshError, null);
+            isRefreshing = false;
+            window.dispatchEvent(new CustomEvent("auth:logout"));
+            throw refreshError;
+          }
+        }
+
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(() => apiRequest(path, options))
+          .catch((err) => { throw err; });
+      }
+
+      if (response.status === 401 && !options.skipAuth) {
+        window.dispatchEvent(new CustomEvent("auth:logout"));
+      }
+
+      const errorMessage = translateErrorMessage(errorData.detail || errorData.message || errorData.title || `HTTP ${response.status}`);
+      const error = new Error(errorMessage);
+      error.status = response.status;
+      error.detail = errorData.detail;
+      error.title = errorData.title;
+      error.instance = errorData.instance;
+
+      if (errorData.errors) {
+        error.errors = errorData.errors;
+      } else if (errorData.extensions?.errors) {
+        error.errors = errorData.extensions.errors;
+      }
+      throw error;
     }
 
-    if (response.status === 401 && !options.skipAuth) {
-      window.dispatchEvent(new CustomEvent("auth:logout"));
-    }
+    if (response.status === 204) return null;
 
-    const errorMessage = translateErrorMessage(errorData.detail || errorData.message || errorData.title || `HTTP ${response.status}`);
-
-    const error = new Error(errorMessage);
-    error.status = response.status;
-    error.detail = errorData.detail;
-    error.title = errorData.title;
-    error.instance = errorData.instance;
-
-    if (errorData.errors) {
-      error.errors = errorData.errors;
-    } else if (errorData.extensions?.errors) {
-      error.errors = errorData.extensions.errors;
-    }
-
-    throw error;
-  }
-
-  if (response.status === 204) return null;
-
-  const contentType = response.headers.get("content-type");
-
-  if (contentType?.includes("application/json")) {
-    try {
-      return responseText ? JSON.parse(responseText) : null;
-    } catch {
+    const contentType = response.headers.get("content-type");
+    if (contentType?.includes("application/json")) {
+      try {
+        return responseText ? JSON.parse(responseText) : null;
+      } catch {
+        return responseText;
+      }
+    } else {
       return responseText;
     }
-  } else {
-    return responseText;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 

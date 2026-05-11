@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, lazy, Suspense } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -8,33 +8,34 @@ import {
 import { AnimatePresence } from "framer-motion";
 import { Toaster } from "react-hot-toast";
 
-import Home from "./pages/Home";
-import AuthPage from "./pages/AuthPage";
-import Dashboard from "./pages/Dashboard";
-import AddBook from "./pages/AddBook";
-import StudentDashboard from "./pages/StudentDashboard";
-import StudentProfile from "./pages/StudentProfile";
-import ChangePassword from "./pages/ChangePassword";
-import BookDetail from "./pages/BookDetail";
-import MyCopies from "./pages/MyCopies";
-import BorrowingIncomingRequests from "./pages/BorrowingIncomingRequests";
-import BorrowingOutgoingRequests from "./pages/BorrowingOutgoingRequests";
-import BorrowingTransactions from "./pages/BorrowingTransactions";
-import AdminStudents from "./pages/AdminStudents";
-import AdminBooks from "./pages/AdminBooks";
-import AdminDashboard from "./pages/AdminDashboard";
-import EmailVerified from "./redirects/EmailVerified";
-import ResetPassword from "./redirects/ResetPassword";
-import Notifications from "./pages/Notifications";
-import PublicProfile from "./pages/PublicProfile";
-import Chat from "./pages/Chat";
-
 import Preloader from "./components/effects/Preloader";
 import Aurora from "./components/effects/Aurora";
 
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import ChatProvider from "./context/ChatContext";
+
+const Home = lazy(() => import("./pages/Home"));
+const AuthPage = lazy(() => import("./pages/AuthPage"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const AddBook = lazy(() => import("./pages/AddBook"));
+const StudentDashboard = lazy(() => import("./pages/StudentDashboard"));
+const StudentProfile = lazy(() => import("./pages/StudentProfile"));
+const ChangePassword = lazy(() => import("./pages/ChangePassword"));
+const BookDetail = lazy(() => import("./pages/BookDetail"));
+const MyCopies = lazy(() => import("./pages/MyCopies"));
+const BorrowingIncomingRequests = lazy(() => import("./pages/BorrowingIncomingRequests"));
+const BorrowingOutgoingRequests = lazy(() => import("./pages/BorrowingOutgoingRequests"));
+const BorrowingTransactions = lazy(() => import("./pages/BorrowingTransactions"));
+const AdminStudents = lazy(() => import("./pages/AdminStudents"));
+const AdminBooks = lazy(() => import("./pages/AdminBooks"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const EmailVerified = lazy(() => import("./redirects/EmailVerified"));
+const ResetPassword = lazy(() => import("./redirects/ResetPassword"));
+const Notifications = lazy(() => import("./pages/Notifications"));
+const PublicProfile = lazy(() => import("./pages/PublicProfile"));
+const Chat = lazy(() => import("./pages/Chat"));
+
 
 const ProtectedRoute = ({ children }) => {
   const { isLoggedIn, loading } = useAuth();
@@ -81,8 +82,9 @@ const GuestRoute = ({ children }) => {
 };
 
 function AppRoutes() {
+  const isRootPath = window.location.pathname === "/";
   const [loading, setLoading] = useState(
-    () => !sessionStorage.getItem("site_loaded"),
+    () => isRootPath && !sessionStorage.getItem("site_loaded"),
   );
 
   const handlePreloaderComplete = () => {
@@ -100,201 +102,207 @@ function AppRoutes() {
           <div className="App relative z-10">
             <Toaster position="top-center" reverseOrder={false} />
 
-            <Routes>
-              <Route
-                path="/"
-                element={
-                  <GuestRoute>
-                    <Home />
-                  </GuestRoute>
-                }
-              />
-              <Route
-                path="/login"
-                element={
-                  <GuestRoute>
-                    <AuthPage />
-                  </GuestRoute>
-                }
-              />
-              <Route
-                path="/register"
-                element={
-                  <GuestRoute>
-                    <AuthPage />
-                  </GuestRoute>
-                }
-              />
-              <Route path="/confirm-email" element={<EmailVerified />} />
-              <Route path="/email-verified" element={<EmailVerified />} />
-              <Route path="/EmailVerified" element={<EmailVerified />} />
-              <Route path="/EmailVerfied" element={<EmailVerified />} />
-              <Route
-                path="/reset-password"
-                element={
-                  <GuestRoute>
-                    <ResetPassword />
-                  </GuestRoute>
-                }
-              />
-              <Route
-                path="/ResetPassword"
-                element={
-                  <GuestRoute>
-                    <ResetPassword />
-                  </GuestRoute>
-                }
-              />
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen bg-library-paper dark:bg-dark-bg">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-library-accent"></div>
+              </div>
+            }>
+              <Routes>
+                <Route
+                  path="/"
+                  element={
+                    <GuestRoute>
+                      <Home />
+                    </GuestRoute>
+                  }
+                />
+                <Route
+                  path="/login"
+                  element={
+                    <GuestRoute>
+                      <AuthPage />
+                    </GuestRoute>
+                  }
+                />
+                <Route
+                  path="/register"
+                  element={
+                    <GuestRoute>
+                      <AuthPage />
+                    </GuestRoute>
+                  }
+                />
+                <Route path="/confirm-email" element={<EmailVerified />} />
+                <Route path="/email-verified" element={<EmailVerified />} />
+                <Route path="/EmailVerified" element={<EmailVerified />} />
+                <Route path="/EmailVerfied" element={<EmailVerified />} />
+                <Route
+                  path="/reset-password"
+                  element={
+                    <GuestRoute>
+                      <ResetPassword />
+                    </GuestRoute>
+                  }
+                />
+                <Route
+                  path="/ResetPassword"
+                  element={
+                    <GuestRoute>
+                      <ResetPassword />
+                    </GuestRoute>
+                  }
+                />
 
-              <Route
-                path="/app"
-                element={
-                  <ProtectedRoute>
-                    <StudentDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/profile"
-                element={
-                  <ProtectedRoute>
-                    <StudentProfile />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/change-password"
-                element={
-                  <ProtectedRoute>
-                    <ChangePassword />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/catalog/:bookId"
-                element={
-                  <ProtectedRoute>
-                    <BookDetail />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/my-copies"
-                element={
-                  <ProtectedRoute>
-                    <MyCopies />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/lending/incoming"
-                element={
-                  <ProtectedRoute>
-                    <BorrowingIncomingRequests />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/lending/outgoing"
-                element={
-                  <ProtectedRoute>
-                    <BorrowingOutgoingRequests />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/lending/transactions/:type"
-                element={
-                  <ProtectedRoute>
-                    <BorrowingTransactions />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/addbook"
-                element={
-                  <ProtectedRoute>
-                    <AddBook />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/notifications"
-                element={
-                  <ProtectedRoute>
-                    <Notifications />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/student/:studentId"
-                element={
-                  <ProtectedRoute>
-                    <PublicProfile />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/chat/:studentId?"
-                element={
-                  <ProtectedRoute>
-                    <Chat />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/chat"
-                element={
-                  <ProtectedRoute>
-                    <Chat />
-                  </ProtectedRoute>
-                }
-              />
+                <Route
+                  path="/app"
+                  element={
+                    <ProtectedRoute>
+                      <StudentDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute>
+                      <StudentProfile />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/change-password"
+                  element={
+                    <ProtectedRoute>
+                      <ChangePassword />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/catalog/:bookId"
+                  element={
+                    <ProtectedRoute>
+                      <BookDetail />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/my-copies"
+                  element={
+                    <ProtectedRoute>
+                      <MyCopies />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/lending/incoming"
+                  element={
+                    <ProtectedRoute>
+                      <BorrowingIncomingRequests />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/lending/outgoing"
+                  element={
+                    <ProtectedRoute>
+                      <BorrowingOutgoingRequests />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/lending/transactions/:type"
+                  element={
+                    <ProtectedRoute>
+                      <BorrowingTransactions />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/addbook"
+                  element={
+                    <ProtectedRoute>
+                      <AddBook />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/notifications"
+                  element={
+                    <ProtectedRoute>
+                      <Notifications />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/student/:studentId"
+                  element={
+                    <ProtectedRoute>
+                      <PublicProfile />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/chat/:studentId?"
+                  element={
+                    <ProtectedRoute>
+                      <Chat />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/chat"
+                  element={
+                    <ProtectedRoute>
+                      <Chat />
+                    </ProtectedRoute>
+                  }
+                />
 
-              <Route
-                path="/admin"
-                element={
-                  <AdminRoute>
-                    <AdminDashboard />
-                  </AdminRoute>
-                }
-              />
-              <Route
-                path="/admin/students"
-                element={
-                  <AdminRoute>
-                    <AdminStudents />
-                  </AdminRoute>
-                }
-              />
-              <Route
-                path="/admin/books"
-                element={
-                  <AdminRoute>
-                    <AdminBooks />
-                  </AdminRoute>
-                }
-              />
+                <Route
+                  path="/admin"
+                  element={
+                    <AdminRoute>
+                      <AdminDashboard />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="/admin/students"
+                  element={
+                    <AdminRoute>
+                      <AdminStudents />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="/admin/books"
+                  element={
+                    <AdminRoute>
+                      <AdminBooks />
+                    </AdminRoute>
+                  }
+                />
 
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/books"
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/books"
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
 
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Suspense>
           </div>
         </div>
       )}
